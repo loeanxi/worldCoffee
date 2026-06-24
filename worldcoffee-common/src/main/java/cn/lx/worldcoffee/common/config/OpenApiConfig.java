@@ -33,7 +33,7 @@ public class OpenApiConfig {
     public GroupedOpenApi allApi() {
         return GroupedOpenApi.builder()
                 .group("全部接口")
-                .packagesToScan("cn.lx.worldcoffee.module.user.controller")
+                .packagesToScan("cn.lx.worldcoffee.module")
                 .build();
     }
 }
