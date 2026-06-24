@@ -28,6 +28,10 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/users/register",
                                 "/api/users/login",
+                                "/api/coffee/posts",           // GET 列表（公开）
+                                "/api/coffee/posts/*",         // GET 详情（公开）
+                                "/api/coffee/search",          // 搜索（公开）
+                                "/uploads/**",                 // 静态图片资源
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/webjars/**",
