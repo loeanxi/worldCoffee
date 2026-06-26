@@ -3,12 +3,14 @@ package cn.lx.worldcoffee.module.coffee.domain;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
 @Data
 @TableName("coffee_post")
+
 public class CoffeePost {
     @TableId(type = IdType.AUTO)
     private Long id;
