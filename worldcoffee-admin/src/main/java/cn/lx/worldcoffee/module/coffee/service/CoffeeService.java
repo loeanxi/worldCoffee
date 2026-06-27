@@ -1,16 +1,16 @@
 package cn.lx.worldcoffee.module.coffee.service;
 
 import cn.hutool.json.JSONUtil;
-import cn.lx.worldcoffee.module.coffee.dao.CoffeeCommentDao;
-import cn.lx.worldcoffee.module.coffee.dao.CoffeeFavoriteDao;
-import cn.lx.worldcoffee.module.coffee.dao.CoffeeLikeDao;
-import cn.lx.worldcoffee.module.coffee.dao.CoffeePostDao;
+import cn.lx.worldcoffee.module.coffee.dao.*;
 import cn.lx.worldcoffee.module.coffee.domain.*;
 import cn.lx.worldcoffee.module.coffee.domain.from.CommentCreateFrom;
 import cn.lx.worldcoffee.module.coffee.domain.from.PostCreateFrom;
+import cn.lx.worldcoffee.module.coffee.domain.from.ReportCreatFrom;
 import cn.lx.worldcoffee.module.coffee.domain.vo.CommentVO;
 import cn.lx.worldcoffee.module.coffee.domain.vo.PostDetailVO;
 import cn.lx.worldcoffee.module.coffee.domain.vo.PostListVO;
+import cn.lx.worldcoffee.module.notification.domain.NotificationEvent;
+import cn.lx.worldcoffee.module.notification.service.NotificationService;
 import cn.lx.worldcoffee.module.user.dao.UserDao;
 import cn.lx.worldcoffee.module.user.domain.User;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -19,8 +19,12 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import cn.lx.worldcoffee.module.coffee.domain.CoffeeLike;
+import org.springframework.web.multipart.MultipartFile;
 
 
+import java.io.File;
+import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -32,109 +36,14 @@ public class CoffeeService {
     private final CoffeeLikeDao likeDao;
     private final CoffeeFavoriteDao favoriteDao;
     private final CoffeeCommentDao commentDao;
+    private final CoffeeCommentLikeDao commentLikeDao;
+    private final UserFollowDao followDao;
+    private final NotificationService notificationService;
+    private final PostReportDao postReportDao;
 
 
 
-    public List<PostListVO> listPosts(Integer page, Integer size) {
-        // ===== 1. 分页查帖子 =====
-        // SQL: SELECT * FROM coffee_post WHERE status = 1 ORDER BY create_time DESC LIMIT 0,10
-        LambdaQueryWrapper<CoffeePost> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(CoffeePost::getStatus,1)     //只查正常帖子
-                .orderByDesc(CoffeePost::getCreateTime)  //最新在前
-                .last("LIMIT " + (page - 1) * size + "," + size);//分页
-        List<CoffeePost> posts = postDao.selectList(wrapper);
-        if (posts.isEmpty()){
-            return List.of();
-        }
-
-        // 错误：LIMIT 和数字连在一起，SQL会变成 LIMIT0,10
-        //.last("LIMIT" + (page - 1) * size + "," + size);
-        //
-        //// 正确：加一个空格
-        //.last("LIMIT " + (page - 1) * size + "," + size);
-
-        // ===== 2. 批量查发帖人信息 =====
-        // SQL: SELECT * FROM sys_user WHERE id IN (1,3,5,7,9...)   ← 一次性查出所有发帖人
-        // 收集所有不重复的 userId
-        List<Long> userIds = posts.stream()
-                .map(CoffeePost::getUserId)
-                .distinct()
-                .collect(Collectors.toList());
-        /** stream()：把帖子集合转为流式处理；
-         map(CoffeePost::getUserId)：遍历每篇帖子，提取发帖人的userId；
-         distinct()：对用户 ID 去重，同一个用户发多条帖子只保留一个 ID，避免重复查询；
-         collect(Collectors.toList())：把去重后的 ID 收集成集合。*/
-
-        // 一次查出所有用户（避免 N+1 查询）
-        Map<Long, User> userMap = userDao.selectBatchIds(userIds)
-                .stream()
-                .collect(Collectors.toMap(User::getId, u -> u));
-
-        /** selectBatchIds(userIds)：MyBatis-Plus 批量查询，执行一条SELECT * FROM user WHERE id IN (?,?,?)SQL，一次性查出所有发帖用户；
-         再通过流转换成Map<用户ID, 用户实体>结构；
-         后续遍历帖子时，直接用userMap.get(post.getUserId())就能拿到对应用户信息。
-         核心作用：解决 N+1 查询问题
-         如果不批量查，循环每篇帖子单独根据userId查用户：
-         1 次查帖子 + N 次查用户 = N+1 条 SQL，数据量大时性能极差。
-         现在只执行2 次 SQL：查帖子、批量查用户，大幅提升查询效率。
-         * */
-
-        // ===== 3. 查当前用户是否点赞/收藏 =====
-        // SQL: SELECT * FROM coffee_like WHERE user_id = ? AND post_id IN (1,2,3,...)
-        // SQL: SELECT * FROM coffee_favorite WHERE user_id = ? AND post_id IN (1,2,3,...)
-        // 先判断是否登录（SecurityContext 有没有 userId
-        Long currentUserId = getCurrentUserId();   // 没登录返回null
-        Set<Long> likedPostIds = new HashSet<>();
-        Set<Long> favoritedPostIds = new HashSet<>();
-
-        if (currentUserId != null) {
-            List<Long> postIds = posts.stream()
-                    .map(CoffeePost::getId)
-                    .collect(Collectors.toList());
-
-            // 查当前用户对这些帖子的点赞记录
-            likedPostIds = likeDao.selectList(
-                    new LambdaQueryWrapper<CoffeeLike>()
-                            .eq(CoffeeLike::getUserId, currentUserId)
-                            .in(CoffeeLike::getPostId, postIds)
-            ).stream().map(CoffeeLike::getUserId).collect(Collectors.toSet());
-
-
-            // 查当前用户对这些帖子的收藏记录
-            favoritedPostIds = favoriteDao.selectList(
-                    new LambdaQueryWrapper<CoffeeFavorite>()
-                            .eq(CoffeeFavorite::getUserId, currentUserId)
-                            .in(CoffeeFavorite::getPostId, postIds)
-            ).stream().map(CoffeeFavorite::getPostId).collect(Collectors.toSet());
-        }
-        // ===== 4. 组装 PostListVO =====
-        final Set<Long> finalLiked = likedPostIds;
-        final Set<Long> finalFavorited = favoritedPostIds;
-
-        return posts.stream().map(post -> {
-            User user = userMap.get(post.getUserId());
-            return PostListVO.builder()
-                    .id(post.getId())
-                    .userId(post.getUserId())
-                    .username(user != null ? user.getUsername() : "未知用户")
-                    .title(post.getTitle())
-                    .content(truncate(post.getContent(), 80))  // 截取前80字
-                    .images(parseImages(post.getImages()))      // JSON字符串→List
-                    .coffeeName(post.getCoffeeName())
-                    .coffeeBrand(post.getCoffeeBrand())
-                    .location(post.getLocation())
-                    .postType(post.getPostType())
-                    .likeCount(post.getLikeCount())
-                    .commentCount(post.getCommentCount())
-                    .favoriteCount(post.getFavoriteCount())
-                    .likedByMe(finalLiked.contains(post.getId()))
-                    .favoritedByMe(finalFavorited.contains(post.getId()))
-                    .createTime(post.getCreateTime())
-                    .build();
-        }).collect(Collectors.toList());
-    }
-
-    // ===== 工具方法 =====
+    // ===== =======   工具方法 =======   =====
     /** 获取当前登录用户ID，未登录返回null */
     private Long getCurrentUserId(){
         try {
@@ -157,6 +66,199 @@ public class CoffeeService {
         return JSONUtil.toList(imagesJson, String.class);  // Hutool
     }
 
+    /**
+     * 把帖子列表增强为 PostListVO 列表
+     * 统一处理：批量查用户名、点赞状态、收藏状态
+     */
+    //方法采用了"先批量查、再逐条拼"的策略，避免了在循环里逐条查数据库的 N+1 问题。
+    // 整个流程分三步：查用户、查当前用户交互状态、组装 VO。
+    // 这是一个比较成熟的写法，说明作者对性能有一定意识。嘻嘻
+    /** 关于解决n+1问题
+     *  没解决（N+1）：                         解决后：
+     * ┌────────┐  ┌────────┐                 ┌────────┐
+     * │ 查帖子  │  │ 查帖子  │                 │ 查帖子  │
+     * │ (1次)  │  │ (1次)  │                 │ (1次)  │
+     * └───┬────┘  └───┬────┘                 └───┬────┘
+     *     │           │                          │
+     *     ├ 查用户 id=3  │                 ┌─────┴─────┐
+     *     ├ 查用户 id=3  │  重复          │ 查用户 IN(1,3,5) │
+     *     ├ 查用户 id=5  │  浪费          │ (1次)     │
+     *     ├ 查用户 id=1  │                 └───────────┘
+     *     ...          │
+     *   10次           │
+     *
+     *
+     * 没解决n+1：
+     * for (CoffeePost post : posts) {
+     *     User user = userDao.selectById(post.getUserId());   // 循环里查库
+     *     // 组装VO...
+     * }
+     * 第1条：SELECT * FROM coffee_post WHERE status = 1     ← 1条（查帖子）
+     * 第2条：SELECT * FROM sys_user WHERE id = 3            ← 帖子1的作者
+     * 第3条：SELECT * FROM sys_user WHERE id = 3            ← 帖子2的作者（同一个人的又查了一次）
+     * 第4条：SELECT * FROM sys_user WHERE id = 5            ← 帖子3的作者
+     * 第5条：SELECT * FROM sys_user WHERE id = 1            ← 帖子4的作者
+     * ...
+     * 解决以后：
+     * // 1次查出所有帖子（1条SQL）
+     * List<CoffeePost> posts = postDao.selectList(wrapper);
+     * // 拿出所有 userId，去重
+     * List<Long> userIds = posts.stream().map(CoffeePost::getUserId).distinct().collect(...);
+     * // 一次性查出所有用户（1条SQL）
+     * Map<Long, User> userMap = userDao.selectBatchIds(userIds);
+     *
+     * 第1条：SELECT * FROM coffee_post WHERE status = 1     ← 1条
+     * 第2条：SELECT * FROM sys_user WHERE id IN (1,3,5)     ← 1条（三个用户一次查完）
+     *
+     * 为什么这叫 N+1 问题
+     *        查帖子	     查用户	          总计
+     * 没解决	1次	     N次（每帖一次）	  N+1
+     * 解决	    1次	     1次（批量）	      2
+     * 解决的关键：把"循环里每条查一次"改成"循环前一次性全查出来，用 IN 条件"。
+     *
+     */
+    public List<PostListVO> buildPostListVO(List<CoffeePost> posts) {
+        if (posts.isEmpty()) return List.of();
+
+        /**1.为什么在selectBatchIds之后还要进行一个流处理？
+         * 因为 selectBatchIds 返回的是一个 List<User>，不是 Map。
+         * selectBatchIds 返回的是：
+         * List<User> users = [
+         *     User{id=3, username="张三"},
+         *     User{id=5, username="李四"}
+         * ]
+         * 之后你要在循环里通过 userId 快速找到对应的 username。如果用 List：
+         * // 每次都要遍历 List 找，O(n) 复杂度
+         * for (User u : users) {
+         *     if (u.getId().equals(post.getUserId())) return u.getUsername();
+         * }
+         * // get(key) 直接找到，O(1) 复杂度
+         * Map<Long, User> userMap = {
+         *     3: User{张三},
+         *     5: User{李四}
+         * }
+         * userMap.get(post.getUserId())  // 一步到位，不用循环
+         * 第1个 stream：posts → 提取userId → 去重 → [3,5]  ← 准备批量查询的参数
+         *
+         * selectBatchIds([3,5]) → List<User>  ← 查数据库，返回的是 List
+         *
+         * 第2个 stream：List<User> → 转成 Map<Long,User>  ← 把 List 变 Map，方便后面 get 查找
+         *
+         * 关于这种lamda表达式
+         * // 简写（Lambda + 方法引用）
+         * users.stream().collect(Collectors.toMap(User::getId, u -> u));
+         *
+         * // 等价于完整写法
+         * users.stream().collect(Collectors.toMap(
+         *     new Function<User, Long>() {
+         *         @Override
+         *         public Long apply(User user) {
+         *             return user.getId();    // key = 用户ID
+         *         }
+         *     },
+         *     new Function<User, User>() {
+         *         @Override
+         *         public User apply(User user) {
+         *             return user;            // value = 用户自己
+         *         }
+         *     }
+         * ));
+         * 本质:user::getId(方法引用简写) == user -> user.getId(lambda表达式写法)
+         * 本质:u -> u    直接返回元素本身   // 输入是什么，输出就是什么
+         * :: 即前调用后  u->u 它本身
+         *
+         * 这里也可以引出stream = 让集合在流水线上被逐批加工的流程
+         * List<User> users = [User{id=3, "张三"}, User{id=5, "李四"}]
+         *        │
+         *        ▼
+         * .stream()
+         *        │  流水线启动
+         *        ▼
+         * .collect(Collectors.toMap(
+         *        │
+         *        ├─ User::getId     ← 第1个user：取 id=3 作为 Map 的 key
+         *        │                      第2个user：取 id=5 作为 Map 的 key
+         *        │
+         *        └─ u -> u          ← 第1个user：value 就是 User{张三}
+         *                              第2个user：value 就是 User{李四}
+         * ))
+         *        │
+         *        ▼
+         * Map<Long, User> = {3: User{张三}, 5: User{李四}}
+         */
+        // 1. 批量查发帖人
+        // SQL: SELECT * FROM sys_user WHERE id IN (?)
+        Map<Long, User> userMap = userDao.selectBatchIds(
+                posts.stream().map(CoffeePost::getUserId).distinct().collect(Collectors.toList())
+        ).stream().collect(Collectors.toMap(User::getId, u -> u));
+
+        // 2. 查当前用户点赞/收藏状态
+        Long currentUserId = getCurrentUserId();
+        Set<Long> likedPostIds = new HashSet<>();
+        Set<Long> favoritedPostIds = new HashSet<>();
+        if (currentUserId != null) {
+            List<Long> postIds = posts.stream().map(CoffeePost::getId).collect(Collectors.toList());
+            // SQL: SELECT * FROM coffee_like WHERE user_id = ? AND post_id IN (?)
+            likedPostIds = likeDao.selectList(new LambdaQueryWrapper<CoffeeLike>()
+                    .eq(CoffeeLike::getUserId, currentUserId)
+                    .in(CoffeeLike::getPostId, postIds)
+            ).stream().map(CoffeeLike::getPostId).collect(Collectors.toSet());
+            // SQL: SELECT * FROM coffee_favorite WHERE user_id = ? AND post_id IN (?)
+            favoritedPostIds = favoriteDao.selectList(new LambdaQueryWrapper<CoffeeFavorite>()
+                    .eq(CoffeeFavorite::getUserId, currentUserId)
+                    .in(CoffeeFavorite::getPostId, postIds)
+            ).stream().map(CoffeeFavorite::getPostId).collect(Collectors.toSet());
+        }
+
+        // 3. 组装 VO
+        //posts         ← 帖子列表（有 id、title、content...）
+        //userMap       ← 用户查找表（{3→张三, 5→李四}）
+        //finalLiked    ← 我点过赞的帖子ID集合（{1, 3}）
+        //finalFavorited ← 我收藏的帖子ID集合（{3}）
+
+        //这是 Java 的限制：Lambda 表达式里只能引用 final 或 "实际上不可变" 的变量。
+        // 如果不赋值给一个 final 变量，
+        // 编译器不让你在 .map(post -> { ... }) 里面用。没有别的意思，就是换个名字让编译器闭嘴。
+        final Set<Long> finalLiked = likedPostIds;
+        final Set<Long> finalFavorited = favoritedPostIds;
+        return posts.stream().map(post -> {     // 遍历每条帖子，把 CoffeePost → PostListVO
+            User user = userMap.get(post.getUserId());   // 根据userId从Map里取用户
+            return PostListVO.builder()
+                    // ---- 从帖子本身拿 ----
+                    .id(post.getId())
+                    .userId(post.getUserId())
+                    .title(post.getTitle())
+                    .content(truncate(post.getContent(), 80))
+                    .images(parseImages(post.getImages()))
+                    .coffeeName(post.getCoffeeName())
+                    .coffeeBrand(post.getCoffeeBrand())
+                    .location(post.getLocation())
+                    .postType(post.getPostType())
+                    .likeCount(post.getLikeCount())
+                    .commentCount(post.getCommentCount())
+                    .favoriteCount(post.getFavoriteCount())
+                    // ---- 从用户Map查 ----
+                    .username(user != null ? user.getUsername() : "未知用户")
+                    // ---- 从点赞/收藏集合判断 ----
+                    .likedByMe(finalLiked.contains(post.getId()))// 当前帖子的ID在不在我的点赞列表里
+                    .favoritedByMe(finalFavorited.contains(post.getId()))// 在不在我的收藏列表里
+                    .createTime(post.getCreateTime())
+                    .build();
+        }).collect(Collectors.toList()); // 所有组装好的VO收集成List
+
+    }
+
+    // ========   业务方法    ===========
+    public List<PostListVO> listPosts(Integer page, Integer size) {
+        // ===== 1. 分页查帖子 =====
+        // SQL: SELECT * FROM coffee_post WHERE status = 1 ORDER BY create_time DESC LIMIT 0,10
+        LambdaQueryWrapper<CoffeePost> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(CoffeePost::getStatus,1)     //只查正常帖子
+                .orderByDesc(CoffeePost::getCreateTime)  //最新在前
+                .last("LIMIT " + (page - 1) * size + "," + size);//分页
+        List<CoffeePost> posts = postDao.selectList(wrapper);
+        return buildPostListVO(posts);
+    }
 
     public void createPost(PostCreateFrom from) {
         // 1. 从 SecurityContext 拿当前登录用户ID
@@ -222,7 +324,6 @@ public class CoffeeService {
 
     }
 
-
     public PostDetailVO getPostDetail(Long postId) {
         // 1. 查帖子
         // SQL: SELECT * FROM coffee_post WHERE id = ?
@@ -241,6 +342,10 @@ public class CoffeeService {
                 .orderByAsc(CoffeeComment::getCreateTime)
         );
 
+        //这是边界判断的基础功。。selectBatchIds 传空列表 MyBatis-Plus 不会自动跳过，
+        // 直接拼出 IN () 炸 SQL。
+        //帖子 1-9 有评论 → commentIds = [2, 5, 7] →WHERE id IN (2,5,7)
+        // ✅ 帖子 10+ 没评论 → commentIds = [] → WHERE id IN ( ) 💥
         // 4. 批量查评论人信息
         // SQL: SELECT * FROM sys_user WHERE id IN (2,5,7,...)   ← 批量查评论人
         List<Long> commentIds = commentList.stream()
@@ -248,10 +353,20 @@ public class CoffeeService {
                 .distinct()
                 .collect(Collectors.toList());
 
-        Map<Long,User> userMap = userDao.selectBatchIds(commentIds)
+//        Map<Long, User> userMap = Collections.emptyMap();
+//        if (!commentIds.isEmpty()){
+//            userMap = userDao.selectBatchIds(commentIds)
+//                    .stream()
+//                    .collect(Collectors.toMap(User::getId,u -> u));
+//        }
+        Map<Long, User> userMap = commentIds.isEmpty()
+                ? Collections.emptyMap()
+                : userDao.selectBatchIds(commentIds)
                 .stream()
-                .collect(Collectors.toMap(User::getId,u -> u));
-
+                .collect(Collectors.toMap(User::getId, u -> u));
+//为什么：Java 的 Lambda 里引用外部变量，
+// 要求这个变量是 final 或者"实际只赋值过一次"。
+// 三目运算符在声明时就确定值，只赋值一次，编译通过。
         //5.组装评论
         List<CommentVO> commentVOs = commentList.stream().map(c -> {
             User u = userMap.get(c.getUserId());
@@ -355,7 +470,6 @@ public class CoffeeService {
     //                    ▼
     //            返回给前端
 
-
     public List<PostListVO> search(String keyword, Integer page, Integer size) {
         //本质like模糊匹配
         // SQL: SELECT * FROM coffee_post WHERE status = 1
@@ -374,73 +488,8 @@ public class CoffeeService {
                 .like(CoffeePost::getContent,keyword)
                 .orderByDesc(CoffeePost::getCreateTime)
                 .last("LIMIT " + (page - 1) * size + "," + size);
-
-        List<CoffeePost> posts = postDao.selectList(wrapper);
-
-
-        //复用postlists方法查询模糊匹配到的发帖人信息，查当前用户是否收藏点赞，然后组装vo返回
-        List<Long> userIds = posts.stream()
-                .map(CoffeePost::getUserId)
-                .distinct()
-                .collect(Collectors.toList());
-
-        Map<Long, User> userMap = userDao.selectBatchIds(userIds)
-                .stream()
-                .collect(Collectors.toMap(User::getId, u -> u));
-
-        // ===== 3. 查当前用户是否点赞/收藏 =====
-        // 先判断是否登录（SecurityContext 有没有 userId
-        Long currentUserId = getCurrentUserId();   // 没登录返回null
-        Set<Long> likedPostIds = new HashSet<>();
-        Set<Long> favoritedPostIds = new HashSet<>();
-
-        if (currentUserId != null) {
-            List<Long> postIds = posts.stream()
-                    .map(CoffeePost::getId)
-                    .collect(Collectors.toList());
-
-            // 查当前用户对这些帖子的点赞记录
-            likedPostIds = likeDao.selectList(
-                    new LambdaQueryWrapper<CoffeeLike>()
-                            .eq(CoffeeLike::getUserId, currentUserId)
-                            .in(CoffeeLike::getPostId, postIds)
-            ).stream().map(CoffeeLike::getUserId).collect(Collectors.toSet());
-
-
-            // 查当前用户对这些帖子的收藏记录
-            favoritedPostIds = favoriteDao.selectList(
-                    new LambdaQueryWrapper<CoffeeFavorite>()
-                            .eq(CoffeeFavorite::getUserId, currentUserId)
-                            .in(CoffeeFavorite::getPostId, postIds)
-            ).stream().map(CoffeeFavorite::getPostId).collect(Collectors.toSet());
-        }
-        // ===== 4. 组装 PostListVO =====
-        final Set<Long> finalLiked = likedPostIds;
-        final Set<Long> finalFavorited = favoritedPostIds;
-
-        return posts.stream().map(post -> {
-            User user = userMap.get(post.getUserId());
-            return PostListVO.builder()
-                    .id(post.getId())
-                    .userId(post.getUserId())
-                    .username(user != null ? user.getUsername() : "未知用户")
-                    .title(post.getTitle())
-                    .content(truncate(post.getContent(), 80))  // 截取前80字
-                    .images(parseImages(post.getImages()))      // JSON字符串→List
-                    .coffeeName(post.getCoffeeName())
-                    .coffeeBrand(post.getCoffeeBrand())
-                    .location(post.getLocation())
-                    .postType(post.getPostType())
-                    .likeCount(post.getLikeCount())
-                    .commentCount(post.getCommentCount())
-                    .favoriteCount(post.getFavoriteCount())
-                    .likedByMe(finalLiked.contains(post.getId()))
-                    .favoritedByMe(finalFavorited.contains(post.getId()))
-                    .createTime(post.getCreateTime())
-                    .build();
-        }).collect(Collectors.toList());
+        return buildPostListVO(postDao.selectList(wrapper));
     }
-
 
     public Boolean toggleLike(Long postId) {
         // 1. 拿当前登录用户ID
@@ -481,6 +530,16 @@ public class CoffeeService {
             CoffeePost post = postDao.selectById(postId);
             post.setLikeCount(post.getLikeCount() + 1);
             postDao.updateById(post);
+            // 发通知（必须在 return 之前，否则代码不可达）
+            if (!post.getUserId().equals(userId)) {
+                notificationService.send(NotificationEvent.builder()
+                        .receiverId(post.getUserId())
+                        .senderId(userId)
+                        .type("LIKE")
+                        .postId(postId)
+                        .content("赞了你的帖子")
+                        .build());
+            }
             return true;
         }
     }
@@ -507,6 +566,15 @@ public class CoffeeService {
             CoffeePost post = postDao.selectById(postId);
             post.setFavoriteCount(post.getFavoriteCount() + 1);
             postDao.updateById(post);
+            if (!post.getUserId().equals(userId)) {
+                notificationService.send(NotificationEvent.builder()
+                        .receiverId(post.getUserId())
+                        .senderId(userId)
+                        .type("FAVORITE")
+                        .postId(postId)
+                        .content("收藏了你的帖子")
+                        .build());
+            }
             return true;
         }else {
             //用户已收藏 将不收藏 return false
@@ -553,6 +621,19 @@ public class CoffeeService {
         // 5. 查自己的昵称，组装 CommentVO 返回给前端
         // SQL: SELECT * FROM sys_user WHERE id = ?
         User user = userDao.selectById(userId);
+
+        // 6. 发评论通知给帖子作者（自己评论自己不通知）
+        if (!post.getUserId().equals(userId)) {
+            notificationService.send(NotificationEvent.builder()
+                    .receiverId(post.getUserId())
+                    .senderId(userId)
+                    .type("COMMENT")
+                    .postId(postId)
+                    .commentId(comment.getId())
+                    .content(truncate(from.getContent(), 30))
+                    .build());
+        }
+
         return CommentVO.builder()
                 .id(comment.getId())
                 .userId(userId)
@@ -578,9 +659,6 @@ public class CoffeeService {
 
 
     }
-
-
-
 
     //核心思想：任何修改/删除操作都要校验 userId == 创建者，防止 A 用户删 B 用户的帖子。
     public void deletePost(Long id) {
@@ -625,7 +703,6 @@ public class CoffeeService {
 
     }
 
-
     public void deleteComment(Long commentId) {
         Long userId = getCurrentUserId();
         if (userId == null) throw new RuntimeException("请先登录");
@@ -657,4 +734,262 @@ public class CoffeeService {
         //  └─ 路人     → 不能删 ❌
     }
 
+    public List<PostListVO> getMyPosts(Integer page, Integer size) {
+        //和 listPosts 的区别只有这一个地方：.eq(CoffeePost::getUserId, userId) 把查所有人的帖改成只查当前登录用户的帖，其余一模一样。
+
+        Long userId = getCurrentUserId();
+        if (userId == null) throw new RuntimeException("请先登录");
+        // SQL: SELECT * FROM coffee_post WHERE user_id = ? AND status = 1
+        //      ORDER BY create_time DESC LIMIT ?,?
+        LambdaQueryWrapper<CoffeePost> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(CoffeePost::getUserId,userId)    // ← 只查自己的
+                .eq(CoffeePost::getStatus,1)
+                .orderByDesc(CoffeePost::getCreateTime)
+                .last("LIMIT " + (page - 1) * size + "," + size);
+        return buildPostListVO(postDao.selectList(wrapper));
+    }
+
+    //收藏和点赞不能缩到更短的原因：它们要先查关联表拿 ID 列表再手动分页，
+    // 这和直接查 coffee_post 的 LIMIT 分页不同。
+    // 但拿到帖子列表后直接扔给 buildPostListVO 就完事了，后半段全部复用。
+    public List<PostListVO> getMyFavorites(Integer page, Integer size) {
+        Long userId = getCurrentUserId();
+        if (userId == null) throw new RuntimeException("请先登录");
+
+        // 第1步：查收藏记录，拿到帖子ID列表
+        // SQL: SELECT post_id FROM coffee_favorite WHERE user_id = ? ORDER BY create_time DESC
+        List<Long> allPostIds = favoriteDao.selectList(
+                new LambdaQueryWrapper<CoffeeFavorite>()
+                        .eq(CoffeeFavorite::getUserId, userId)
+                        .orderByDesc(CoffeeFavorite::getCreateTime)
+        ).stream().map(CoffeeFavorite::getPostId).collect(Collectors.toList());
+        if (allPostIds.isEmpty()) return List.of();
+
+        // 第2步：手动分页
+        int start = (page - 1) * size;
+        if (start >= allPostIds.size()) return List.of();
+        int end = Math.min(start + size, allPostIds.size());
+        List<Long> postIds = allPostIds.subList(start, end);
+
+        // 第3步：按ID列表查帖子
+        // SQL: SELECT * FROM coffee_post WHERE id IN (?,?,?) AND status = 1
+        List<CoffeePost> posts = postDao.selectList(
+                new LambdaQueryWrapper<CoffeePost>()
+                        .in(CoffeePost::getId, postIds)
+                        .eq(CoffeePost::getStatus, 1)
+                        .orderByDesc(CoffeePost::getCreateTime)
+        );
+
+        // 第4步：复用公共方法，组装VO
+        return buildPostListVO(posts);
+    }
+
+    public List<PostListVO> getMyLikes(Integer page, Integer size) {
+        //收藏和点赞列表唯一区别：查收藏查 coffee_favorite 表，
+        //点赞查 coffee_like 表，其余批量查帖子、批量查用户、组装VO全都一样。
+        Long userId = getCurrentUserId();
+        if (userId == null) throw new RuntimeException("请先登录");
+
+        // SQL: SELECT post_id FROM coffee_like WHERE user_id = ? ORDER BY create_time DESC
+        List<Long> allPostIds = likeDao.selectList(
+                new LambdaQueryWrapper<CoffeeLike>()
+                        .eq(CoffeeLike::getUserId, userId)
+                        .orderByDesc(CoffeeLike::getCreateTime)
+        ).stream().map(CoffeeLike::getPostId).collect(Collectors.toList());
+
+        if (allPostIds.isEmpty()) return List.of();
+        // 第2步：手动分页
+        int start = (page - 1) * size;
+        if (start >= allPostIds.size()) return List.of();
+        int end = Math.min(start + size, allPostIds.size());
+        List<Long> postIds = allPostIds.subList(start, end);
+
+        // 第3步：按ID列表查帖子
+        // SQL: SELECT * FROM coffee_post WHERE id IN (?,?,?) AND status = 1
+        List<CoffeePost> posts = postDao.selectList(
+                new LambdaQueryWrapper<CoffeePost>()
+                        .in(CoffeePost::getId, postIds)
+                        .eq(CoffeePost::getStatus, 1)
+                        .orderByDesc(CoffeePost::getCreateTime)
+        );
+
+        // 第4步：复用公共方法，组装VO
+        return buildPostListVO(posts);
+    }
+
+    public String uploadImage(MultipartFile file) {
+        /**
+         * 上传图片
+         * 返回：http://localhost:8080/uploads/xxx.png
+         */
+        if (file.isEmpty()) throw new RuntimeException("文件不能为空");
+        // 校验文件类型：只允许图片
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new RuntimeException("只能上传图片");
+        }
+
+        // 生成唯一文件名：时间戳_原文件名
+        String originalName = file.getOriginalFilename();
+        String suffix = originalName != null && originalName.contains(".")
+                ? originalName.substring(originalName.lastIndexOf("."))
+                : ".png";
+        String fileName = System.currentTimeMillis() + "_" + UUID.randomUUID().toString().substring(0, 8) + suffix;
+
+        // 保存到 uploads 目录
+        // uploads 目录通过 WebMvcConfig 已映射到 /uploads/** 可浏览器访问
+        File uploadDir = new File("uploads");
+        if (!uploadDir.exists()) uploadDir.mkdirs();
+
+        try {
+            file.transferTo(new File(uploadDir, fileName));
+        } catch (IOException e) {
+            throw new RuntimeException("文件上传失败");
+        }
+        return "http://localhost:8080/uploads/" + fileName;
+
+
+        //const formData = new FormData()
+        //formData.append('file', fileInput.files[0])
+        //
+        //const { data } = await api.post('/coffee/upload', formData, {
+        //  headers: { 'Content-Type': 'multipart/form-data' }
+        //})
+        //
+        //// data.data = "http://localhost:8080/uploads/1719843200_a1b2c3d4.jpg"
+        //
+
+        //   数据流
+        //前端选择图片
+        //  │
+        //  ▼
+        //POST /api/coffee/upload (FormData)
+        //  │
+        //  ▼
+        //CoffeeService.uploadImage(file)
+        //  ├─ 校验：是不是图片？
+        //  ├─ 生成唯一文件名：时间戳_UUID.png
+        //  ├─ 保存到 uploads/ 目录
+        //  └─ 返回 http://localhost:8080/uploads/xxx.png
+        //  │
+        //  ▼
+        //前端拿到URL → 填到 images 字段 → 随发帖请求一起提交
+    }
+
+    public List<PostListVO> getHotPosts(Integer page, Integer size) {
+        //用lamdaquerywrapper的话
+        //orderByDesc(SFunction<T, ?> column) 要的是一个 Lambda 方法引用，
+        // 编译器把 CoffeePost::getLikeCount 映射成 like_count 字段名。
+        // 传字符串 "(like_count+...)" 匹配不上 SFunction 类型，所以爆红。
+        // 需要用原始SQL的话，直接用 .last() 追加。
+        LambdaQueryWrapper<CoffeePost> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(CoffeePost::getStatus, 1)
+                .last("ORDER BY (like_count + comment_count + favorite_count) DESC, create_time DESC LIMIT "
+                        + (page - 1) * size + "," + size);
+
+        return buildPostListVO(postDao.selectList(wrapper));
+    }
+
+    public Boolean toggleCommentLike(Long commentId) {
+        Long userId = getCurrentUserId();
+        if (userId == null) throw new RuntimeException("请先登录");
+
+
+        // SQL: SELECT COUNT(*) FROM coffee_comment_like
+        // WHERE comment_id = ? AND user_id = ?
+        LambdaQueryWrapper<CoffeeCommentLike> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(CoffeeCommentLike::getCommentId, commentId)
+                .eq(CoffeeCommentLike::getUserId, userId);
+        Long count = commentLikeDao.selectCount(wrapper);
+
+        if (count > 0) {
+            // 取消点赞
+            // SQL: DELETE FROM coffee_comment_like WHERE comment_id = ? AND user_id = ?
+            commentLikeDao.delete(wrapper);
+            // SQL: UPDATE coffee_comment SET like_count = like_count - 1 WHERE id = ?
+            CoffeeComment comment = commentDao.selectById(commentId);
+            comment.setLikeCount(Math.max(0, comment.getLikeCount() - 1));
+            commentDao.updateById(comment);
+            return false;
+        }else {
+            // 点赞
+            // SQL: INSERT INTO coffee_comment_like (comment_id, user_id) VALUES (?, ?)
+            CoffeeCommentLike like = new CoffeeCommentLike();
+            like.setCommentId(commentId);
+            like.setUserId(userId);
+            commentLikeDao.insert(like);
+            // SQL: UPDATE coffee_comment SET like_count = like_count + 1 WHERE id = ?
+            CoffeeComment comment = commentDao.selectById(commentId);
+            comment.setLikeCount(comment.getLikeCount() + 1);
+            commentDao.updateById(comment);
+            if (!comment.getUserId().equals(userId)) {
+                notificationService.send(NotificationEvent.builder()
+                        .receiverId(comment.getUserId())
+                        .senderId(userId)
+                        .type("LIKE")
+                        .postId(comment.getPostId())
+                        .commentId(commentId)
+                        .content("点赞了你的评论")
+                        .build());
+            }
+            return true;
+        }
+    }
+
+    public List<PostListVO> getFollowingPosts(Integer page, Integer size) {
+        Long userId = getCurrentUserId();
+        if (userId == null) throw new RuntimeException("请先登录");
+
+        // SQL: SELECT followee_id FROM user_follow WHERE follower_id = ?
+        List<Long> followeeIds = followDao.selectList(new LambdaQueryWrapper<UserFollow>()
+                .eq(UserFollow::getFollowerId, userId)
+        ).stream().map(UserFollow::getFolloweeId).collect(Collectors.toList());
+
+        if (followeeIds.isEmpty()) return List.of();
+
+        // SQL: SELECT * FROM coffee_post
+        // WHERE user_id IN (?,?,?) AND status = 1 ORDER BY create_time DESC LIMIT ?,?
+        LambdaQueryWrapper<CoffeePost> wrapper = new LambdaQueryWrapper<>();
+        wrapper.in(CoffeePost::getUserId,followeeIds)
+                .eq(CoffeePost::getStatus,1)
+                .orderByDesc(CoffeePost::getCreateTime)
+                .last("LIMIT " + (page - 1) * size + "," +size);
+        return buildPostListVO(postDao.selectList(wrapper));
+    }
+
+    /**
+     * 设计要点：
+     *
+     * 同一人同一帖只允许举报一次，防止刷举报
+     * 不能举报自己的帖子
+     * status 字段留给管理后台处理，目前默认 0
+     */
+    public void reportPost(Long postId, ReportCreatFrom from) {
+        Long userId = getCurrentUserId();
+        if (userId == null) throw new RuntimeException("请先登录");
+
+        // 校验帖子存在
+        CoffeePost post = postDao.selectById(postId);
+        if (post == null || post.getStatus() == 0) throw new RuntimeException("帖子不存在");
+
+        // 不能举报自己的帖子
+        if (post.getUserId().equals(userId)) throw new RuntimeException("不能举报自己的帖子");
+
+        // 查是否已经举报过（同一人同一帖只允许举报一次）
+        Long count = postReportDao.selectCount(new LambdaQueryWrapper<PostReport>()
+                .eq(PostReport::getPostId, postId)
+                .eq(PostReport::getReporterId, userId));
+        if (count > 0) throw new RuntimeException("你已经举报过该帖子");
+
+        PostReport report = new PostReport();
+        report.setPostId(postId);
+        report.setReporterId(userId);
+        report.setReason(from.getReason());
+        report.setStatus(0);
+        report.setCreateTime(LocalDateTime.now());
+
+        // SQL: INSERT INTO post_report (post_id, reporter_id, reason, status) VALUES (?, ?, ?, 0)
+        postReportDao.insert(report);
+
+    }
 }
