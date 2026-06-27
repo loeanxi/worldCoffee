@@ -24,10 +24,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
-
+        // 1. 优先从 Authorization header 取 token
+        String token = null;
         String header = request.getHeader("Authorization");
         if (header != null && header.startsWith("Bearer ")){
-            String token = header.substring(7);
+            token = header.substring(7);
+        }
+        // 新增 query parameter 取 token 的降级逻辑，解决 SSE EventSource 无法发送自定义 header 导致认证失败的问题。
+        // 2. 降级：从 query parameter 取 token（SSE 的 EventSource 不支持自定义 header）
+        if (token == null) {
+            token = request.getParameter("token");
+        }
+
+        if (token != null) {
             try {
                 Claims claims = jwtUtil.parseToken(token);
                 String userId = claims.getSubject();
@@ -36,7 +45,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(userId, null, List.of());
                 auth.setDetails(username);
                 SecurityContextHolder.getContext().setAuthentication(auth);
-            }catch (Exception e){
+            } catch (Exception e) {
                 //token无效，不设置认证 -> 后面security返回401
             }
         }

@@ -12,5 +12,6 @@ public class ReturnMeVO {
     private String username;
     private String phone;
     private Integer status;
+    private String avatar;  // 头像URL
     private LocalDateTime createTime;
 }

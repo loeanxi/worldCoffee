@@ -8,14 +8,11 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-@TableName("coffee_comment")
-public class CoffeeComment {
+@TableName("coffee_comment_like")
+public class CoffeeCommentLike {
     @TableId(type = IdType.AUTO)
     private Long id;
+    private Long commentId;
     private Long userId;
-    private Long postId;
-    private String content;
     private LocalDateTime createTime;
-    private Integer likeCount;
-
 }
