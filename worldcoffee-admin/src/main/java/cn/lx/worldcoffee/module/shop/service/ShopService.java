@@ -2,24 +2,30 @@ package cn.lx.worldcoffee.module.shop.service;
 
 import cn.hutool.json.JSONUtil;
 import cn.lx.worldcoffee.module.shop.dao.CartItemDao;
+import cn.lx.worldcoffee.module.shop.dao.CoffeeOrderDao;
 import cn.lx.worldcoffee.module.shop.dao.CoffeeProductDao;
+import cn.lx.worldcoffee.module.shop.dao.OrderItemDao;
 import cn.lx.worldcoffee.module.shop.domain.CartItem;
+import cn.lx.worldcoffee.module.shop.domain.CoffeeOrder;
 import cn.lx.worldcoffee.module.shop.domain.CoffeeProduct;
+import cn.lx.worldcoffee.module.shop.domain.OrderItem;
 import cn.lx.worldcoffee.module.shop.domain.from.AddCartFrom;
 import cn.lx.worldcoffee.module.shop.domain.from.CreateOrderFrom;
 import cn.lx.worldcoffee.module.shop.domain.vo.CartVO;
 import cn.lx.worldcoffee.module.shop.domain.vo.OrderVO;
 import cn.lx.worldcoffee.module.shop.domain.vo.ProductVO;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,6 +33,8 @@ import java.util.stream.Collectors;
 public class ShopService {
     private final CoffeeProductDao productDao;
     private final CartItemDao cartItemDao;
+    private final CoffeeOrderDao orderDao;
+    private final OrderItemDao orderItemDao;
 
     private Long getCurrentUserId() {
         try {
@@ -237,25 +245,148 @@ public class ShopService {
      *       全部在一个事务里，任何一步失败整体回滚
      *
      */
+    @Transactional(rollbackFor = Exception.class)
     public OrderVO createOrder(CreateOrderFrom from) {
-        return null;
+        Long userId = getCurrentUserId();
+        if (userId == null) throw new RuntimeException("请先登录");
+
+        // 1. 查购物车
+        List<CartItem> cartItems = cartItemDao.selectList(
+                new LambdaQueryWrapper<CartItem>().eq(CartItem::getUserId, userId));
+        if (cartItems.isEmpty()) throw new RuntimeException("购物车是空的");
+
+        // 2. 批量查商品，校验库存
+        List<Long> productIds = cartItems.stream().map(CartItem::getProductId).collect(Collectors.toList());
+        Map<Long, CoffeeProduct> productMap = productDao.selectBatchIds(productIds)
+                .stream().collect(Collectors.toMap(CoffeeProduct::getId, p -> p));
+
+        BigDecimal total = BigDecimal.ZERO;
+        List<OrderItem> orderItems = new ArrayList<>();
+        for (CartItem cart : cartItems) {
+            CoffeeProduct p = productMap.get(cart.getProductId());
+            if (p == null || p.getStatus() == 0) throw new RuntimeException("商品已下架：" + cart.getProductId());
+            if (cart.getQuantity() > p.getStock()) throw new RuntimeException("库存不足：" + p.getName());
+
+            // 订单明细（存快照，防止商品改名后历史订单对不上）
+            OrderItem oi = new OrderItem();
+            oi.setProductId(p.getId());
+            oi.setProductName(p.getName());
+            oi.setPrice(p.getPrice());
+            oi.setQuantity(cart.getQuantity());
+            orderItems.add(oi);
+
+            total = total.add(p.getPrice().multiply(BigDecimal.valueOf(cart.getQuantity())));
+        }
+
+        // 3. 生成订单编号：时间戳 + 用户ID后4位 + 随机3位
+        String orderNo = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))
+                + String.format("%04d", userId % 10000)
+                + String.format("%03d", new Random().nextInt(1000));
+
+        // 4. 插入订单
+        CoffeeOrder order = new CoffeeOrder();
+        order.setOrderNo(orderNo);
+        order.setUserId(userId);
+        order.setTotalAmount(total);
+        order.setStatus(0);  // 待支付
+        order.setAddress(from.getAddress());
+        order.setRemark(from.getRemark());
+        order.setCreateTime(LocalDateTime.now());
+        // SQL: INSERT INTO coffee_order (order_no, user_id, total_amount, status, ...) VALUES (?, ?, ?, ?, ...)
+        orderDao.insert(order);
+
+        // 5. 批量插入订单明细
+        for (OrderItem item : orderItems) {
+            item.setOrderId(order.getId());
+            // SQL: INSERT INTO order_item (order_id, product_id, product_name, price, quantity) VALUES (?, ?, ?, ?, ?)
+            orderItemDao.insert(item);
+        }
+
+        // 6. 批量扣库存
+        for (CartItem cart : cartItems) {
+            // SQL: UPDATE coffee_product SET stock = stock - ? WHERE id = ? AND stock >= ?
+            int affected = productDao.update(null, new LambdaUpdateWrapper<CoffeeProduct>()
+                    .setSql("stock = stock - " + cart.getQuantity())
+                    .eq(CoffeeProduct::getId, cart.getProductId())
+                    .ge(CoffeeProduct::getStock, cart.getQuantity()));
+            if (affected == 0) throw new RuntimeException("库存扣减失败，请重新下单");
+        }
+
+        // 7. 清空购物车
+        // SQL: DELETE FROM cart_item WHERE user_id = ?
+        cartItemDao.delete(new LambdaQueryWrapper<CartItem>().eq(CartItem::getUserId, userId));
+
+        // 8. 组装VO返回
+        List<OrderVO.OrderItemVO> itemVOs = orderItems.stream().map(i -> OrderVO.OrderItemVO.builder()
+                .productId(i.getProductId())
+                .productName(i.getProductName())
+                .price(i.getPrice())
+                .quantity(i.getQuantity())
+                .build()).collect(Collectors.toList());
+
+        return OrderVO.builder()
+                .id(order.getId())
+                .orderNo(orderNo)
+                .totalAmount(total)
+                .status(0)
+                .address(from.getAddress())
+                .remark(from.getRemark())
+                .createTime(order.getCreateTime())
+                .items(itemVOs)
+                .build();
     }
 
     public List<OrderVO> listOrders(int page, int size) {
-        return null;
+        Long userId = getCurrentUserId();
+        if (userId == null) throw new RuntimeException("请先登录");
+
+        // SQL: SELECT * FROM coffee_order WHERE user_id = ? ORDER BY create_time DESC LIMIT ?,?
+        List<CoffeeOrder> orders = orderDao.selectList(new LambdaQueryWrapper<CoffeeOrder>()
+                .eq(CoffeeOrder::getUserId, userId)
+                .orderByDesc(CoffeeOrder::getCreateTime)
+                .last("LIMIT " + (page - 1) * size + "," + size));
+
+        return orders.stream().map(o -> OrderVO.builder()
+                .id(o.getId())
+                .orderNo(o.getOrderNo())
+                .totalAmount(o.getTotalAmount())
+                .status(o.getStatus())
+                .address(o.getAddress())
+                .remark(o.getRemark())
+                .createTime(o.getCreateTime())
+                .build()).collect(Collectors.toList());
     }
 
-    public OrderVO getOrderDetail(Long id) {
-        return null;
+    public OrderVO getOrderDetail(Long orderId) {
+        Long userId = getCurrentUserId();
+        if (userId == null) throw new RuntimeException("请先登录");
+
+        // 1. 查订单
+        // SQL: SELECT * FROM coffee_order WHERE id = ?
+        CoffeeOrder order = orderDao.selectById(orderId);
+        if (order == null) throw new RuntimeException("订单不存在");
+        if (!order.getUserId().equals(userId)) throw new RuntimeException("无权查看该订单");
+
+        // 2. 查订单明细
+        // SQL: SELECT * FROM order_item WHERE order_id = ?
+        List<OrderItem> items = orderItemDao.selectList(
+                new LambdaQueryWrapper<OrderItem>().eq(OrderItem::getOrderId, orderId));
+
+        // 3. 组装返回
+        return OrderVO.builder()
+                .id(order.getId())
+                .orderNo(order.getOrderNo())
+                .totalAmount(order.getTotalAmount())
+                .status(order.getStatus())
+                .address(order.getAddress())
+                .remark(order.getRemark())
+                .createTime(order.getCreateTime())
+                .items(items.stream().map(i -> OrderVO.OrderItemVO.builder()
+                        .productId(i.getProductId())
+                        .productName(i.getProductName())
+                        .price(i.getPrice())
+                        .quantity(i.getQuantity())
+                        .build()).collect(Collectors.toList()))
+                .build();
     }
-
-
-    /**
-     * 红色 = 未被 git 跟踪（新创建的文件，还没 git add）
-     *
-     * 蓝色 = 已被 git 跟踪且有改动
-     *
-     * 说白了就是：我帮你生成的 shop/ 下那几个文件还没被 git 纳入管理，
-     * 你 git add 一下就会变绿/蓝了。不影响编译和运行，只是 IDE 的 git 状态标识。
-     */
 }

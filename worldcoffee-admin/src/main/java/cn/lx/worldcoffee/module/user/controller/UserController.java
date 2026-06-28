@@ -5,10 +5,7 @@ import cn.lx.worldcoffee.module.user.domain.form.ChangePasswordFrom;
 import cn.lx.worldcoffee.module.user.domain.form.LoginFrom;
 import cn.lx.worldcoffee.module.user.domain.form.RegisterForm;
 import cn.lx.worldcoffee.module.user.domain.form.UpdateProfileFrom;
-import cn.lx.worldcoffee.module.user.domain.vo.FollowingVO;
-import cn.lx.worldcoffee.module.user.domain.vo.LoginVO;
-import cn.lx.worldcoffee.module.user.domain.vo.ReturnMeVO;
-import cn.lx.worldcoffee.module.user.domain.vo.UserProfileVO;
+import cn.lx.worldcoffee.module.user.domain.vo.*;
 import cn.lx.worldcoffee.module.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -16,6 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -114,5 +112,29 @@ public class UserController {
             @Parameter(description = "页码") @RequestParam(defaultValue = "1") int page,
             @Parameter(description = "每页条数") @RequestParam(defaultValue = "20") int size) {
         return Result.success(userService.searchUsers(keyword, page, size));
+    }
+
+    @Operation(summary = "上传头像", description = "上传头像图片，自动更新当前用户的 avatar 字段")
+    @PostMapping("/avatar")
+    public Result<String> uploadAvatar(
+            @Parameter(description = "头像文件") @RequestParam("file") MultipartFile file) {
+        return Result.success(userService.uploadAvatar(file));
+    }
+
+    //要真正实现登出，得选一个方案。目前的情况：
+    //
+    //JWT 是无状态的 — token 发出去就管不了了
+    //唯一能拦的方式是：把 token 加入黑名单，下次请求时在 JWT 过滤器里拦掉
+    @Operation(summary = "登出", description = "使当前 JWT token 失效，清除服务端缓存")
+    @PostMapping("/logout")
+    public Result<Void> logout(@RequestHeader("Authorization") String authHeader) {
+        userService.logout(authHeader);
+        return Result.success(null);
+    }
+
+    @Operation(summary = "个人统计", description = "当前用户的发帖数、获赞数、收藏数、评论数、关注数、粉丝数")
+    @GetMapping("/me/stats")
+    public Result<UserStatsVO> myStats() {
+        return Result.success(userService.getMyStats());
     }
 }
