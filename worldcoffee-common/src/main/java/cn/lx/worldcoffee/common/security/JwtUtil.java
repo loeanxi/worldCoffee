@@ -41,4 +41,8 @@ public class JwtUtil {
                 .parseClaimsJws(token)
                 .getBody();
     }
+
+    public Long getExpireTime() {
+        return expireTime;
+    }
 }

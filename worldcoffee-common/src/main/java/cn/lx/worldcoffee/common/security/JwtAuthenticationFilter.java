@@ -6,6 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -19,6 +20,7 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    private final StringRedisTemplate stringRedisTemplate;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
@@ -38,6 +40,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (token != null) {
             try {
+                // === 新增：检查黑名单 ===
+                Boolean isBlacklisted = stringRedisTemplate.opsForSet().isMember("token:blacklist", token);
+                if (Boolean.TRUE.equals(isBlacklisted)) {
+                    filterChain.doFilter(request, response);
+                    return;  // 不放行 return; 表示"我不往下传了，直接结束"
+                }
                 Claims claims = jwtUtil.parseToken(token);
                 String userId = claims.getSubject();
                 String username = claims.get("username", String.class);
@@ -49,6 +57,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 //token无效，不设置认证 -> 后面security返回401
             }
         }
+
         filterChain.doFilter(request,response);
     }
 }

@@ -53,7 +53,9 @@ public class NotificationController {
     @Operation(summary = "SSE 订阅", description = "建立长连接，服务端实时推送新通知给前端")
     @GetMapping(value = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter subscribe() {
-        String userId = getCurrentUserId().toString();
+        Long uId = getCurrentUserId();
+        if (uId == null) throw new RuntimeException("请先登录");
+        String userId = uId.toString();
         SseEmitter emitter = new SseEmitter(0L);  // 不过期
         receiver.addEmitter(userId, emitter);
         emitter.onCompletion(() -> receiver.removeEmitter(userId, emitter));

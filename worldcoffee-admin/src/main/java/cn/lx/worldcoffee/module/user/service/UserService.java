@@ -3,10 +3,8 @@ package cn.lx.worldcoffee.module.user.service;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import cn.lx.worldcoffee.common.security.JwtUtil;
-import cn.lx.worldcoffee.module.coffee.dao.CoffeePostDao;
-import cn.lx.worldcoffee.module.coffee.dao.UserFollowDao;
-import cn.lx.worldcoffee.module.coffee.domain.CoffeePost;
-import cn.lx.worldcoffee.module.coffee.domain.UserFollow;
+import cn.lx.worldcoffee.module.coffee.dao.*;
+import cn.lx.worldcoffee.module.coffee.domain.*;
 import cn.lx.worldcoffee.module.coffee.service.CoffeeService;
 import cn.lx.worldcoffee.module.notification.domain.NotificationEvent;
 import cn.lx.worldcoffee.module.notification.service.NotificationService;
@@ -16,11 +14,9 @@ import cn.lx.worldcoffee.module.user.domain.form.ChangePasswordFrom;
 import cn.lx.worldcoffee.module.user.domain.form.LoginFrom;
 import cn.lx.worldcoffee.module.user.domain.form.RegisterForm;
 import cn.lx.worldcoffee.module.user.domain.form.UpdateProfileFrom;
-import cn.lx.worldcoffee.module.user.domain.vo.FollowingVO;
-import cn.lx.worldcoffee.module.user.domain.vo.LoginVO;
-import cn.lx.worldcoffee.module.user.domain.vo.ReturnMeVO;
-import cn.lx.worldcoffee.module.user.domain.vo.UserProfileVO;
+import cn.lx.worldcoffee.module.user.domain.vo.*;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.core.Authentication;
@@ -28,7 +24,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -48,6 +47,9 @@ public class UserService {
     private final CoffeeService coffeeService;
     private final UserFollowDao followDao;
     private final NotificationService notificationService;
+    private final CoffeeLikeDao likeDao;
+    private final CoffeeFavoriteDao favoriteDao;
+    private final CoffeeCommentDao commentDao;
 
     /** 获取当前登录用户ID，未登录返回null */
     public Long getCurrentUserId(){
@@ -458,5 +460,156 @@ public class UserService {
                 .avatar(u.getAvatar())
                 .isFollowing(finalFollowees.contains(u.getId()))
                 .build()).collect(Collectors.toList());
+    }
+
+    public String uploadAvatar(MultipartFile file) {
+        //接收文件 → 校验 → 存盘 → 拼URL → 写库 → 清缓存 → 返回
+        Long userId = getCurrentUserId();
+        if (userId == null) throw new RuntimeException("请先登录");
+
+        // 1. 校验文件
+        if (file.isEmpty()) throw new RuntimeException("文件不能为空");
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new RuntimeException("只能上传图片");
+        }
+
+        // 2. 生成唯一文件名
+        String originalName = file.getOriginalFilename();
+        String suffix = originalName != null && originalName.contains(".")
+                ? originalName.substring(originalName.lastIndexOf("."))
+                : ".png";
+        String fileName = "avatar_" + userId + "_"
+                + System.currentTimeMillis() + suffix;
+        // 3. 保存文件
+        File uploadDir = new File("uploads/avatars");
+        if (!uploadDir.exists()) uploadDir.mkdirs();
+        try {
+            file.transferTo(new File(uploadDir, fileName));
+        } catch (IOException e) {
+            throw new RuntimeException("头像上传失败");
+        }
+        // 4. 拼接可访问的 URL
+        //http://localhost:8080/uploads/avatars/xxx.jpg
+        // 会被映射到物理文件 uploads/avatars/xxx.jpg。
+        //⚠️ http://localhost:8080 是硬编码的 — 部署时改成配置项更好，不过当前阶段这样够用。
+        String avatarUrl = "http://localhost:8080/uploads/avatars/" + fileName;
+        // 5. 更新数据库
+        User user = userDao.selectById(userId);
+        user.setAvatar(avatarUrl);
+        userDao.updateById(user);
+
+        // 6. 更新 Redis 缓存（如果有）
+        //ReturnMe() 方法优先从 Redis 读用户信息（key = user:info{userId}）
+        // 。如果不删掉这个缓存，ReturnMe() 返回的还是旧的头像 URL。删掉后下次请求会自动查库回填。
+        stringRedisTemplate.delete("user:info" + userId);
+        return avatarUrl;
+    }
+
+    //让一个 JWT 失效。难点是 JWT 是无状态的——发出去就管不了。所以要用 Redis 记黑名单来"拦住"它。
+    public void logout(String authHeader) {
+        //1从header里扣出token
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return;  // 没传 token 也算登出成功
+        }
+
+        String token = authHeader.substring(7);
+        // 2. 解析 token 拿到 userId
+        Long userId;
+        try {
+            Claims claims = jwtUtil.parseToken(token);
+            userId = Long.valueOf(claims.getSubject());
+        } catch (Exception e) {
+            return;  // token 已经无效了，不用再处理
+        }
+
+        // 3. 清除 Redis 缓存
+        stringRedisTemplate.delete("user:info" + userId);
+
+        // 4. 把 token 加入 Redis 黑名单，TTL = JWT 剩余有效期
+        //    这样 JwtAuthenticationFilter 下次看到这个 token 就拦截
+        stringRedisTemplate.opsForSet().add("token:blacklist", token);
+
+        // 算出 token 剩余秒数，到期自动过期，省得手动清理
+        Long ttl = jwtUtil.getExpireTime() / 1000; // 默认 86400 秒（24h）
+        stringRedisTemplate.expire("token:blacklist", ttl, TimeUnit.SECONDS);
+        /**
+         * 前端 POST /api/users/logout
+         *   Header: Bearer eyJhbG...
+         *
+         *   Step 1  → 抠出 token = "eyJhbG..."
+         *   Step 2  → 解析 → userId = 5
+         *   Step 3  → 删 Redis user:info5
+         *   Step 4  → 把 "eyJhbG..." 丢进 Redis 黑名单
+         *   Step 5  → 设 24h 后自动过期
+         *   Step 6  → return（void，没东西返回前端）
+         *
+         * 前端再带同样的 token 来：
+         *   JwtAuthenticationFilter
+         *   → 查 Redis：这个 token 在黑名单吗？ → 是 → 拦掉，返回 401
+         */
+    }
+
+    public UserStatsVO getMyStats() {
+        Long userId = getCurrentUserId();
+        if (userId == null) throw new RuntimeException("请先登录");
+
+        // 1. 发帖数
+        Long postCount = postDao.selectCount(
+                new LambdaQueryWrapper<CoffeePost>()
+                        .eq(CoffeePost::getUserId, userId)
+                        .eq(CoffeePost::getStatus, 1)
+        );
+
+        // 2. 收到的赞总数（所有帖子获得的点赞之和）
+        //    先查自己发了哪些帖子 → 再查这些帖子被点了多少赞
+        List<Long> postIds = postDao.selectList(
+                new LambdaQueryWrapper<CoffeePost>()
+                        .select(CoffeePost::getId)
+                        .eq(CoffeePost::getUserId, userId)
+        ).stream().map(CoffeePost::getId).collect(Collectors.toList());
+
+        Long likeCount = 0L;
+        Long favoriteCount = 0L;
+        Long commentCount = 0L;
+
+        if (!postIds.isEmpty()) {
+            // 赞总数
+            likeCount = likeDao.selectCount(
+                    new LambdaQueryWrapper<CoffeeLike>()
+                            .in(CoffeeLike::getPostId, postIds)
+            );
+            // 收藏总数
+            favoriteCount = favoriteDao.selectCount(
+                    new LambdaQueryWrapper<CoffeeFavorite>()
+                            .in(CoffeeFavorite::getPostId, postIds)
+            );
+            // 评论总数
+            commentCount = commentDao.selectCount(
+                    new LambdaQueryWrapper<CoffeeComment>()
+                            .in(CoffeeComment::getPostId, postIds)
+            );
+        }
+
+        // 3. 关注数
+        Long followingCount = followDao.selectCount(
+                new LambdaQueryWrapper<UserFollow>()
+                        .eq(UserFollow::getFollowerId, userId)
+        );
+
+        // 4. 粉丝数
+        Long followerCount = followDao.selectCount(
+                new LambdaQueryWrapper<UserFollow>()
+                        .eq(UserFollow::getFolloweeId, userId)
+        );
+
+        return UserStatsVO.builder()
+                .postCount(postCount)
+                .likeCount(likeCount)
+                .favoriteCount(favoriteCount)
+                .commentCount(commentCount)
+                .followingCount(followingCount)
+                .followerCount(followerCount)
+                .build();
     }
 }

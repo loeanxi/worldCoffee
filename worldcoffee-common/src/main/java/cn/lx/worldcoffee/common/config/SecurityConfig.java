@@ -33,6 +33,7 @@ public class SecurityConfig {
                                 "/api/coffee/search",          // 搜索（公开）
                                 "/uploads/**",                 // 静态图片资源
                                 "/swagger-ui/**",
+                                "/api/notifications/subscribe",
                                 "/v3/api-docs/**",
                                 "/webjars/**",
                                 "/swagger-resources/**"
