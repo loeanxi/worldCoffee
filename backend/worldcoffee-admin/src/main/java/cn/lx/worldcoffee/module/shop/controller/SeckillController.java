@@ -7,17 +7,15 @@ import cn.lx.worldcoffee.module.shop.dao.CouponProductDao;
 import cn.lx.worldcoffee.module.shop.dao.UserCouponDao;
 import cn.lx.worldcoffee.module.shop.domain.Coupon;
 import cn.lx.worldcoffee.module.shop.domain.CouponProduct;
-import cn.lx.worldcoffee.module.shop.domain.UserCoupon;
 import cn.lx.worldcoffee.module.shop.domain.from.SeckillForm;
 import cn.lx.worldcoffee.module.shop.domain.vo.CouponVO;
-import cn.lx.worldcoffee.module.shop.domain.vo.OrderVO;
+import cn.lx.worldcoffee.module.shop.domain.vo.SeckillOrderResultVO;
 import cn.lx.worldcoffee.module.shop.service.SeckillService;
 import cn.lx.worldcoffee.module.shop.service.ShopService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -66,9 +64,14 @@ public class SeckillController {
 
     /** 秒杀抢购（领券 + 下单一步完成） */
     @PostMapping("/buy")
-    public Result<OrderVO> buy(@RequestBody SeckillForm form) {
+    public Result<SeckillOrderResultVO> buy(@RequestBody SeckillForm form) {
         Long userId = getCurrentUserId();
         if (userId == null) throw new ServiceException("请先登录");
+
+        // 1. 校验秒杀 token
+        if (!seckillService.validateSeckillToken(form.getSeckillToken())) {
+            return Result.fail("秒杀令牌无效或已过期");
+        }
 
         String lockKey = "seckill:lock:" + userId + ":" + form.getCouponId();
         RLock lock = redissonClient.getLock(lockKey);
@@ -85,13 +88,33 @@ public class SeckillController {
         }
 
         try {
-            OrderVO order = seckillService.seckillBuy(userId, form);
-            return Result.success(order);
+            String orderNo = seckillService.seckillBuy(userId, form);
+            // 消耗 token
+            seckillService.consumeSeckillToken(form.getSeckillToken());
+            return Result.success(SeckillOrderResultVO.builder()
+                            .orderNo(orderNo)
+                            .status("PROCESSING")
+                            .build());
         } finally {
             if (lock.isHeldByCurrentThread()) {
                 lock.unlock();
             }
         }
+    }
+    @GetMapping("/captcha")
+    public Result<String> getCaptcha() {
+        Long userId = getCurrentUserId();
+        if (userId == null) throw new ServiceException("请先登录");
+        String captcha = seckillService.generateCaptcha(userId);
+        return Result.success(captcha);
+    }
+
+    @PostMapping("/token")
+    public Result<String> getToken(@RequestParam String captcha) {
+        Long userId = getCurrentUserId();
+        if (userId == null) throw new ServiceException("请先登录");
+        String token = seckillService.generateSeckillToken(userId, captcha);
+        return Result.success(token);
     }
     //先查userCuopon表判断用户有没有参与过 再插入userConpou + 创建订单
     //但是现在有一个问题 “查重->插入之间并没有并发的保护” 俩个人同时点就能通过检查 产生重复的订单

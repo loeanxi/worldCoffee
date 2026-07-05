@@ -1,12 +1,15 @@
 package cn.lx.worldcoffee.module.shop.controller;
 
+import cn.lx.worldcoffee.common.exception.ServiceException;
 import cn.lx.worldcoffee.common.result.Result;
 import cn.lx.worldcoffee.module.shop.domain.EsProduct;
+import cn.lx.worldcoffee.module.shop.domain.PaymentRecord;
 import cn.lx.worldcoffee.module.shop.domain.from.AddCartFrom;
 import cn.lx.worldcoffee.module.shop.domain.from.CreateOrderFrom;
 import cn.lx.worldcoffee.module.shop.domain.from.ProductForm;
 import cn.lx.worldcoffee.module.shop.domain.vo.*;
 import cn.lx.worldcoffee.module.shop.service.EsSearchService;
+import cn.lx.worldcoffee.module.shop.service.PaymentService;
 import cn.lx.worldcoffee.module.shop.service.ShopService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -26,6 +29,7 @@ public class ShopController {
 
     private final ShopService shopService;
     private final EsSearchService esSearchService;
+    private final PaymentService paymentService;
 
     // ==================== 商品 ====================
 
@@ -116,6 +120,16 @@ public class ShopController {
             @Parameter(description = "目标状态") @RequestParam Integer status) {
         shopService.updateOrderStatus(id, status);
         return Result.success(null);
+    }
+
+    @Operation(summary = "查询订单状态", description = "订单状态")
+    @GetMapping("/order/no/{orderNo}")
+    public Result<OrderVO> getByOrderNo(@Parameter(description = "订单编号：")@PathVariable String orderNo) {
+        OrderVO order = shopService.getOrderByOrderNo(orderNo);
+        if (order == null) {
+            return Result.success(null);
+        }
+        return Result.success(order);
     }
 
     // ==================== 收货地址 ====================
@@ -229,16 +243,29 @@ public class ShopController {
         return Result.success(shopService.listProducts(page, size, categoryId));
     }
 
-    @Operation(summary = "支付订单", description = "模拟支付，将待支付状态改为已支付")
+    @Operation(summary = "发起支付", description = "创建支付单，返回 Mock 支付信息")
     @PostMapping("/orders/{id}/pay")
-    public Result<Void> payOrder(@PathVariable Long id) {
-        shopService.payOrder(id);
-        return Result.success(null);
+    public Result<PaymentResultVO> payOrder(@PathVariable Long id) {
+        Long userId = getCurrentUserId();  // 需要你自己加这个方法，或者从 SecurityContext 拿
+        if (userId == null) throw new ServiceException("请先登录");
+
+        // 根据订单 ID 拿到订单号
+        OrderVO order = shopService.getOrderDetail(id);
+        if (order == null) throw new ServiceException("订单不存在");
+
+        return Result.success(paymentService.createPayment(userId, order.getOrderNo()));
     }
 
-
-
-
+    private Long getCurrentUserId() {
+        try {
+            var auth = org.springframework.security.core.context.SecurityContextHolder
+                    .getContext().getAuthentication();
+            if (auth != null && auth.getPrincipal() != null) {
+                return Long.valueOf(auth.getPrincipal().toString());
+            }
+        } catch (Exception ignored) {}
+        return null;
+    }
 
 
     //==================管理员后台=======================

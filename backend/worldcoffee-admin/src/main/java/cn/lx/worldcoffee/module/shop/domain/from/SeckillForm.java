@@ -8,6 +8,7 @@ public class SeckillForm {
     private Long productId;
     private String address;
     private String remark;
+    private String seckillToken;
 
     public CreateOrderFrom toCreateOrderForm() {
         CreateOrderFrom form = new CreateOrderFrom();

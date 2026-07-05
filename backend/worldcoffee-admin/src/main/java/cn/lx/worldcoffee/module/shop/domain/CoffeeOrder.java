@@ -17,6 +17,7 @@ public class CoffeeOrder {
     private Long userId;            // 用户ID
     private BigDecimal totalAmount; // 总金额
     private Integer status;         // 0-待支付 1-已支付 2-已发货 3-已完成 4-已取消
+    private LocalDateTime payTime;  // 支付时间
     private String address;         // 收货地址
     private String remark;          // 备注
     private LocalDateTime createTime;

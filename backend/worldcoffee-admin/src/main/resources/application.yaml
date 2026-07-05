@@ -26,6 +26,15 @@ spring:
     username: guest
     password: guest
     virtual-host: /
+    listener:
+      simple:
+        retry:
+          enabled: true
+          max-attempts: 3     #最多重试3次
+          initial-interval: 1s    #第一次重试间隔
+          multiplier: 2   #每次间隔翻倍
+          max-interval: 10s
+        default-requeue-rejected: false #重试耗尽后不进队，直接变成死信  default-requeue-rejected: false 很重要，它让重试耗尽的消息不重新入队，而是走死信交换机。
   elasticsearch:
     uris: http://localhost:9200
 

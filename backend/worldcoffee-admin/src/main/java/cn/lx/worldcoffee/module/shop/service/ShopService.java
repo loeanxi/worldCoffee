@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -27,6 +28,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 @AllArgsConstructor
 public class ShopService {
     private final CoffeeProductDao productDao;
@@ -513,22 +515,39 @@ public class ShopService {
         if (order == null) throw new ServiceException("订单不存在");
         if (!order.getUserId().equals(userId)) throw new ServiceException("无权操作该订单");
 
-        // 2. 只有待支付才能取消
+        doCancelOrder(orderId, order);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void cancelOrderBySystem(Long orderId) {
+        CoffeeOrder order = orderDao.selectById(orderId);
+        if (order == null) {
+            log.warn("系统取消订单失败，订单不存在，orderId={}", orderId);
+            return;
+        }
+        doCancelOrder(orderId, order);
+    }
+
+    private void doCancelOrder(Long orderId, CoffeeOrder order) {
         if (order.getStatus() != 0) {
             throw new ServiceException("当前订单状态不允许取消");
         }
 
-        // 3. 查订单明细，恢复库存
+        // 1. 查订单明细
         List<OrderItem> items = orderItemDao.selectList(
                 new LambdaQueryWrapper<OrderItem>().eq(OrderItem::getOrderId, orderId)
         );
+        // 2. 恢复库存：MySQL + Redis
         for (OrderItem item : items) {
+            // MySQL 库存回滚
             productDao.update(null, new LambdaUpdateWrapper<CoffeeProduct>()
                     .setSql("stock = stock + " + item.getQuantity())
                     .eq(CoffeeProduct::getId, item.getProductId()));
+            // Redis 库存回滚
+            String key = "product:stock:" + item.getProductId();
+            redisTemplate.opsForValue().increment(key, item.getQuantity());
         }
-
-        // 4. 更新订单状态为已取消
+        // 3. 更新订单状态为已取消
         order.setStatus(4);
         orderDao.updateById(order);
     }
@@ -851,5 +870,33 @@ public class ShopService {
          * 所以前面写的 rollbackStock 方法就是干这个用的——在 catch 块里手动恢复 Redis 库存。
          *
          */
+    }
+
+    public OrderVO getOrderByOrderNo(String orderNo) {
+        CoffeeOrder order = orderDao.selectOne(new LambdaQueryWrapper<CoffeeOrder>()
+                .eq(CoffeeOrder::getOrderNo, orderNo));
+
+        if (order == null) return null;
+
+        List<OrderItem> items = orderItemDao.selectList(new LambdaQueryWrapper<OrderItem>()
+                .eq(OrderItem::getOrderId, order.getId()));
+
+        List<OrderVO.OrderItemVO> itemVOs = items.stream().map(i -> OrderVO.OrderItemVO.builder()
+                .productId(i.getProductId())
+                .productName(i.getProductName())
+                .price(i.getPrice())
+                .quantity(i.getQuantity())
+                .build()).collect(Collectors.toList());
+
+        return OrderVO.builder()
+                .id(order.getId())
+                .orderNo(order.getOrderNo())
+                .totalAmount(order.getTotalAmount())
+                .status(order.getStatus())
+                .address(order.getAddress())
+                .remark(order.getRemark())
+                .createTime(order.getCreateTime())
+                .items(itemVOs)
+                .build();
     }
 }
