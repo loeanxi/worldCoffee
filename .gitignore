@@ -1,2 +1,16 @@
 .idea/ 
 .idea/ 
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# ºó¶Ë
+/backend/target/
+/backend/*.log
+
+# Ç°¶Ë
+/frontend/node_modules/
+/frontend/dist/
+/frontend/.env
