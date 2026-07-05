@@ -1,0 +1,82 @@
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  web:
+    resources:
+      static-locations: file:./uploads/,classpath:/static/
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/worldCoffee?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+    hikari:
+      initialization-fail-timeout: -1
+      minimum-idle: 2
+  application:
+    name: worldCoffee
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+  elasticsearch:
+    uris: http://localhost:9200
+
+  ai:
+    openai:
+      base-url: https://dashscope.aliyuncs.com/compatible-mode
+      api-key: REDACTED_DASHSCOPE_KEY
+      chat:
+        options:
+          model: qwen-plus
+      embedding:
+        options:
+          model: text-embedding-v3
+          dimensions: 1024
+    vectorstore:
+      redis:
+        initialize-schema: true
+        index-name: coffee-knowledge
+        prefix: "knowledge:"
+    chat:
+        memory:
+          repository:
+            jdbc:
+              initialize-schema: always
+
+
+
+jwt:
+  secret: REDACTED_JWT_SECRET
+  expire-time: 86400000
+
+upload:
+  path: D:\mycode\worldCoffee\worldCoffee\uploads
+
+sms:
+  # 验证码过期时间（秒）
+  code-expire: 300
+  # 发送间隔（秒），防止刷接口
+  code-interval: 60
+
+
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: cn.lx.worldcoffee.module.*.domain
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
+
+
+
+
