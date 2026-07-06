@@ -81,11 +81,11 @@
         <div class="p-5 space-y-2.5">
           <div class="flex items-center gap-3 text-sm">
             <Icon icon="material-symbols:alternate-email" class="w-4 h-4 text-ink-muted" />
-            <span class="text-ink-muted">support@worldcoffee.app</span>
+            <span class="text-ink-muted">support@lx123123wsc.gamil.com</span>
           </div>
           <div class="flex items-center gap-3 text-sm">
             <Icon icon="material-symbols:code" class="w-4 h-4 text-ink-muted" />
-            <span class="text-ink-muted">github.com/worldcoffee</span>
+            <span class="text-ink-muted">https://github.com/MagicLil/worldCoffee</span>
           </div>
         </div>
       </div>

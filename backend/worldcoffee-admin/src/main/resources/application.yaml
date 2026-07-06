@@ -86,6 +86,17 @@ mybatis-plus:
     db-config:
       id-type: auto
 
+# 雪花算法配置
+snowflake:
+  machine-id: 1
+  data-center-id: 1
+
+# 管理后台账号配置（单账号，无 RBAC）
+# 密码明文存储，开发阶段够用；生产环境建议改为 BCrypt 哈希
+admin:
+  username: admin
+  password: admin123
+
 
 
 

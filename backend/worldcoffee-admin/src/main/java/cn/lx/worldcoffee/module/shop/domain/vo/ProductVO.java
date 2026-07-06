@@ -18,4 +18,6 @@ public class ProductVO {
     private String weight;          // 200g
     private Integer stock;
     private Integer sales;          // 销量，用于"已售xx件"展示
+    private Integer status;         // 上下架状态：0-下架 1-上架（admin 后台商品列表需要）
+
 }

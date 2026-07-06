@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen pb-8 bg-surface">
+  <div class="min-h-screen pb-28 bg-surface">
     <!-- 顶部栏 -->
     <header class="sticky top-0 z-30 bg-surface-elevated/90 backdrop-blur-xl border-b border-line/60">
       <div class="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
@@ -17,24 +17,6 @@
 
     <main class="max-w-2xl mx-auto px-4 pt-6 animate-fade-up">
       <div class="rounded-3xl p-6 bg-surface-elevated shadow-[0_1px_2px_rgba(62,39,35,0.04),0_2px_12px_rgba(62,39,35,0.06)] space-y-6 border border-line/40">
-        <!-- 类型切换 -->
-        <div class="flex gap-1.5 p-1 bg-surface-soft rounded-2xl">
-          <button
-            v-for="t in postTypes"
-            :key="t.value"
-            :class="[
-              'flex-1 py-2.5 rounded-xl text-sm font-medium transition-all tap-scale',
-              form.postType === t.value
-                ? 'bg-surface-elevated text-ink shadow-[0_1px_2px_rgba(62,39,35,0.04),0_2px_6px_rgba(62,39,35,0.06)] border border-line/40'
-                : 'text-ink-muted hover:text-ink'
-            ]"
-            @click="form.postType = t.value"
-          >
-            <Icon :icon="t.icon" class="w-4 h-4 mr-1.5 -mt-0.5 inline" />
-            {{ t.label }}
-          </button>
-        </div>
-
         <!-- 标题 -->
         <AppInput
           v-model="form.title"
@@ -139,7 +121,7 @@
           <svg v-if="submitting" class="animate-spin-slow w-5 h-5" viewBox="0 0 24 24" fill="none">
             <path d="M12 2 A10 10 0 0 1 22 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
           </svg>
-          <span>{{ submitting ? '发布中…' : (form.postType === 2 ? '打卡发布' : '发布帖子') }}</span>
+          <span>{{ submitting ? '发布中…' : '发布帖子' }}</span>
         </button>
       </div>
     </main>
@@ -183,18 +165,12 @@ const uploadProgress = ref(0)
 
 const DRAFT_KEY = 'worldcoffee:post-draft'
 
-const postTypes = [
-  { value: 1, label: '图文分享', icon: 'material-symbols:image-outline' },
-  { value: 2, label: '打卡记录', icon: 'material-symbols:check-circle-outline' }
-]
-
 const form = reactive({
   title: '',
   content: '',
   coffeeName: '',
   coffeeBrand: '',
-  location: '',
-  postType: 1
+  location: ''
 })
 
 const errors = reactive({ title: '' })
@@ -220,8 +196,7 @@ onMounted(() => {
           content: saved.content || '',
           coffeeName: saved.coffeeName || '',
           coffeeBrand: saved.coffeeBrand || '',
-          location: saved.location || '',
-          postType: saved.postType || 1
+          location: saved.location || ''
         })
         if (Array.isArray(saved.images)) uploadedImages.value = saved.images
       }
@@ -314,8 +289,7 @@ async function handleSubmit() {
       images: [...uploadedImages.value],
       coffeeName: form.coffeeName.trim() || null,
       coffeeBrand: form.coffeeBrand.trim() || null,
-      location: form.location.trim() || null,
-      postType: form.postType === 1 || form.postType === 2 ? form.postType : 1
+      location: form.location.trim() || null
     }
 
     const res = await coffeeApi.createPost(payload)

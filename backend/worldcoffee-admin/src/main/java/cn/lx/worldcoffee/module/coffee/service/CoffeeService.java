@@ -255,13 +255,23 @@ public class CoffeeService {
     }
 
     // ========   业务方法    ===========
-    public List<PostListVO> listPosts(Integer page, Integer size) {
+    public List<PostListVO> listPosts(Integer page, Integer size, String sort) {
         // ===== 1. 分页查帖子 =====
-        // SQL: SELECT * FROM coffee_post WHERE status = 1 ORDER BY create_time DESC LIMIT 0,10
         LambdaQueryWrapper<CoffeePost> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(CoffeePost::getStatus,1)     //只查正常帖子
-                .orderByDesc(CoffeePost::getCreateTime)  //最新在前
-                .last("LIMIT " + (page - 1) * size + "," + size);//分页
+        wrapper.eq(CoffeePost::getStatus, 1);
+
+        if ("random".equals(sort)) {
+            // 推荐页：随机排序，每次刷新顺序不同
+            // SQL: SELECT * FROM coffee_post WHERE status = 1 ORDER BY RAND() LIMIT 0,12
+            wrapper.last("ORDER BY RAND() LIMIT " + (page - 1) * size + "," + size);
+        } else {
+            // 最新页：按时间倒序，id兜底防重复
+            // SQL: SELECT * FROM coffee_post WHERE status = 1 ORDER BY create_time DESC, id DESC LIMIT 0,12
+            wrapper.orderByDesc(CoffeePost::getCreateTime)
+                    .orderByDesc(CoffeePost::getId)
+                    .last("LIMIT " + (page - 1) * size + "," + size);
+        }
+
         List<CoffeePost> posts = postDao.selectList(wrapper);
         return buildPostListVO(posts);
     }
@@ -495,6 +505,7 @@ public class CoffeeService {
                 .or()
                 .like(CoffeePost::getContent,keyword)
                 .orderByDesc(CoffeePost::getCreateTime)
+                .orderByDesc(CoffeePost::getId)
                 .last("LIMIT " + (page - 1) * size + "," + size);
         return buildPostListVO(postDao.selectList(wrapper));
     }
@@ -754,6 +765,7 @@ public class CoffeeService {
         wrapper.eq(CoffeePost::getUserId,userId)    // ← 只查自己的
                 .eq(CoffeePost::getStatus,1)
                 .orderByDesc(CoffeePost::getCreateTime)
+                .orderByDesc(CoffeePost::getId)
                 .last("LIMIT " + (page - 1) * size + "," + size);
         return buildPostListVO(postDao.selectList(wrapper));
     }
@@ -897,7 +909,7 @@ public class CoffeeService {
         // 需要用原始SQL的话，直接用 .last() 追加。
         LambdaQueryWrapper<CoffeePost> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(CoffeePost::getStatus, 1)
-                .last("ORDER BY (like_count + comment_count + favorite_count) DESC, create_time DESC LIMIT "
+                .last("ORDER BY (like_count + comment_count + favorite_count) DESC, create_time DESC, id DESC LIMIT "
                         + (page - 1) * size + "," + size);
 
         return buildPostListVO(postDao.selectList(wrapper));
@@ -966,6 +978,7 @@ public class CoffeeService {
         wrapper.in(CoffeePost::getUserId,followeeIds)
                 .eq(CoffeePost::getStatus,1)
                 .orderByDesc(CoffeePost::getCreateTime)
+                .orderByDesc(CoffeePost::getId)
                 .last("LIMIT " + (page - 1) * size + "," +size);
         return buildPostListVO(postDao.selectList(wrapper));
     }

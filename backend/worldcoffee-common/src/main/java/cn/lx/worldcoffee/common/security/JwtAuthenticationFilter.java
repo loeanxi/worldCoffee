@@ -59,10 +59,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 Claims claims = jwtUtil.parseToken(token);
                 String userId = claims.getSubject();
                 String username = claims.get("username", String.class);
+                String role = claims.get("role", String.class);
 
                 if (userId != null) {
+                    // 如果 JWT 携带了 ADMIN 角色，授予 ADMIN_ROLE 权限
+                    // 普通用户 token 没有 role claim，authorities 为空列表
+                    List<org.springframework.security.core.GrantedAuthority> authorities;
+                    if ("ADMIN".equals(role)) {
+                        authorities = List.of(
+                                new org.springframework.security.core.authority.SimpleGrantedAuthority("ADMIN_ROLE"));
+                    } else {
+                        authorities = List.of();
+                    }
+
                     UsernamePasswordAuthenticationToken auth =
-                            new UsernamePasswordAuthenticationToken(userId, null, List.of());
+                            new UsernamePasswordAuthenticationToken(userId, null, authorities);
                     auth.setDetails(username);
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 }

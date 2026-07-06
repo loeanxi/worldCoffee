@@ -12,7 +12,7 @@
         </button>
 
         <!-- 标题 -->
-        <div class="flex items-center gap-2 flex-1 min-w-0">
+        <div class="flex items-center gap-2 flex-shrink-0 min-w-0">
           <WorldCoffeeLogoMini :size="36" :with-circle="false" />
           <div class="hidden sm:block">
             <div class="text-base font-bold text-brand leading-tight">咖啡商城</div>
@@ -67,36 +67,84 @@
 
     <!-- Main -->
     <main class="max-w-6xl mx-auto px-3 md:px-6 pt-4 pb-8">
-      <!-- 横幅 -->
-      <div class="rounded-[24px] overflow-hidden relative mb-5 shadow-[0_4px_20px_rgba(62,39,35,0.18)]" style="background: linear-gradient(135deg, #2C1810 0%, #3E2723 35%, #5D4037 70%, #4E342E 100%);">
-        <!-- 装饰：细腻点阵纹理 -->
-        <svg class="absolute inset-0 w-full h-full opacity-[0.07]" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="shop-dots" x="0" y="0" width="18" height="18" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.2" fill="white"/></pattern></defs><rect width="100%" height="100%" fill="url(#shop-dots)"/></svg>
-        <!-- 装饰：渐变圆环 -->
-        <div class="absolute -right-6 -top-6 w-36 h-36 rounded-full border-[6px] border-white/[0.07]"></div>
-        <div class="absolute -right-2 top-10 w-24 h-24 rounded-full border-[3px] border-white/[0.05]"></div>
-        <div class="absolute -left-4 -bottom-4 w-28 h-28 rounded-full border-[5px] border-white/[0.05]"></div>
-        <!-- 装饰：品牌 Logo 水印 -->
-        <div class="absolute right-4 bottom-3 opacity-[0.08]">
-          <WorldCoffeeLogoMini :size="88" :with-circle="false" />
-        </div>
-        <div class="relative z-10 p-5 md:p-8">
-          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-sm mb-3">
-            <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
-            <span class="text-[11px] uppercase tracking-wider text-white/90 font-semibold">限时优惠</span>
+      <!-- 秒杀轮播 -->
+      <div v-if="seckillActivities.length > 0" class="mb-5">
+        <div
+          class="relative rounded-2xl overflow-hidden shadow-[0_2px_12px_rgba(62,39,35,0.08)]"
+          @touchstart="onCarouselTouchStart"
+          @touchmove="onCarouselTouchMove"
+          @touchend="onCarouselTouchEnd"
+          @mouseenter="pauseCarousel"
+          @mouseleave="resumeCarousel"
+        >
+          <!-- 滑动轨道 -->
+          <div
+            class="flex transition-transform duration-500 ease-out"
+            :style="{ transform: `translateX(-${carouselIndex * 100}%)` }"
+          >
+            <div
+              v-for="act in seckillActivities"
+              :key="act.id"
+              class="w-full shrink-0 cursor-pointer group"
+              @click="openSeckillModal(act)"
+            >
+              <!-- 图片 + 标签 -->
+              <div class="relative h-[160px] overflow-hidden bg-surface-soft">
+                <img
+                  v-if="act.productImage"
+                  :src="act.productImage"
+                  :alt="act.productName || act.name"
+                  class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  loading="lazy"
+                />
+                <div v-else class="w-full h-full flex items-center justify-center brand-placeholder">
+                  <WorldCoffeeLogoMini :size="40" :with-circle="false" />
+                </div>
+                <!-- 秒杀标签 -->
+                <span class="absolute top-3 left-3 bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-[0_2px_8px_rgba(239,68,68,0.4)] flex items-center gap-1">
+                  <Icon icon="material-symbols:flash-on" class="w-3 h-3" />
+                  秒杀
+                </span>
+                <!-- 倒计时 -->
+                <span class="absolute bottom-3 right-3 bg-black/60 backdrop-blur-sm text-white text-[11px] font-mono font-bold px-2.5 py-1 rounded-full">
+                  {{ getCountdown(act) }}
+                </span>
+              </div>
+              <!-- 内容 -->
+              <div class="p-3 bg-surface-elevated">
+                <div class="flex items-center justify-between">
+                  <h3 class="text-[13px] font-bold text-brand leading-snug line-clamp-1 flex-1 min-w-0">
+                    {{ act.productName || act.name }}
+                  </h3>
+                  <div class="flex items-baseline gap-1.5 ml-3 shrink-0">
+                    <span class="text-[11px] text-red-500 font-bold">¥</span>
+                    <span class="text-base font-bold text-red-500 leading-none">{{ formatPrice(act.seckillPrice) }}</span>
+                    <span class="text-[10px] text-ink-muted line-through">¥{{ formatPrice(act.value) }}</span>
+                  </div>
+                </div>
+                <div class="flex items-center justify-between mt-1.5">
+                  <span v-if="act.stock !== null && act.stock !== undefined" class="text-[10px] text-ink-muted">
+                    仅剩 <span class="text-red-500 font-semibold">{{ act.stock }}</span> 件
+                  </span>
+                  <span v-else class="text-[10px] text-ink-muted">限量抢购</span>
+                  <button class="text-[11px] font-bold px-3 py-1.5 rounded-full bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-[0_2px_8px_rgba(239,68,68,0.3)] hover:shadow-[0_4px_14px_rgba(239,68,68,0.4)] transition-all tap-scale">
+                    立即秒杀
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
-          <h2 class="text-2xl md:text-3xl font-bold text-white leading-tight mb-2">
-            好豆 · 好味 · 好价格
-          </h2>
-          <p class="text-sm text-white/75 mb-4 max-w-md">精选世界各地咖啡豆，新鲜烘焙直送到家</p>
-          <div class="flex flex-wrap items-center gap-2">
-            <span class="text-[11px] font-semibold px-3 py-1.5 rounded-full bg-white/12 text-white/90 backdrop-blur-sm">#新鲜烘焙</span>
-            <span class="text-[11px] font-semibold px-3 py-1.5 rounded-full bg-white/12 text-white/90 backdrop-blur-sm">#原厂直发</span>
-            <span class="text-[11px] font-semibold px-3 py-1.5 rounded-full bg-white/12 text-white/90 backdrop-blur-sm">#包邮到家</span>
-            <span class="mx-1 w-px h-4 bg-white/20 hidden sm:inline-block"></span>
-            <button class="text-[11px] font-bold px-4 py-1.5 rounded-full bg-white text-[#3E2723] hover:bg-white/90 transition-colors tap-scale hidden sm:inline-flex items-center gap-1">
-              立即选购
-              <Icon icon="material-symbols:arrow-forward" class="w-3 h-3" />
-            </button>
+
+          <!-- 圆点指示器 -->
+          <div v-if="seckillActivities.length > 1" class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+            <span
+              v-for="(_, i) in seckillActivities"
+              :key="i"
+              :class="[
+                'block rounded-full transition-all duration-300',
+                i === carouselIndex ? 'w-5 h-1.5 bg-white' : 'w-1.5 h-1.5 bg-white/50'
+              ]"
+            />
           </div>
         </div>
       </div>
@@ -262,14 +310,125 @@
         </div>
       </div>
     </main>
+
+    <!-- 秒杀弹窗 -->
+    <Teleport to="body">
+      <div v-if="seckillModal.show" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center" @click.self="closeSeckillModal">
+        <!-- 遮罩 -->
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeSeckillModal"></div>
+        <!-- 弹窗内容 -->
+        <div class="relative w-full sm:max-w-md bg-surface rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden animate-slide-up">
+          <!-- 头部 -->
+          <div class="flex items-center justify-between px-5 py-4 border-b border-line/30">
+            <h3 class="text-base font-bold text-brand flex items-center gap-2">
+              <Icon icon="material-symbols:flash-on" class="w-5 h-5 text-red-500" />
+              秒杀确认
+            </h3>
+            <button class="p-1.5 rounded-full hover:bg-surface-soft transition-colors" @click="closeSeckillModal">
+              <Icon icon="material-symbols:close" class="w-5 h-5 text-ink-muted" />
+            </button>
+          </div>
+
+          <div class="px-5 py-4 space-y-4">
+            <!-- 商品信息 -->
+            <div class="flex gap-3 p-3 bg-surface-soft rounded-2xl">
+              <img
+                v-if="seckillModal.activity?.productImage"
+                :src="seckillModal.activity.productImage"
+                class="w-16 h-16 rounded-xl object-cover flex-shrink-0"
+              />
+              <div class="flex-1 min-w-0">
+                <h4 class="text-sm font-bold text-brand line-clamp-1">{{ seckillModal.activity?.productName || seckillModal.activity?.name }}</h4>
+                <div class="flex items-baseline gap-2 mt-1">
+                  <span class="text-base font-bold text-red-500">¥{{ formatPrice(seckillModal.activity?.seckillPrice) }}</span>
+                  <span class="text-xs text-ink-muted line-through">¥{{ formatPrice(seckillModal.activity?.value) }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 收货地址 -->
+            <div>
+              <label class="text-xs font-semibold text-ink-muted mb-1.5 block">收货地址</label>
+              <input
+                v-model="seckillModal.address"
+                type="text"
+                placeholder="请输入收货地址（姓名、电话、详细地址）"
+                class="w-full h-10 px-3 rounded-xl bg-surface-elevated border border-line/30 text-sm text-ink placeholder:text-ink-muted/60 focus:outline-none focus:border-red-400/50 focus:ring-2 focus:ring-red-400/10 transition-all"
+              />
+            </div>
+
+            <!-- 验证码 -->
+            <div v-if="seckillModal.step === 'captcha'">
+              <label class="text-xs font-semibold text-ink-muted mb-1.5 block">验证码</label>
+              <div class="flex gap-2">
+                <input
+                  v-model="seckillModal.captchaInput"
+                  type="text"
+                  maxlength="4"
+                  placeholder="请输入验证码"
+                  class="flex-1 h-10 px-3 rounded-xl bg-surface-elevated border border-line/30 text-sm text-ink placeholder:text-ink-muted/60 focus:outline-none focus:border-red-400/50 focus:ring-2 focus:ring-red-400/10 transition-all"
+                  @keyup.enter="handleSeckillSubmit"
+                />
+                <button
+                  class="shrink-0 h-10 px-4 rounded-xl bg-surface-elevated border border-line/30 text-sm text-brand font-semibold hover:bg-surface-soft transition-colors"
+                  :disabled="seckillModal.captchaLoading"
+                  @click="fetchCaptcha"
+                >
+                  {{ seckillModal.captchaLoading ? '获取中...' : (seckillModal.captchaCode ? seckillModal.captchaCode : '获取验证码') }}
+                </button>
+              </div>
+              <p class="text-[10px] text-ink-muted mt-1">点击右侧按钮获取验证码，60秒有效</p>
+            </div>
+
+            <!-- 处理中 -->
+            <div v-if="seckillModal.step === 'processing'" class="flex items-center justify-center py-4">
+              <Icon icon="material-symbols:progress-activity" class="w-8 h-8 text-red-500 animate-spin" />
+              <span class="ml-2 text-sm text-ink-muted">秒杀处理中...</span>
+            </div>
+
+            <!-- 成功 -->
+            <div v-if="seckillModal.step === 'success'" class="text-center py-4">
+              <Icon icon="material-symbols:check-circle" class="w-12 h-12 text-green-500 mx-auto mb-2" />
+              <p class="text-sm font-bold text-brand">秒杀成功！</p>
+              <p class="text-xs text-ink-muted mt-1">订单号：{{ seckillModal.orderNo }}</p>
+            </div>
+          </div>
+
+          <!-- 底部按钮 -->
+          <div v-if="seckillModal.step !== 'success' && seckillModal.step !== 'processing'" class="px-5 pb-5 pt-2 flex gap-3">
+            <button
+              class="flex-1 h-11 rounded-xl bg-surface-elevated border border-line/30 text-sm font-semibold text-ink hover:bg-surface-soft transition-colors"
+              @click="closeSeckillModal"
+            >
+              取消
+            </button>
+            <button
+              class="flex-1 h-11 rounded-xl bg-gradient-to-r from-red-500 to-orange-500 text-white text-sm font-bold shadow-[0_2px_12px_rgba(239,68,68,0.3)] hover:shadow-[0_4px_16px_rgba(239,68,68,0.4)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              :disabled="!canSeckill"
+              @click="handleSeckillSubmit"
+            >
+              {{ seckillModal.step === 'captcha' ? '确认秒杀' : '获取验证码' }}
+            </button>
+          </div>
+          <div v-if="seckillModal.step === 'success'" class="px-5 pb-5 pt-2">
+            <button
+              class="w-full h-11 rounded-xl bg-gradient-to-r from-red-500 to-orange-500 text-white text-sm font-bold shadow-[0_2px_12px_rgba(239,68,68,0.3)] transition-all"
+              @click="closeSeckillModal"
+            >
+              完成
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, inject } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, watch, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
-import { shopApi, getApiError } from '../api'
+import { shopApi, seckillApi, getApiError } from '../api'
 import { useAuth } from '../composables/useAuth'
 import WorldCoffeeLogoMini from '../components/WorldCoffeeLogoMini.vue'
 
@@ -290,8 +449,29 @@ const categories = ref([])
 const searchKeyword = ref('')
 const isSearchMode = ref(false)
 
+// ─── 秒杀相关 ───────────────────────────────
+const seckillActivities = ref([])
+
+// ─── 轮播相关 ───────────────────────────────
+const carouselIndex = ref(0)
+let carouselTimer = null
+let touchStartX = 0
+let touchDeltaX = 0
+const seckillModal = reactive({
+  show: false,
+  activity: null,
+  address: '',
+  step: 'captcha',        // captcha | processing | success
+  captchaCode: '',
+  captchaInput: '',
+  captchaLoading: false,
+  seckillToken: '',
+  orderNo: ''
+})
+let countdownTimer = null
+
 function handleImgError(e, product) {
-  if (product?.id != null) imgErrors.value[product.id] = true
+  if (product?.id != null) imgErrors[product.id] = true
 }
 
 function formatPrice(price) {
@@ -407,9 +587,214 @@ async function handleAddToCart(product) {
   }
 }
 
+// ─── 秒杀方法 ───────────────────────────────
+async function fetchSeckillActivities() {
+  try {
+    const res = await seckillApi.getActivities()
+    if (res && res.code === 200) {
+      seckillActivities.value = Array.isArray(res.data) ? res.data : []
+    }
+  } catch (e) {
+    console.warn('获取秒杀活动失败', e)
+  }
+}
+
+function getCountdown(act) {
+  if (!act?.endTime) return '--:--:--'
+  const end = new Date(act.endTime).getTime()
+  const now = Date.now()
+  const diff = Math.max(0, end - now)
+  const h = String(Math.floor(diff / 3600000)).padStart(2, '0')
+  const m = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0')
+  const s = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0')
+  return `${h}:${m}:${s}`
+}
+
+function startCountdown() {
+  stopCountdown()
+  countdownTimer = setInterval(() => {
+    // 触发响应式更新：重新赋值数组
+    seckillActivities.value = [...seckillActivities.value]
+  }, 1000)
+}
+
+function stopCountdown() {
+  if (countdownTimer) {
+    clearInterval(countdownTimer)
+    countdownTimer = null
+  }
+}
+
+// ─── 轮播逻辑 ───────────────────────────────
+function nextSlide() {
+  if (seckillActivities.value.length <= 1) return
+  carouselIndex.value = (carouselIndex.value + 1) % seckillActivities.value.length
+}
+
+function startCarousel() {
+  stopCarousel()
+  carouselTimer = setInterval(nextSlide, 4000)
+}
+
+function stopCarousel() {
+  if (carouselTimer) {
+    clearInterval(carouselTimer)
+    carouselTimer = null
+  }
+}
+
+function pauseCarousel() {
+  stopCarousel()
+}
+
+function resumeCarousel() {
+  if (seckillActivities.value.length > 1) startCarousel()
+}
+
+function onCarouselTouchStart(e) {
+  touchStartX = e.touches[0].clientX
+  touchDeltaX = 0
+  pauseCarousel()
+}
+
+function onCarouselTouchMove(e) {
+  touchDeltaX = e.touches[0].clientX - touchStartX
+}
+
+function onCarouselTouchEnd() {
+  if (Math.abs(touchDeltaX) > 50) {
+    if (touchDeltaX < 0) {
+      // 左滑 → 下一张
+      carouselIndex.value = Math.min(carouselIndex.value + 1, seckillActivities.value.length - 1)
+    } else {
+      // 右滑 → 上一张
+      carouselIndex.value = Math.max(carouselIndex.value - 1, 0)
+    }
+  }
+  resumeCarousel()
+}
+
+// 秒杀数据变化时重置轮播位置
+watch(seckillActivities, (list) => {
+  if (list.length > 0) {
+    carouselIndex.value = 0
+    if (list.length > 1) startCarousel()
+    else stopCarousel()
+  } else {
+    stopCarousel()
+  }
+})
+
+function openSeckillModal(act) {
+  if (!isLoggedIn.value) {
+    toast.show('请先登录后再参与秒杀', 'warn')
+    router.push('/login')
+    return
+  }
+  seckillModal.activity = act
+  seckillModal.address = ''
+  seckillModal.step = 'captcha'
+  seckillModal.captchaCode = ''
+  seckillModal.captchaInput = ''
+  seckillModal.captchaLoading = false
+  seckillModal.seckillToken = ''
+  seckillModal.orderNo = ''
+  seckillModal.show = true
+}
+
+function closeSeckillModal() {
+  seckillModal.show = false
+  seckillModal.activity = null
+}
+
+async function fetchCaptcha() {
+  seckillModal.captchaLoading = true
+  try {
+    const res = await seckillApi.getCaptcha()
+    if (res && res.code === 200) {
+      seckillModal.captchaCode = res.data
+      toast.show('验证码已获取，请尽快输入', 'success')
+    }
+  } catch (e) {
+    toast.show(getApiError(e), 'error')
+  } finally {
+    seckillModal.captchaLoading = false
+  }
+}
+
+const canSeckill = computed(() => {
+  if (seckillModal.step === 'processing') return false
+  if (seckillModal.step === 'captcha') {
+    return seckillModal.captchaInput.trim().length === 4 && seckillModal.address.trim().length > 0
+  }
+  // step 不是 captcha 时（初始状态），至少要有地址
+  return seckillModal.address.trim().length > 0
+})
+
+async function handleSeckillSubmit() {
+  // 第一步：获取验证码
+  if (seckillModal.step !== 'captcha') {
+    // 还没到验证码阶段，先获取验证码
+    await fetchCaptcha()
+    return
+  }
+
+  // 第二步：用验证码换 token，然后下单
+  if (!seckillModal.captchaInput.trim()) {
+    toast.show('请输入验证码', 'warn')
+    return
+  }
+  if (!seckillModal.address.trim()) {
+    toast.show('请填写收货地址', 'warn')
+    return
+  }
+
+  seckillModal.step = 'processing'
+  try {
+    // 1. 用验证码换 token
+    const tokenRes = await seckillApi.getToken(seckillModal.captchaInput.trim())
+    if (!tokenRes || tokenRes.code !== 200) {
+      toast.show(tokenRes?.msg || '验证码错误', 'error')
+      seckillModal.step = 'captcha'
+      return
+    }
+    seckillModal.seckillToken = tokenRes.data
+
+    // 2. 秒杀下单
+    const act = seckillModal.activity
+    const buyRes = await seckillApi.buy({
+      couponId: act.id,
+      productId: act.productId,
+      address: seckillModal.address.trim(),
+      remark: '',
+      seckillToken: seckillModal.seckillToken
+    })
+
+    if (buyRes && buyRes.code === 200) {
+      seckillModal.orderNo = buyRes.data?.orderNo || ''
+      seckillModal.step = 'success'
+      toast.show('秒杀成功！', 'success')
+    } else {
+      toast.show(buyRes?.msg || '秒杀失败', 'error')
+      seckillModal.step = 'captcha'
+    }
+  } catch (e) {
+    toast.show(getApiError(e), 'error')
+    seckillModal.step = 'captcha'
+  }
+}
+
 onMounted(() => {
   fetchCategories()
   fetchProducts(true)
+  fetchSeckillActivities()
+  startCountdown()
+  startCarousel()
+})
+
+onUnmounted(() => {
+  stopCountdown()
+  stopCarousel()
 })
 </script>
 

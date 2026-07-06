@@ -1,8 +1,12 @@
 package cn.lx.worldcoffee.module.shop.service;
 
 import cn.lx.worldcoffee.common.config.RabbitConfig;
+import cn.lx.worldcoffee.module.shop.dao.CoffeeOrderDao;
+import cn.lx.worldcoffee.module.shop.dao.SeckillEventDao;
+import cn.lx.worldcoffee.module.shop.domain.SeckillEvent;
 import cn.lx.worldcoffee.module.shop.domain.from.CreateOrderFrom;
 import cn.lx.worldcoffee.module.shop.domain.message.SeckillOrderMessage;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -11,6 +15,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -19,7 +24,9 @@ import java.util.concurrent.TimeUnit;
 public class SeckillOrderConsumer {
 
     private final StringRedisTemplate redisTemplate;
-    private final ShopService shopService;
+    private final OrderService orderService;
+    private final SeckillEventDao seckillEventDao;
+    private final CoffeeOrderDao orderDao;
 
     @RabbitListener(queues = RabbitConfig.SECKILL_ORDER_QUEUE)
     public void handle(SeckillOrderMessage msg){
@@ -43,7 +50,10 @@ public class SeckillOrderConsumer {
             form.setAddress(msg.getAddress());
             form.setRemark(msg.getRemark());
 
-            shopService.createOrder(form, msg.getSeckillPrice());
+            orderService.createOrder(form, msg.getSeckillPrice());
+
+            // 4. 更新事件状态为已完成
+            updateEventStatus(msg.getOrderNo(), 2);
 
         }catch (Exception e){
             log.error("秒杀订单创建失败，orderNo={}", msg.getOrderNo(), e);
@@ -52,6 +62,21 @@ public class SeckillOrderConsumer {
             throw e;  // 抛异常触发 MQ 重试
         }finally {
             SecurityContextHolder.clearContext();
+        }
+    }
+
+    private void updateEventStatus(String orderNo, int status) {
+        try {
+            SeckillEvent event = seckillEventDao.selectOne(
+                    new LambdaQueryWrapper<SeckillEvent>()
+                            .eq(SeckillEvent::getOrderNo, orderNo));
+            if (event != null) {
+                event.setStatus(status);
+                event.setUpdateTime(LocalDateTime.now());
+                seckillEventDao.updateById(event);
+            }
+        } catch (Exception e) {
+            log.error("更新 seckill_event 状态失败，orderNo={}", orderNo, e);
         }
     }
 }

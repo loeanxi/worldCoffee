@@ -19,7 +19,7 @@ import java.util.List;
 public class OrderTimeoutConsumer {
 
     private final CoffeeOrderDao orderDao;
-    private final ShopService shopService;
+    private final OrderService orderService;
 
     @RabbitListener(queues = RabbitConfig.ORDER_TIMEOUT_QUEUE)
     public void handle (String orderNo){
@@ -38,8 +38,8 @@ public class OrderTimeoutConsumer {
             return;
         }
 
-        // 3. 调用 ShopService 统一取消
-        shopService.cancelOrderBySystem(order.getId());
+        // 3. 调用 OrderService 统一取消
+        orderService.cancelOrderBySystem(order.getId());
 
 
         log.info("订单超时已取消，orderNo={}", orderNo);

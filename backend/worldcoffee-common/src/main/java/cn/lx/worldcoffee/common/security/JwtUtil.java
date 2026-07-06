@@ -23,15 +23,26 @@ public class JwtUtil {
     }
 
     public String generateToken(String userId, String username) {
+        return generateToken(userId, username, null);
+    }
+
+    /**
+     * 签发 JWT（支持角色）
+     * role 为 null 时和两参数版本完全一样，不影响普通用户的 token
+     * 管理员登录时传 "ADMIN"，JwtFilter 解析后授予 ADMIN_ROLE 权限
+     */
+    public String generateToken(String userId, String username, String role) {
         Date now = new Date();
         Date expireDate = new Date(now.getTime() + expireTime);
-        return Jwts.builder()
+        var builder = Jwts.builder()
                 .setSubject(userId)
                 .claim("username", username)
                 .setIssuedAt(now)
-                .setExpiration(expireDate)
-                .signWith(getKey())
-                .compact();
+                .setExpiration(expireDate);
+        if (role != null) {
+            builder.claim("role", role);
+        }
+        return builder.signWith(getKey()).compact();
     }
 
     public Claims parseToken(String token) {

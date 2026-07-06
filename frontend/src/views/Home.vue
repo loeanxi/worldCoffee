@@ -4,15 +4,14 @@
     <header class="fixed top-0 left-0 right-0 z-40 bg-surface-elevated/90 backdrop-blur-xl border-b border-line">
       <div class="max-w-7xl mx-auto px-3 md:px-6 py-2.5">
         <div class="flex items-center gap-3">
-          <!-- ✨ magic 助手入口（左上角，点击跳转到消息列表） -->
-          <button
-            class="shrink-0 flex items-center gap-2 group hover:opacity-80 transition-opacity"
-            aria-label="消息 / magic 助手"
-            @click="router.push('/messages')"
+          <!-- 左上角 Logo（连点三次跳转关于我们） -->
+          <div
+            class="shrink-0 flex items-center gap-2 group cursor-pointer hover:opacity-80 transition-opacity select-none"
+            @click="handleLogoClick"
           >
             <WorldCoffeeAiLogo :size="36" />
             <span class="hidden md:inline text-[15px] font-bold text-ink tracking-wide group-hover:text-ink-soft/90 transition-colors">WorldCoffee</span>
-          </button>
+          </div>
 
           <!-- 桌面端：搜索框 + Tab -->
           <div class="hidden lg:flex items-center gap-6 flex-1">
@@ -80,6 +79,16 @@
 
           <!-- 右侧按钮 -->
           <div class="flex items-center gap-1 shrink-0">
+            <!-- AI 助手入口 -->
+            <router-link
+              to="/ai-chat"
+              class="inline-flex items-center gap-1 px-3 h-9 rounded-full bg-surface-soft text-[13px] font-medium text-brand tap-scale hover:bg-surface hover:shadow-sm transition-colors"
+              aria-label="magic 助手"
+            >
+              <Icon icon="material-symbols:smart-toy-outline" class="w-4 h-4" />
+              助手
+            </router-link>
+
             <!-- 主题切换按钮 (全局可见) -->
             <button
               class="w-9 h-9 rounded-full bg-surface-soft flex items-center justify-center tap-scale hover:bg-surface hover:shadow-sm transition-colors"
@@ -288,15 +297,6 @@
               >
                 <Icon icon="material-symbols:local-fire-department" class="w-3 h-3" />
                 {{ formatCount(post.likeCount || post.likes || 0) }}
-              </span>
-
-              <!-- 左上角：打卡标签 -->
-              <span
-                v-if="post.postType === 2"
-                class="absolute top-2.5 left-2.5 bg-surface-elevated/90 backdrop-blur-md text-brand text-[11px] font-semibold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm"
-              >
-                <Icon icon="material-symbols:check-circle" class="w-3 h-3 text-green-600" />
-                打卡
               </span>
             </div>
 
@@ -518,10 +518,6 @@
                     <Icon icon="material-symbols:location-on" class="w-4 h-4" />
                     {{ selectedPost.location }}
                   </span>
-                  <span v-if="selectedPost.postType === 2" class="inline-flex items-center gap-1.5 bg-surface-soft text-ink text-[12px] px-3 py-1.5 rounded-xl font-medium">
-                    <Icon icon="material-symbols:check-circle" class="w-4 h-4" />
-                    打卡
-                  </span>
                 </div>
 
                 <!-- 交互按钮 -->
@@ -617,7 +613,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, inject, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, inject, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import { coffeeApi, normalizeUrl, extractApiError } from '../api'
@@ -630,6 +626,28 @@ const router = useRouter()
 const toast = inject('toast', { show: () => {}, notifCount: ref(0) })
 const { isLoggedIn, user, avatar: authAvatar } = useAuth()
 const { isDark, toggleTheme } = useTheme()
+
+// Logo 连点彩蛋：连点三次跳转关于我们
+let logoClickCount = 0
+let logoClickTimer = null
+function handleLogoClick() {
+  logoClickCount++
+  if (logoClickCount === 1) {
+    logoClickTimer = setTimeout(() => { logoClickCount = 0 }, 600)
+  }
+  if (logoClickCount >= 3) {
+    clearTimeout(logoClickTimer)
+    logoClickCount = 0
+    router.push('/settings/about')
+  }
+}
+
+onBeforeUnmount(() => {
+  if (logoClickTimer) {
+    clearTimeout(logoClickTimer)
+    logoClickTimer = null
+  }
+})
 
 const searchQuery = ref('')
 const isSearching = ref(false)
@@ -672,7 +690,6 @@ const quickStats = computed(() => ({
 const tabs = [
   { key: 'recommend', label: '推荐' },
   { key: 'latest', label: '最新' },
-  { key: 'checkin', label: '打卡' },
   ...(isLoggedIn.value ? [{ key: 'following', label: '关注' }] : [])
 ]
 
@@ -801,8 +818,7 @@ async function fetchPosts(reset = false) {
       res = await coffeeApi.search(params)
     } else if (activeTab.value === 'following' && isLoggedIn.value) {
       res = await coffeeApi.getFollowingPosts(params)
-    } else if (activeTab.value === 'checkin') {
-      params.postType = 2
+    } else if (activeTab.value === 'recommend') {
       res = await coffeeApi.getPosts(params)
     } else {
       res = await coffeeApi.getPosts(params)
@@ -814,8 +830,19 @@ async function fetchPosts(reset = false) {
 
     const list = extractList(res)
     if (list.length > 0) {
-      posts.value = [...posts.value, ...list]
+      // 按 id 去重，防止后端分页返回重叠数据
+      const existingIds = new Set(posts.value.map(p => p.id))
+      const newPosts = list.filter(p => !existingIds.has(p.id))
+      posts.value = [...posts.value, ...newPosts]
       hasMore.value = list.length >= pageSize
+
+      // 推荐 tab 首页加载后客户端随机排列，保证分页一致性
+      if (activeTab.value === 'recommend' && page.value === 1) {
+        for (let i = posts.value.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [posts.value[i], posts.value[j]] = [posts.value[j], posts.value[i]]
+        }
+      }
     } else {
       hasMore.value = false
     }

@@ -3,13 +3,18 @@ package cn.lx.worldcoffee.module.shop.service;
 import cn.lx.worldcoffee.common.config.RabbitConfig;
 import cn.lx.worldcoffee.common.exception.ServiceException;
 import cn.lx.worldcoffee.module.shop.dao.CouponDao;
+import cn.lx.worldcoffee.module.shop.dao.SeckillEventDao;
 import cn.lx.worldcoffee.module.shop.dao.UserCouponDao;
 import cn.lx.worldcoffee.module.shop.domain.Coupon;
+import cn.lx.worldcoffee.module.shop.domain.SeckillEvent;
 import cn.lx.worldcoffee.module.shop.domain.UserCoupon;
 import cn.lx.worldcoffee.module.shop.domain.from.SeckillForm;
 import cn.lx.worldcoffee.module.shop.domain.message.SeckillOrderMessage;
 import cn.lx.worldcoffee.module.shop.domain.vo.OrderVO;
+import cn.lx.worldcoffee.module.shop.util.OrderNoGenerator;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.dao.DuplicateKeyException;
@@ -31,7 +36,10 @@ public class SeckillService {
     private final UserCouponDao userCouponDao;
     private final RabbitTemplate rabbitTemplate;
     private final StringRedisTemplate redisTemplate;
+    private final SeckillEventDao seckillEventDao;
+    private final OrderNoGenerator orderNoGenerator;
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
      * 引入rabbitmq后不在由这个方法去创建订单
@@ -71,21 +79,8 @@ public class SeckillService {
                     .eq(UserCoupon::getCouponId, form.getCouponId()));
             if (count > 0) throw new ServiceException("已参加过该活动");
 
-            // 4. 记录领券
-            UserCoupon uc = new UserCoupon();
-            uc.setUserId(userId);
-            uc.setCouponId(form.getCouponId());
-            uc.setUsed(1);
-            uc.setCreateTime(LocalDateTime.now());
-
-            try {
-                userCouponDao.insert(uc);
-            } catch (DuplicateKeyException e) {
-                throw new ServiceException("已参加过该活动");
-            }
-
             // 5. 生成订单号
-            String orderNo = generateOrderNo(userId);
+            String orderNo = orderNoGenerator.nextOrderNo();
 
             // 6. 构造 MQ 消息
             SeckillOrderMessage msg = new SeckillOrderMessage();
@@ -97,9 +92,41 @@ public class SeckillService {
             msg.setRemark(form.getRemark());
             msg.setSeckillPrice(coupon.getSeckillPrice());
 
-            // 7. 发 MQ
+            // 4. 记录领券 + 事务（本地事务）
+            UserCoupon uc = new UserCoupon();
+            uc.setUserId(userId);
+            uc.setCouponId(form.getCouponId());
+            uc.setUsed(1);
+            uc.setCreateTime(LocalDateTime.now());
+            try {
+                userCouponDao.insert(uc);
+            } catch (DuplicateKeyException e) {
+                throw new ServiceException("已参加过该活动");
+            }
+
+            // 7. 写入 seckill_event
+            SeckillEvent event = new SeckillEvent();
+            event.setOrderNo(orderNo);
+            event.setUserId(userId);
+            event.setCouponId(form.getCouponId());
+            event.setStatus(0);  // 待发送
+
+            try {
+                event.setPayload(objectMapper.writeValueAsString(msg));
+            } catch (JsonProcessingException e) {
+                throw new ServiceException("事件序列化失败");
+            }
+            event.setCreateTime(LocalDateTime.now());
+            seckillEventDao.insert(event);
+
+            // 8. 发送 MQ（事务外，但方法内）
             rabbitTemplate.convertAndSend(RabbitConfig.SECKILL_ORDER_EXCHANGE,
                     RabbitConfig.SECKILL_ORDER_ROUTING_KEY, msg);
+
+            // 9. 更新事件状态为已发送
+            event.setStatus(1);
+            event.setUpdateTime(LocalDateTime.now());
+            seckillEventDao.updateById(event);
 
             return orderNo;
         } catch (Exception e) {
@@ -110,13 +137,14 @@ public class SeckillService {
 
     }
 
+
 //    private static final Random RANDOM = new Random();
 
-    private String generateOrderNo(Long userId) {
-        return LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))
-                + String.format("%04d", userId % 10000)
-                + String.format("%03d", ThreadLocalRandom.current().nextInt(1000));
-    }
+//    private String generateOrderNo(Long userId) {
+//        return LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))
+//                + String.format("%04d", userId % 10000)
+//                + String.format("%03d", ThreadLocalRandom.current().nextInt(1000));
+//    }
 
     public String generateCaptcha(Long userId) {
         // 随机 4 位验证码
@@ -150,6 +178,10 @@ public class SeckillService {
     public boolean validateSeckillToken(String token) {
         String key = "seckill:token:" + token;
         String value = redisTemplate.opsForValue().get(key);
+        //这里返回 value != null 是因为我们只想知道 token 在 Redis 里是否还存在
+        //key 是 token 本身：seckill:token:{uuid}
+        //value 是 userId：记录是谁的 token
+        //当用户带 token 来秒杀时，我们不需要知道 value 是多少，只要确认这个 token 还在有效期内就行。
         return value != null;
     }
 

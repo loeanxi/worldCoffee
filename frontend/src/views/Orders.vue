@@ -100,6 +100,17 @@
               </div>
             </div>
 
+            <!-- 待支付倒计时 -->
+            <div
+              v-if="order.status === 0 && countdownMap[order.id] != null"
+              class="flex items-center gap-1.5 mb-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium"
+              :class="isCountdownUrgent(order.id) ? 'bg-rose-50 text-rose-500' : 'bg-amber-50 text-amber'"
+            >
+              <Icon icon="material-symbols:timer-outline" class="w-3.5 h-3.5" />
+              <span>剩余支付时间</span>
+              <span class="font-bold font-mono tracking-wide">{{ formatCountdown(countdownMap[order.id]) }}</span>
+            </div>
+
             <!-- 分隔线 -->
             <div class="divider-coffee my-3" />
 
@@ -159,9 +170,8 @@
                 v-if="order.status === 0"
                 class="h-8 px-4 rounded-lg brand-gradient-btn text-xs font-semibold shadow-sm hover:brightness-110 transition-all disabled:opacity-40"
                 :disabled="!!orderActionLoading[order.id]"
-                @click.stop="handlePayOrder(order)"
+                @click.stop="router.push(`/shop/payment/${order.id}`)"
               >
-                <Icon v-if="orderActionLoading[order.id] === 'pay'" icon="material-symbols:progress-activity" class="w-3.5 h-3.5 animate-spin inline -mt-0.5 mr-1" />
                 去支付
               </button>
               <button
@@ -241,7 +251,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, inject, watch, nextTick } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, inject, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import { shopApi, getApiError } from '../api'
@@ -265,6 +275,67 @@ const expandedOrderId = ref(null)
 const highlightedOrderId = ref(null)
 const orderActionLoading = reactive({}) // id -> 'cancel' | 'pay' | 'confirm'
 const loadedDetails = reactive({}) // id -> true，记录已加载过详情的订单
+
+// ── 待支付订单倒计时 ────────────────────
+const countdownMap = reactive({}) // orderId -> 剩余秒数
+const PAYMENT_TIMEOUT = 15 * 60 // 15 分钟
+let countdownTimer = null
+
+/** 根据订单 createTime 计算剩余秒数并启动倒计时 */
+function startOrderCountdowns() {
+  // 清理旧的
+  Object.keys(countdownMap).forEach(k => delete countdownMap[k])
+
+  const pendingOrders = orders.value.filter(o => o.status === 0 && o.createTime)
+  if (pendingOrders.length === 0) {
+    stopCountdownTimer()
+    return
+  }
+
+  pendingOrders.forEach(order => {
+    const created = new Date(order.createTime).getTime()
+    const elapsed = Math.floor((Date.now() - created) / 1000)
+    countdownMap[order.id] = Math.max(0, PAYMENT_TIMEOUT - elapsed)
+  })
+
+  // 启动全局 tick
+  if (!countdownTimer) {
+    countdownTimer = setInterval(() => {
+      let allDone = true
+      for (const id of Object.keys(countdownMap)) {
+        countdownMap[id]--
+        if (countdownMap[id] <= 0) {
+          delete countdownMap[id]
+        } else {
+          allDone = false
+        }
+      }
+      if (allDone || Object.keys(countdownMap).length === 0) {
+        stopCountdownTimer()
+        // 倒计时结束，刷新订单列表（可能已被系统取消）
+        fetchOrders(true)
+      }
+    }, 1000)
+  }
+}
+
+function stopCountdownTimer() {
+  if (countdownTimer) {
+    clearInterval(countdownTimer)
+    countdownTimer = null
+  }
+}
+
+function formatCountdown(seconds) {
+  const s = Math.max(0, seconds)
+  const m = Math.floor(s / 60)
+  const sec = s % 60
+  return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
+}
+
+function isCountdownUrgent(orderId) {
+  return countdownMap[orderId] != null && countdownMap[orderId] <= 60
+}
 
 // ─── 登录守卫 ───────────────────────────
 watch(isLoggedIn, (val) => {
@@ -398,9 +469,16 @@ async function handlePayOrder(order) {
   orderActionLoading[order.id] = 'pay'
   try {
     const res = await shopApi.payOrder(order.id)
-    if (res && res.code === 200) {
-      order.status = 1
-      toast.show('支付成功')
+    if (res && res.code === 200 && res.data) {
+      const { orderNo, transactionId } = res.data
+      // 调用支付回调，真正更新订单状态为已支付
+      const cbRes = await shopApi.payCallback({ orderNo, transactionId })
+      if (cbRes && cbRes.code === 200) {
+        order.status = 1
+        toast.show('支付成功')
+      } else {
+        toast.show(cbRes?.msg || '支付回调失败', 'error')
+      }
     } else {
       toast.show(res?.msg || '支付失败', 'error')
     }
@@ -483,10 +561,10 @@ function loadMore() {
 onMounted(async () => {
   if (isLoggedIn.value) {
     await fetchOrders(true)
+    startOrderCountdowns()
 
-    // 从购物车结算后跳转过来，高亮新订单并自动发起支付
+    // 从支付页跳转过来时，高亮新订单
     const highlightId = route.query.highlight
-    const autoPay = route.query.autoPay === '1'
     if (highlightId) {
       const id = Number(highlightId) || highlightId
       highlightedOrderId.value = id
@@ -497,16 +575,12 @@ onMounted(async () => {
       if (el) {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' })
       }
-
-      if (autoPay) {
-        const order = orders.value.find(o => o.id === id)
-        if (order && order.status === 0) {
-          // 延迟一下再自动支付，让用户先看到订单
-          setTimeout(() => handlePayOrder(order), 1200)
-        }
-      }
     }
   }
+})
+
+onUnmounted(() => {
+  stopCountdownTimer()
 })
 </script>
 

@@ -375,9 +375,9 @@ export const shopApi = {
   removeFromCart: id =>
     http.delete(`/shop/cart/${id}`).then(ok),
 
-  /** 提交订单 */
-  createOrder: (address, remark = '') =>
-    http.post('/shop/orders', { address, remark }).then(ok),
+  /** 提交订单（couponId 可选，使用优惠券时传入） */
+  createOrder: (address, remark = '', couponId = null) =>
+    http.post('/shop/orders', { address, remark, couponId }).then(ok),
 
   /** 我的订单列表（兼容直接数组 / 分页包装，订单内商品图片归一化） */
   getOrders: (params = { page: 1, size: 10 }) =>
@@ -422,6 +422,9 @@ export const shopApi = {
 
   /** 模拟支付（POST /shop/orders/{id}/pay） */
   payOrder: id => http.post(`/shop/orders/${id}/pay`).then(ok),
+
+  /** 支付回调（模拟支付完成后通知后端更新订单状态） */
+  payCallback: data => http.post('/shop/pay/callback', data).then(ok),
 
   /** 推进订单状态（0→1支付, 1→2发货, 2→3完成） */
   updateOrderStatus: (id, status) =>
@@ -500,7 +503,13 @@ export const seckillApi = {
     return result
   }),
 
-  /** 秒杀下单（领券+下单一步完成）body: { couponId, productId, address } */
+  /** 获取秒杀验证码 */
+  getCaptcha: () => http.get('/shop/seckill/captcha').then(ok),
+
+  /** 用验证码换取秒杀 token */
+  getToken: captcha => http.post('/shop/seckill/token', null, { params: { captcha } }).then(ok),
+
+  /** 秒杀下单（领券+下单一步完成）body: { couponId, productId, address, seckillToken } */
   buy: data => http.post('/shop/seckill/buy', data).then(ok)
 }
 

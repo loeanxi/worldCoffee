@@ -101,6 +101,13 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/shop/payment/:orderId',
+    name: 'Payment',
+    component: () => import('../views/Payment.vue'),
+    props: true,
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/shop/coupons',
     name: 'CouponCenter',
     component: () => import('../views/CouponCenter.vue')

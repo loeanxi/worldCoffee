@@ -205,8 +205,58 @@
                   <span class="text-brand font-semibold flex-shrink-0">¥{{ formatPrice((item.price || 0) * getQuantity(item)) }}</span>
                 </div>
                 <div class="flex justify-between pt-2 mt-1 border-t border-line/40 text-sm">
-                  <span class="text-ink font-medium">合计</span>
+                  <span class="text-ink font-medium">商品合计</span>
                   <span class="text-brand font-bold text-base">¥{{ formatPrice(totalAmount) }}</span>
+                </div>
+                <!-- 折扣 -->
+                <div v-if="discountAmount > 0" class="flex justify-between text-sm text-emerald-600">
+                  <span>优惠券</span>
+                  <span class="font-semibold">-¥{{ formatPrice(discountAmount) }}</span>
+                </div>
+                <div class="flex justify-between pt-1 mt-1 border-t border-line/40 text-sm">
+                  <span class="text-ink font-semibold">实付</span>
+                  <span class="text-brand font-bold text-base">¥{{ formatPrice(finalTotal) }}</span>
+                </div>
+              </div>
+
+              <!-- 优惠券选择 -->
+              <div>
+                <label class="block text-sm font-medium text-ink mb-2 flex items-center gap-1.5">
+                  <Icon icon="material-symbols:confirmation-number-outline" class="w-4 h-4 text-brand" />
+                  优惠券
+                </label>
+                <div v-if="couponsLoading" class="text-xs text-ink-muted py-2">加载中...</div>
+                <div v-else-if="myCoupons.length === 0" class="text-xs text-ink-muted py-2">暂无可用优惠券</div>
+                <div v-else class="space-y-2">
+                  <!-- 不使用优惠券 -->
+                  <button
+                    class="w-full text-left px-3 py-2.5 rounded-xl border text-sm transition-all"
+                    :class="selectedCouponId === null
+                      ? 'border-brand bg-brand/5 text-brand'
+                      : 'border-line/40 text-ink-muted hover:border-brand/50'"
+                    @click="selectedCouponId = null"
+                  >
+                    不使用优惠券
+                  </button>
+                  <!-- 可选优惠券列表 -->
+                  <button
+                    v-for="c in myCoupons"
+                    :key="c.id"
+                    class="w-full text-left px-3 py-2.5 rounded-xl border text-sm transition-all flex items-center justify-between gap-2"
+                    :class="selectedCouponId === c.id
+                      ? 'border-brand bg-brand/5'
+                      : 'border-line/40 hover:border-brand/50'"
+                    :disabled="c.minAmount && totalAmount < Number(c.minAmount)"
+                    @click="selectedCouponId = selectedCouponId === c.id ? null : c.id"
+                  >
+                    <div class="flex items-center gap-2 min-w-0">
+                      <span class="font-semibold text-brand flex-shrink-0">{{ couponDesc(c) }}</span>
+                      <span class="text-ink truncate">{{ c.name }}</span>
+                    </div>
+                    <span v-if="c.minAmount && totalAmount < Number(c.minAmount)" class="text-[11px] text-ink-muted flex-shrink-0">
+                      差¥{{ formatPrice(Number(c.minAmount) - totalAmount) }}可用
+                    </span>
+                  </button>
                 </div>
               </div>
 
@@ -268,7 +318,7 @@
 import { ref, computed, reactive, onMounted, inject, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
-import { shopApi, getApiError } from '../api'
+import { shopApi, couponApi, getApiError } from '../api'
 import { useAuth } from '../composables/useAuth'
 import EmptyState from '../components/EmptyState.vue'
 import WorldCoffeeLogo from '../components/WorldCoffeeLogo.vue'
@@ -294,6 +344,11 @@ const addressInput = ref('')
 const remarkInput = ref('')
 const checkoutLoading = ref(false)
 
+// ─── 优惠券 ────────────────────────────
+const myCoupons = ref([])
+const selectedCouponId = ref(null)
+const couponsLoading = ref(false)
+
 // ─── 计算属性 ────────────────────────────
 function getQuantity(item) {
   if (!item) return 0
@@ -312,6 +367,32 @@ const totalAmount = computed(() => {
     (sum, item) => sum + (Number(item.price) || 0) * getQuantity(item),
     0
   )
+})
+
+/** 根据选中的优惠券计算折扣金额 */
+const discountAmount = computed(() => {
+  if (!selectedCouponId.value) return 0
+  const coupon = myCoupons.value.find(c => c.id === selectedCouponId.value)
+  if (!coupon) return 0
+  const total = totalAmount.value
+  // 满减券：直接减固定面额
+  if (coupon.type === 1) {
+    if (coupon.minAmount && total < Number(coupon.minAmount)) return 0
+    return Math.min(Number(coupon.value) || 0, total)
+  }
+  // 折扣券：value=8 表示打 8 折，优惠 20%
+  if (coupon.type === 2) {
+    if (coupon.minAmount && total < Number(coupon.minAmount)) return 0
+    const val = Number(coupon.value) || 0
+    return Math.round(total * (10 - val) / 10 * 100) / 100
+  }
+  return 0
+})
+
+/** 实付金额 = 原价 - 折扣 */
+const finalTotal = computed(() => {
+  const t = totalAmount.value - discountAmount.value
+  return t > 0 ? t : 0
 })
 
 // ─── 工具函数 ────────────────────────────
@@ -448,6 +529,30 @@ function goToDetail(item) {
   }
 }
 
+// ─── 优惠券 ───────────────────────────
+async function fetchMyCoupons() {
+  couponsLoading.value = true
+  try {
+    const res = await couponApi.getMy()
+    if (res && res.code === 200) {
+      const list = Array.isArray(res.data) ? res.data : []
+      // 只保留满减券和折扣券（秒杀券不能在普通订单用）
+      myCoupons.value = list.filter(c => c.type === 1 || c.type === 2)
+    }
+  } catch (e) {
+    // 静默失败，不影响下单
+    myCoupons.value = []
+  } finally {
+    couponsLoading.value = false
+  }
+}
+
+function couponDesc(c) {
+  if (c.type === 1) return `满${c.minAmount || 0}减${c.value}`
+  if (c.type === 2) return `${c.value}折`
+  return ''
+}
+
 // ─── 结算 ───────────────────────────
 function openCheckoutModal() {
   if (!isLoggedIn.value) {
@@ -459,7 +564,9 @@ function openCheckoutModal() {
     toast.show('购物车暂无商品', 'warn')
     return
   }
+  selectedCouponId.value = null
   showCheckoutModal.value = true
+  fetchMyCoupons()
 }
 
 function closeCheckoutModal() {
@@ -476,15 +583,20 @@ async function handleSubmitOrder() {
 
   checkoutLoading.value = true
   try {
-    const res = await shopApi.createOrder(address, remarkInput.value.trim())
+    const res = await shopApi.createOrder(
+      address,
+      remarkInput.value.trim(),
+      selectedCouponId.value
+    )
     if (res && res.code === 200) {
       toast.show('下单成功！', 'success', 3500)
       showCheckoutModal.value = false
       addressInput.value = ''
       remarkInput.value = ''
+      selectedCouponId.value = null
       const orderId = res.data?.id || res.data
       setTimeout(() => {
-        router.push({ path: '/shop/orders', query: orderId ? { highlight: orderId, autoPay: '1' } : {} })
+        router.push(orderId ? `/shop/payment/${orderId}` : '/shop/orders')
       }, 600)
     } else {
       toast.show(res?.msg || '下单失败，请稍后重试', 'error')

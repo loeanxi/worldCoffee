@@ -5,14 +5,17 @@ import cn.lx.worldcoffee.module.shop.dao.CouponDao;
 import cn.lx.worldcoffee.module.shop.dao.CouponProductDao;
 import cn.lx.worldcoffee.module.shop.dao.UserCouponDao;
 import cn.lx.worldcoffee.module.shop.domain.Coupon;
+import cn.lx.worldcoffee.module.shop.domain.CouponProduct;
 import cn.lx.worldcoffee.module.shop.domain.UserCoupon;
 import cn.lx.worldcoffee.module.shop.domain.vo.CouponVO;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -62,16 +65,28 @@ public class CouponService {
                         .eq(UserCoupon::getCouponId, c.getId())
                 ) > 0;
             }
-            return CouponVO.builder()
+            CouponVO.CouponVOBuilder builder = CouponVO.builder()
                     .id(c.getId())
                     .name(c.getName())
                     .type(c.getType())
                     .value(c.getValue())
                     .minAmount(c.getMinAmount())
                     .stock(c.getStock())
+                    .seckillPrice(c.getSeckillPrice())
                     .claimed(claimed)   // ← 前端根据这个显示"领取"或"已领取"
-                    .endTime(c.getEndTime())
-                    .build();
+                    .endTime(c.getEndTime());
+
+            // 秒杀券补充商品信息
+            if (c.getType() != null && c.getType() == 3) {
+                List<CouponProduct> cpList = couponProductDao.selectList(
+                        new LambdaQueryWrapper<CouponProduct>()
+                                .eq(CouponProduct::getCouponId, c.getId()));
+                if (!cpList.isEmpty()) {
+                    builder.productId(cpList.get(0).getProductId());
+                }
+            }
+
+            return builder.build();
         }).collect(Collectors.toList());
     }
 
@@ -89,8 +104,11 @@ public class CouponService {
                 .eq(UserCoupon::getCouponId, couponId));
         if (count > 0) throw new ServiceException("已领取过该优惠券");
 
-        // 检查库存
-        if (coupon.getStock() > 0) {
+        // 检查库存（stock=0 表示已领完，stock<0 或 null 表示不限量）
+        if (coupon.getStock() != null && coupon.getStock() == 0) {
+            throw new ServiceException("优惠券已被领完");
+        }
+        if (coupon.getStock() != null && coupon.getStock() > 0) {
             Long claimedCount = userCouponDao.selectCount(new LambdaQueryWrapper<UserCoupon>()
                     .eq(UserCoupon::getCouponId, couponId));
             if (claimedCount >= coupon.getStock()) throw new ServiceException("优惠券已被领完");
@@ -125,6 +143,76 @@ public class CouponService {
                     .claimed(true)
                     .build();
         }).filter(v -> v != null).collect(Collectors.toList());
+    }
+
+    /**
+     * 下单时使用优惠券：校验 + 计算折扣 + 标记已使用。
+     * 在 OrderService.createOrder 的事务内调用，如果订单创建失败会一起回滚（used 恢复为 0）。
+     *
+     * @param couponId  用户选择的优惠券ID
+     * @param orderTotal 订单原价（商品总价）
+     * @return { discountAmount, couponName }
+     */
+    public Map<String, Object> applyCoupon(Long couponId, BigDecimal orderTotal) {
+        Long userId = getCurrentUserId();
+        if (userId == null) throw new ServiceException("请先登录");
+
+        // 1. 查 user_coupon 记录：必须属于当前用户 & 未使用
+        UserCoupon uc = userCouponDao.selectOne(new LambdaQueryWrapper<UserCoupon>()
+                .eq(UserCoupon::getUserId, userId)
+                .eq(UserCoupon::getCouponId, couponId)
+                .eq(UserCoupon::getUsed, 0));
+        if (uc == null) throw new ServiceException("优惠券不存在或已使用");
+
+        // 2. 查优惠券模板
+        Coupon coupon = couponDao.selectById(couponId);
+        if (coupon == null || coupon.getStatus() == 0) throw new ServiceException("优惠券不存在");
+
+        // 3. 检查有效期
+        LocalDateTime now = LocalDateTime.now();
+        if (coupon.getStartTime() != null && now.isBefore(coupon.getStartTime()))
+            throw new ServiceException("优惠券尚未生效");
+        if (coupon.getEndTime() != null && now.isAfter(coupon.getEndTime()))
+            throw new ServiceException("优惠券已过期");
+
+        // 4. 计算折扣金额
+        BigDecimal discount = BigDecimal.ZERO;
+        if (coupon.getType() == 1) {
+            // 满减券：订单总额 >= 最低消费才能用，直接减固定面额
+            if (coupon.getMinAmount() != null && orderTotal.compareTo(coupon.getMinAmount()) < 0)
+                throw new ServiceException("订单金额未达到优惠券最低消费要求");
+            discount = coupon.getValue();
+        } else if (coupon.getType() == 2) {
+            // 折扣券：value=8 表示打 8 折，即付 80%，优惠 20%
+            if (coupon.getMinAmount() != null && orderTotal.compareTo(coupon.getMinAmount()) < 0)
+                throw new ServiceException("订单金额未达到优惠券最低消费要求");
+            // 兼容两种存储格式：value=8（折）或 value=0.80（比例）
+            BigDecimal value = coupon.getValue();
+            if (value.compareTo(BigDecimal.ONE) < 0) {
+                // 比例格式（如 0.80），转换为折（如 8.0）
+                value = value.multiply(BigDecimal.TEN);
+            }
+            // discount = orderTotal × (10 - value) / 10
+            discount = orderTotal.multiply(
+                    BigDecimal.TEN.subtract(value)
+            ).divide(BigDecimal.TEN, 2, java.math.RoundingMode.HALF_UP);
+        } else if (coupon.getType() == 3) {
+            // 秒杀券不走这个流程（秒杀有独立的下单逻辑）
+            throw new ServiceException("秒杀券不能在普通订单中使用");
+        }
+
+        // 折扣不能超过订单总额
+        if (discount.compareTo(orderTotal) > 0) discount = orderTotal;
+
+        // 5. 标记为已使用
+        uc.setUsed(1);
+        userCouponDao.updateById(uc);
+
+        // 6. 返回折扣信息
+        Map<String, Object> result = new java.util.HashMap<>();
+        result.put("discountAmount", discount);
+        result.put("couponName", coupon.getName());
+        return result;
     }
 }
 

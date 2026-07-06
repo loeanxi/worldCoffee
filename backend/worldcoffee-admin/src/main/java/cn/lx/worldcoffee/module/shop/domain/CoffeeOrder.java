@@ -21,4 +21,15 @@ public class CoffeeOrder {
     private String address;         // 收货地址
     private String remark;          // 备注
     private LocalDateTime createTime;
+
+    // 优惠券相关
+    private Long couponId;          // 使用的优惠券ID
+    private BigDecimal discountAmount; // 优惠金额
+
+
+    // ↓↓↓ 新增物流字段 ↓↓↓
+    private String shippingCompany; // 快递公司
+    private String trackingNo;      // 快递单号
+    private LocalDateTime shippedTime;   // 发货时间
+    private LocalDateTime deliveredTime; // 收货时间
 }

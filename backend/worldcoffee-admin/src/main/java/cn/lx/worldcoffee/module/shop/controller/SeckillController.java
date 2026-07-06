@@ -2,16 +2,18 @@ package cn.lx.worldcoffee.module.shop.controller;
 
 import cn.lx.worldcoffee.common.exception.ServiceException;
 import cn.lx.worldcoffee.common.result.Result;
+import cn.lx.worldcoffee.module.shop.dao.CoffeeProductDao;
 import cn.lx.worldcoffee.module.shop.dao.CouponDao;
 import cn.lx.worldcoffee.module.shop.dao.CouponProductDao;
 import cn.lx.worldcoffee.module.shop.dao.UserCouponDao;
+import cn.lx.worldcoffee.module.shop.domain.CoffeeProduct;
 import cn.lx.worldcoffee.module.shop.domain.Coupon;
 import cn.lx.worldcoffee.module.shop.domain.CouponProduct;
 import cn.lx.worldcoffee.module.shop.domain.from.SeckillForm;
 import cn.lx.worldcoffee.module.shop.domain.vo.CouponVO;
 import cn.lx.worldcoffee.module.shop.domain.vo.SeckillOrderResultVO;
 import cn.lx.worldcoffee.module.shop.service.SeckillService;
-import cn.lx.worldcoffee.module.shop.service.ShopService;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RLock;
@@ -30,8 +32,8 @@ public class SeckillController {
 
     private final CouponDao couponDao;
     private final CouponProductDao couponProductDao;
+    private final CoffeeProductDao coffeeProductDao;
     private final UserCouponDao userCouponDao;
-    private final ShopService shopService;
     private final RedissonClient redissonClient;
     private final SeckillService seckillService;
 
@@ -54,9 +56,27 @@ public class SeckillController {
                     .value(c.getValue())
                     .seckillPrice(c.getSeckillPrice())
                     .startTime(c.getStartTime())
-                    .endTime(c.getEndTime());
+                    .endTime(c.getEndTime())
+                    .stock(c.getStock());
             if (!cpList.isEmpty()) {
-                builder.productId(cpList.get(0).getProductId());
+                Long productId = cpList.get(0).getProductId();
+                builder.productId(productId);
+                // 补充商品信息
+                CoffeeProduct product = coffeeProductDao.selectById(productId);
+                if (product != null) {
+                    builder.productName(product.getName());
+                    // images 是 JSON 字符串，取第一张作为封面
+                    if (product.getImages() != null && !product.getImages().isBlank()) {
+                        try {
+                            List<String> imgs = JSONUtil.toList(product.getImages(), String.class);
+                            if (!imgs.isEmpty()) {
+                                builder.productImage(imgs.get(0));
+                            }
+                        } catch (Exception ignored) {
+                            builder.productImage(product.getImages());
+                        }
+                    }
+                }
             }
             return builder.build();
         }).collect(Collectors.toList()));
@@ -69,6 +89,7 @@ public class SeckillController {
         if (userId == null) throw new ServiceException("请先登录");
 
         // 1. 校验秒杀 token
+        //如果 validateSeckillToken 返回 false，就进入 if 分支。
         if (!seckillService.validateSeckillToken(form.getSeckillToken())) {
             return Result.fail("秒杀令牌无效或已过期");
         }
@@ -101,6 +122,7 @@ public class SeckillController {
             }
         }
     }
+    //用户看到秒杀商品 点击以后获得验证码
     @GetMapping("/captcha")
     public Result<String> getCaptcha() {
         Long userId = getCurrentUserId();
@@ -109,6 +131,7 @@ public class SeckillController {
         return Result.success(captcha);
     }
 
+    //用户输入验证码以后 请求秒杀token
     @PostMapping("/token")
     public Result<String> getToken(@RequestParam String captcha) {
         Long userId = getCurrentUserId();

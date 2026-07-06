@@ -27,16 +27,17 @@ public class CoffeeController {
 
     private final CoffeeService coffeeService;
 
-    @Operation(summary = "首页帖子列表", description = "分页获取所有正常帖子，按时间倒序")
+    @Operation(summary = "首页帖子列表", description = "分页获取帖子，sort=latest按时间倒序，sort=random随机排序")
     /**
      * 首页列表 - 分页瀑布流
-     * GET /api/coffee/posts?page=1&size=10
+     * GET /api/coffee/posts?page=1&size=10&sort=latest
      */
     @GetMapping("/posts")
     public Result<List<PostListVO>> listPosts(
             @Parameter(description = "页码") @RequestParam(defaultValue = "1") Integer page,
-            @Parameter(description = "每页条数") @RequestParam(defaultValue = "10") Integer size){
-        return Result.success(coffeeService.listPosts(page,size));
+            @Parameter(description = "每页条数") @RequestParam(defaultValue = "10") Integer size,
+            @Parameter(description = "排序方式: latest=最新, random=随机") @RequestParam(defaultValue = "latest") String sort){
+        return Result.success(coffeeService.listPosts(page, size, sort));
     }
 
     @Operation(summary = "发帖", description = "创建图文分享或打卡记录，需要登录")

@@ -47,6 +47,8 @@
             <a class="text-ink font-medium hover:underline" href="javascript:;">忘记密码？</a>
           </div>
 
+          <p v-if="loginError" class="text-[12px] text-red-500 text-center">{{ loginError }}</p>
+
           <button
             type="submit"
             class="w-full h-12 rounded-xl text-[15px] font-semibold active:scale-[0.98] transition-all tap-scale"
@@ -94,7 +96,7 @@
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import WorldCoffeeLogo from '../components/WorldCoffeeLogo.vue'
@@ -108,7 +110,10 @@ const form = reactive({
   remember: false
 })
 
+const loginError = ref('')
+
 async function handleLogin() {
+  loginError.value = ''
   try {
     const ok = await login({
       username: form.username,
@@ -117,9 +122,12 @@ async function handleLogin() {
     })
     if (ok) {
       router.push('/')
+    } else {
+      loginError.value = '用户名或密码错误'
     }
   } catch (e) {
     console.error('登录失败', e)
+    loginError.value = '网络错误，请稍后重试'
   }
 }
 </script>

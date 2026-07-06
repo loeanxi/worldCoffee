@@ -32,24 +32,41 @@ public class SecurityConfig {
                 // 让 Spring Security 认可 CORS 预检（OPTIONS 请求），避免 POST 请求返回 403
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
+                        // 完全公开的接口（无写操作）
                         .requestMatchers(
                                 "/api/users/register",
                                 "/api/users/login",
-                                "/api/coffee/posts",           // GET 列表（公开）
-                                "/api/coffee/posts/*",         // GET 详情（公开）
-                                "/api/coffee/search",          // 搜索（公开）
-                                "/api/shop/products",
-                                "/api/shop/products/*",
-                                "/uploads/**",                 // 静态图片资源
+                                "/api/admin/login",
+                                "/api/coffee/search",
+                                "/uploads/**",
                                 "/swagger-ui/**",
-                                "/api/notifications/subscribe",
                                 "/v3/api-docs/**",
                                 "/webjars/**",
-                                "/swagger-resources/**",
-                                "/api/ai/**",
-                                "/api/shop/coupons/**",
-                                "/api/shop/seckill/**"
+                                "/swagger-resources/**"
                         ).permitAll()
+                        // 帖子：GET 公开浏览，写操作需要登录
+                        .requestMatchers(org.springframework.http.HttpMethod.GET,
+                                "/api/coffee/posts",
+                                "/api/coffee/posts/*"
+                        ).permitAll()
+                        // 商品 & 分类：GET 公开浏览
+                        .requestMatchers(org.springframework.http.HttpMethod.GET,
+                                "/api/shop/products",
+                                "/api/shop/products/*",
+                                "/api/shop/categories",
+                                "/api/shop/categories/*"
+                        ).permitAll()
+                        // 优惠券：GET 列表公开，领取需要登录
+                        .requestMatchers(org.springframework.http.HttpMethod.GET,
+                                "/api/shop/coupons",
+                                "/api/shop/coupons/my"
+                        ).permitAll()
+                        // 秒杀：GET 活动列表公开，下单需要登录
+                        .requestMatchers(org.springframework.http.HttpMethod.GET,
+                                "/api/shop/seckill/activities"
+                        ).permitAll()
+                        // 管理后台接口：需要 ADMIN_ROLE 权限
+                        .requestMatchers("/api/admin/**").hasAuthority("ADMIN_ROLE")
                         .anyRequest().authenticated()
                 )
                 // 3. 把JWT拦截器插到Spring Security过滤器链里

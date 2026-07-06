@@ -58,7 +58,10 @@
           ]"
         >
           <template v-if="!isMine(msg)">
-            <div class="w-9 h-9 rounded-full bg-gradient-to-br from-coffee-brown to-coffee-dark flex items-center justify-center text-white text-[12px] font-bold overflow-hidden shrink-0 shadow-sm">
+            <div
+              class="w-9 h-9 rounded-full bg-gradient-to-br from-coffee-brown to-coffee-dark flex items-center justify-center text-white text-[12px] font-bold overflow-hidden shrink-0 shadow-sm cursor-pointer tap-scale"
+              @click="router.push('/user/' + otherUserId)"
+            >
               <img
                 v-if="otherAvatar"
                 :src="otherAvatar"
@@ -82,7 +85,18 @@
           </div>
 
           <template v-if="isMine(msg)">
-            <div class="w-7 h-7 shrink-0" />
+            <router-link
+              :to="'/user/' + currentUserId"
+              class="w-9 h-9 rounded-full bg-gradient-to-br from-coffee-brown to-coffee-dark flex items-center justify-center text-white text-[12px] font-bold overflow-hidden shrink-0 shadow-sm tap-scale"
+            >
+              <img
+                v-if="myAvatar"
+                :src="myAvatar"
+                class="w-full h-full object-cover"
+                @error="onAvatarError"
+              />
+              <span v-else>{{ myInitial }}</span>
+            </router-link>
           </template>
         </div>
       </div>
@@ -169,6 +183,9 @@ const currentUserId = computed(() => {
 })
 
 const otherAvatar = computed(() => normalizeUrl(otherUser.value.avatar || ''))
+
+const myAvatar = computed(() => normalizeUrl(user.value?.avatar || ''))
+const myInitial = computed(() => initial(user.value?.username || user.value?.nickname || '我'))
 
 const canSend = computed(() => {
   const v = (draft.value || '').trim()
@@ -399,10 +416,10 @@ async function refreshNewMessages() {
 }
 
 let sseSub = null
-onMounted(async () => {
-  loadOtherUserInfo()
-  await loadHistory({ reset: true })
-  markAsRead()
+
+function subscribeSSE() {
+  // 关闭旧的 SSE 连接
+  if (sseSub) { try { sseSub.close() } catch {} sseSub = null }
 
   sseSub = createSSESubscriber()
   if (sseSub) {
@@ -445,16 +462,37 @@ onMounted(async () => {
       } catch {}
     })
   }
+}
+
+onMounted(async () => {
+  loadOtherUserInfo()
+  await loadHistory({ reset: true })
+  markAsRead()
+  subscribeSSE()
 })
 onBeforeUnmount(() => {
   if (sseSub) { try { sseSub.close() } catch {} sseSub = null }
 })
 
-watch(() => route.params.userId, (newVal) => {
+watch(() => route.params.userId, async (newVal) => {
   if (newVal) {
+    // 关闭旧的 SSE 连接
+    if (sseSub) { try { sseSub.close() } catch {} sseSub = null }
+
+    // 重置状态
     hasMarkedRead.value = false
     otherUser.value = { username: '', avatar: '' }
-    loadHistory({ reset: true }).then(markAsRead)
+    messages.value = []
+    page.value = 1
+    hasMore.value = true
+
+    // 重新加载数据
+    loadOtherUserInfo()
+    await loadHistory({ reset: true })
+    markAsRead()
+
+    // 重建 SSE 订阅
+    subscribeSSE()
   }
 })
 </script>

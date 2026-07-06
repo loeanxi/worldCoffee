@@ -377,5 +377,8 @@ function getCouponGradient(type) {
 
 onMounted(() => {
   fetchAvailable()
+  if (isLoggedIn.value) {
+    fetchMyCoupons()
+  }
 })
 </script>

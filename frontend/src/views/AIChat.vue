@@ -102,30 +102,43 @@ function scrollToBottom() {
 }
 
 async function loadConversations() {
-  const list = await aiApi.listConversations()
-  conversations.value = Array.isArray(list) ? list : []
+  try {
+    const list = await aiApi.listConversations()
+    conversations.value = Array.isArray(list) ? list : []
+  } catch (e) {
+    console.error('加载对话列表失败', e)
+  }
 }
 
 async function switchConversation(conv) {
   historyOpen.value = false
   currentChatId.value = conv.chatId || conv.id
-  const res = await aiApi.getConversationMessages(currentChatId.value)
-  messages.value = Array.isArray(res) ? res.map(m => ({ role: m.role, content: m.content })) : []
-  scrollToBottom()
+  try {
+    const res = await aiApi.getConversationMessages(currentChatId.value)
+    messages.value = Array.isArray(res) ? res.map(m => ({ role: m.role, content: m.content })) : []
+    scrollToBottom()
+  } catch (e) {
+    console.error('加载消息失败', e)
+    messages.value = [{ role: 'assistant', content: '加载历史消息失败，请重试' }]
+  }
 }
 
 async function deleteConv(conv) {
   const chatId = conv && (conv.chatId || conv.id)
   if (!chatId) return
-  const ok = await aiApi.deleteConversation(chatId)
-  if (ok) {
-    conversations.value = conversations.value.filter(c => (c.chatId || c.id) !== chatId)
-    if (currentChatId.value === chatId) {
-      currentChatId.value = null
-      messages.value = []
+  try {
+    const ok = await aiApi.deleteConversation(chatId)
+    if (ok) {
+      conversations.value = conversations.value.filter(c => (c.chatId || c.id) !== chatId)
+      if (currentChatId.value === chatId) {
+        currentChatId.value = null
+        messages.value = []
+      }
     }
+    await loadConversations()
+  } catch (e) {
+    console.error('删除对话失败', e)
   }
-  await loadConversations()
 }
 
 function handleSend() {
@@ -164,12 +177,16 @@ function handleSend() {
 }
 
 onMounted(async () => {
-  await loadConversations()
-  if (conversations.value.length > 0) {
-    const latest = conversations.value[0]
-    currentChatId.value = latest.chatId || latest.id
-    const res = await aiApi.getConversationMessages(currentChatId.value)
-    messages.value = Array.isArray(res) ? res.map(m => ({ role: m.role, content: m.content })) : []
+  try {
+    await loadConversations()
+    if (conversations.value.length > 0) {
+      const latest = conversations.value[0]
+      currentChatId.value = latest.chatId || latest.id
+      const res = await aiApi.getConversationMessages(currentChatId.value)
+      messages.value = Array.isArray(res) ? res.map(m => ({ role: m.role, content: m.content })) : []
+    }
+  } catch (e) {
+    console.error('初始化 AI 对话失败', e)
   }
 })
 </script>
