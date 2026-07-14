@@ -1,0 +1,36 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: wc-ai
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+      config:
+        server-addr: 127.0.0.1:8848
+        file-extension: yaml
+  datasource:
+    url: jdbc:mysql://localhost:3306/worldCoffee?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:your-api-key-here}
+      base-url: https://api.openai.com/v1
+      chat:
+        options:
+          model: gpt-3.5-turbo
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
