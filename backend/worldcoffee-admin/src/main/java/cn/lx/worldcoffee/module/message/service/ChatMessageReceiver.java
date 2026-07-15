@@ -1,5 +1,6 @@
 package cn.lx.worldcoffee.module.message.service;
 
+import cn.lx.worldcoffee.common.config.RabbitConfig;
 import cn.lx.worldcoffee.common.redis.NotificationMessageReceiver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -11,8 +12,9 @@ import org.springframework.stereotype.Component;
 public class ChatMessageReceiver {
     private final NotificationMessageReceiver sseReceiver;
 
-    @RabbitListener(queues = "chat.queue.default")
+    @RabbitListener(queues = RabbitConfig.CHAT_QUEUE_PREFIX + "default")
     public void handleChatMessage(
+            //注意这里有个巧妙设计：通过 @Header("amqp_receivedRoutingKey") 拿到消息实际的路由 Key，从中截取收信人 ID。这样即使所有私信进同一个队列，也能知道该推给谁。
             String message,
             @Header("amqp_receivedRoutingKey") String routingKey
     ){

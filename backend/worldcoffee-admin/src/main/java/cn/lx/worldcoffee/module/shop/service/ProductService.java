@@ -136,6 +136,7 @@ public class ProductService {
      * 删除商品（物理删除）。
      * 同时从 ES 移除，否则搜索还能搜出来。
      */
+    @Transactional
     public void deleteProduct(Long productId) {
         CoffeeProduct product = productDao.selectById(productId);
         if (product == null) throw new ServiceException("商品不存在");

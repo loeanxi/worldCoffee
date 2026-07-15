@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.Authentication;
@@ -19,6 +20,7 @@ import reactor.core.publisher.Flux;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -106,7 +108,12 @@ public class AiService {
     }
 
     public void uploadKnowledge(String text, String title) {
-        Document doc = new Document(text, Map.of("title", title));
-        vectorStore.add(List.of(doc));
+        // 1. 先创建一个包含完整文本的 Document，带上元数据
+        Document rawDoc = new Document(text, Map.of("title", title));
+        // 2. 用 TokenTextSplitter 切分成多个小块（Spring AI 1.1.2 直接返回 List<Document>）
+        TokenTextSplitter splitter = new TokenTextSplitter();
+        List<Document> chunks = splitter.apply(List.of(rawDoc));
+        // 3. 把所有小块批量存入向量库
+        vectorStore.add(chunks);
     }
 }

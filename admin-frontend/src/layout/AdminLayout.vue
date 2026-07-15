@@ -10,7 +10,9 @@ const menuItems = [
   { path: '/users', title: '用户管理', icon: 'User' },
   { path: '/products', title: '商品管理', icon: 'Goods' },
   { path: '/orders', title: '订单管理', icon: 'List' },
-  { path: '/marketing', title: '营销管理', icon: 'Present' }
+  { path: '/marketing', title: '营销管理', icon: 'Present' },
+  { path: '/moderation', title: '举报审核', icon: 'Warning' },
+  { path: '/governance', title: '内容治理', icon: 'Filter' }
 ]
 
 function handleLogout() {
@@ -25,7 +27,6 @@ function handleLogout() {
 
 <template>
   <el-container style="height: 100vh">
-    <!-- 左侧菜单 -->
     <el-aside width="220px" style="background: #304156">
       <div style="height: 60px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; font-weight: bold; border-bottom: 1px solid #3d4a5a">
         ☕ World Coffee 后台
@@ -44,9 +45,7 @@ function handleLogout() {
       </el-menu>
     </el-aside>
 
-    <!-- 右侧内容 -->
     <el-container>
-      <!-- 顶部栏 -->
       <el-header style="display: flex; align-items: center; justify-content: flex-end; border-bottom: 1px solid #eee; background: #fff">
         <span style="margin-right: 16px; color: #666">管理员</span>
         <el-button type="danger" text @click="handleLogout">
@@ -55,7 +54,6 @@ function handleLogout() {
         </el-button>
       </el-header>
 
-      <!-- 主内容区 -->
       <el-main style="background: #f5f7fa; padding: 20px">
         <router-view />
       </el-main>

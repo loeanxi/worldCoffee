@@ -1,6 +1,8 @@
 package cn.lx.worldcoffee.module.message.service;
 
+import cn.lx.worldcoffee.common.config.RabbitConfig;
 import cn.lx.worldcoffee.common.exception.ServiceException;
+import cn.lx.worldcoffee.common.redis.NotificationMessageReceiver;
 import cn.lx.worldcoffee.module.message.dao.MessageDao;
 import cn.lx.worldcoffee.module.message.domain.PrivateMessage;
 import cn.lx.worldcoffee.module.message.domain.vo.MessageVO;
@@ -25,6 +27,8 @@ public class MessageService {
     private final MessageDao messageDao;
     private final UserDao userDao;
     private final RabbitTemplate rabbitTemplate;
+    //private final NotificationMessageReceiver sseReceiver;  // 新增
+
 
     /** 从 Spring Security 拿当前登录用户ID */
     private Long getCurrentUserId() {
@@ -62,9 +66,9 @@ public class MessageService {
         messageDao.insert(msg);
 
         // ─── 5. 发到 RabbitMQ，让收信人实时收到 ───
-        String routingKey = "chat." + toId;
+        String routingKey = RabbitConfig.CHAT_ROUTING_KEY_PREFIX + toId;
         String mqMessage = fromId + "|||" + content;
-        rabbitTemplate.convertAndSend("chat.exchange",routingKey,mqMessage);
+        rabbitTemplate.convertAndSend(RabbitConfig.CHAT_EXCHANGE,routingKey,mqMessage);
 
         // ─── 6. 组装 VO 返回 ───
         User fromUser = userDao.selectById(fromId);
@@ -255,6 +259,9 @@ public class MessageService {
                 .eq(PrivateMessage::getIsRead,0) //还未读的
                 .set(PrivateMessage::getIsRead,1) //改成已读
         );
+
+        // 新增：通过 SSE 通知对方"我已读了你的消息"
+        //sseReceiver.sendNotification(otherUserId.toString(), "read:" + userId);
     }
 
 

@@ -35,6 +35,16 @@ const routes = [
         path: 'marketing',
         component: () => import('../views/MarketingManagement.vue'),
         meta: { title: '营销管理' }
+      },
+      {
+        path: 'moderation',
+        component: () => import('../views/ModerationManagement.vue'),
+        meta: { title: '举报审核' }
+      },
+      {
+        path: 'governance',
+        component: () => import('../views/GovernanceManagement.vue'),
+        meta: { title: '内容治理' }
       }
     ]
   }
@@ -45,15 +55,14 @@ const router = createRouter({
   routes
 })
 
-// 路由守卫：未登录跳转到登录页
 router.beforeEach((to, from, next) => {
   const token = sessionStorage.getItem('admin_token')
   if (to.path !== '/login' && !token) {
     next('/login')
-  } else {
-    document.title = to.meta.title ? `${to.meta.title} - World Coffee 管理后台` : 'World Coffee 管理后台'
-    next()
+    return
   }
+  document.title = to.meta.title ? `${to.meta.title} - World Coffee 管理后台` : 'World Coffee 管理后台'
+  next()
 })
 
 export default router

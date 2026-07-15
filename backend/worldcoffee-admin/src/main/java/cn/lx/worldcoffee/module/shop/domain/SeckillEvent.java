@@ -15,7 +15,7 @@ public class SeckillEvent {
     private String orderNo;
     private Long userId;
     private Long couponId;
-    private Integer status;
+    private Integer status; // 0 1 2 3
     private String payload;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;

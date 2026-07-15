@@ -31,6 +31,7 @@ public class SeckillOrderConsumer {
     @RabbitListener(queues = RabbitConfig.SECKILL_ORDER_QUEUE)
     public void handle(SeckillOrderMessage msg){
         String key = "seckill:order:" + msg.getOrderNo();
+        //抛异常是怎么让mq重试的 ？
 
         // 1. SETNX 预检幂等
         Boolean isNew = redisTemplate.opsForValue().setIfAbsent(key, "1", 5, TimeUnit.MINUTES);

@@ -1,5 +1,7 @@
 package cn.lx.worldcoffee.common.redis;
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -11,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 //消息接收器
+@Slf4j
 @Component
 //这个类是上面 Redis 订阅链路的终点——收到消息后，通过 SSE（Server-Sent Events） 把通知实时推送给前端用户。
 //核心数据结构 sseMap
@@ -80,6 +83,40 @@ public class NotificationMessageReceiver {
                 }
             }
             emitters.removeAll(dead);
+        }
+    }
+
+    /**
+     * 定时清理死连接，防止内存泄漏
+     * 每 10 分钟执行一次，遍历所有用户的 SSE 连接，发送心跳探测，失败的移除
+     */
+    @Scheduled(fixedRate = 600000)  // 10 分钟 = 600000 毫秒
+    public void cleanupDeadEmitters() {
+        int cleanedCount = 0;
+        for (Map.Entry<String, CopyOnWriteArrayList<SseEmitter>> entry : sseMap.entrySet()) {
+            String userId = entry.getKey();
+            CopyOnWriteArrayList<SseEmitter> emitters = entry.getValue();
+            List<SseEmitter> dead = new ArrayList<>();
+            for (SseEmitter emitter : emitters) {
+                try {
+                    // 发送心跳 ping，失败了说明连接已断开
+                    emitter.send(SseEmitter.event().comment("ping"));
+                } catch (Exception e) {
+                    dead.add(emitter);
+                }
+            }
+            if (!dead.isEmpty()) {
+                emitters.removeAll(dead);
+                cleanedCount += dead.size();
+                log.info("清理用户 {} 的 {} 个死连接", userId, dead.size());
+            }
+            // 如果这个用户的连接列表空了，从 Map 里移除整个 key
+            if (emitters.isEmpty()) {
+                sseMap.remove(userId);
+            }
+        }
+        if (cleanedCount > 0) {
+            log.info("SSE 连接池清理完成，共清理 {} 个死连接", cleanedCount);
         }
     }
 }

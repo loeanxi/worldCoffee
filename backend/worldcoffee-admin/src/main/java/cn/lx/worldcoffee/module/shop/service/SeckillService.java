@@ -154,11 +154,11 @@ public class SeckillService {
         return code;
     }
 
-    public boolean validateCaptcha(Long userId, String code) {
+    public boolean validateCaptcha(Long userId, String captcha) {
         String key = "seckill:captcha:" + userId;
         String cached = redisTemplate.opsForValue().get(key);
         if (cached == null) return false;
-        return cached.equalsIgnoreCase(code);
+        return cached.equalsIgnoreCase(captcha);
     }
 
 
