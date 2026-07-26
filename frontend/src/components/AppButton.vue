@@ -2,7 +2,7 @@
   <button
     :class="[
       'relative inline-flex items-center justify-center gap-2 font-medium',
-      'rounded-[12px] transition-all tap-scale select-none',
+      'rounded-[10px] transition-all tap-scale select-none',
       'disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none',
       sizeClasses,
       variantClasses
@@ -37,7 +37,7 @@ const sizeClasses = computed(() => ({
 }[props.size]))
 
 const variantClasses = computed(() => ({
-  primary: 'brand-gradient-btn shadow-[0_4px_14px_rgba(109,76,65,0.28)] hover:shadow-[0_6px_20px_rgba(109,76,65,0.38)] hover:brightness-110',
+  primary: 'brand-gradient-btn hover:brightness-95',
   secondary: 'bg-surface-elevated text-brand border border-line hover:bg-surface hover:border-ink/40 shadow-sm',
   danger: 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100',
   ghost: 'text-brand hover:bg-line/30',

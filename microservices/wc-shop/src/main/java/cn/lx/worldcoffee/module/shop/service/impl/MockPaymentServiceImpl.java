@@ -10,9 +10,11 @@ import cn.lx.worldcoffee.module.shop.domain.CoffeeOrder;
 import cn.lx.worldcoffee.module.shop.domain.PaymentRecord;
 import cn.lx.worldcoffee.module.shop.domain.vo.PaymentResultVO;
 import cn.lx.worldcoffee.module.shop.service.PaymentService;
+import cn.lx.worldcoffee.module.shop.service.PointService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -24,6 +26,8 @@ public class MockPaymentServiceImpl implements PaymentService {
     private final CoffeeOrderDao orderDao;
     private final PaymentRecordDao paymentRecordDao;
     private final RabbitTemplate rabbitTemplate;
+    @Lazy
+    private final PointService pointService;
 
     @Override
     public PaymentResultVO createPayment(Long userId, String orderNo) {
@@ -100,6 +104,9 @@ public class MockPaymentServiceImpl implements PaymentService {
         order.setStatus(1);
         order.setPayTime(LocalDateTime.now());
         orderDao.updateById(order);
+
+        // 5. 消费获得积分（1元=1积分）
+        pointService.earnPointsFromOrder(order.getUserId(), orderNo, order.getTotalAmount());
     }
 
     @Override

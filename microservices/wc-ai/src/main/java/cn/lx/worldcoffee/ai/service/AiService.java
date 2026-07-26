@@ -7,8 +7,8 @@ import cn.lx.worldcoffee.common.security.SecurityUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -23,14 +23,17 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AiService {
 
-    private final ChatClient chatClient;
-    private final ChatMemory chatMemory;
+    private final ObjectProvider<ChatClient> chatClientProvider;
     private final AiConversationDao aiConversationDao;
     private final JdbcTemplate jdbcTemplate;
-    private final VectorStore vectorStore;
+    private final ObjectProvider<VectorStore> vectorStoreProvider;
 
     public Flux<String> chat(String message, String chatId) {
         Long userId = SecurityUtils.requireUserId();
+        ChatClient chatClient = chatClientProvider.getIfAvailable();
+        if (chatClient == null) {
+            return Flux.just("AI 服务尚未完成配置：缺少 ChatClient，请检查 Spring AI/OpenAI 配置。");
+        }
 
         if (aiConversationDao.selectCount(
                 new LambdaQueryWrapper<AiConversation>().eq(AiConversation::getChatId, chatId)) == 0) {
@@ -92,6 +95,10 @@ public class AiService {
     }
 
     public void uploadKnowledge(String text, String title) {
+        VectorStore vectorStore = vectorStoreProvider.getIfAvailable();
+        if (vectorStore == null) {
+            throw new ServiceException("AI 知识库尚未配置向量存储");
+        }
         Document doc = new Document(text, Map.of("title", title));
         vectorStore.add(List.of(doc));
     }

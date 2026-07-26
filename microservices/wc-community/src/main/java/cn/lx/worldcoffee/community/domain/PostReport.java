@@ -12,9 +12,11 @@ import java.time.LocalDateTime;
 public class PostReport {
     @TableId(type = IdType.AUTO)
     private Long id;
-    private Long postId;       // 被举报帖子ID
-    private Long reporterId;   // 举报人ID
-    private String reason;     // 举报原因
-    private Integer status;    // 0=未处理 1=已处理
+    private Long postId;
+    private Long reporterId;
+    private String reason;
+    private Integer status;
+    private String remark;
+    private LocalDateTime handleTime;
     private LocalDateTime createTime;
 }

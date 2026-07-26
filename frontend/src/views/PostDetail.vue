@@ -146,6 +146,13 @@
             <span v-if="post.location" class="inline-flex items-center gap-1.5 bg-surface-soft text-ink text-xs px-3 py-1.5 rounded-full">
               <Icon icon="material-symbols:location-on" class="w-3.5 h-3.5" /> {{ post.location }}
             </span>
+            <span
+              v-for="topic in getTopics(post)"
+              :key="topic"
+              class="inline-flex items-center gap-1 bg-[#FF2442]/5 text-[#FF2442] text-xs px-3 py-1.5 rounded-full"
+            >
+              #{{ topic }}
+            </span>
             <span v-if="post.postType === 2" class="inline-flex items-center gap-1.5 bg-surface-soft text-ink text-xs px-3 py-1.5 rounded-full">
               <Icon icon="material-symbols:check-circle" class="w-3.5 h-3.5" /> 打卡
             </span>
@@ -528,6 +535,10 @@ function galleryNext() {
 }
 function onGalleryImgError(e) {
   if (e && e.target) e.target.style.display = 'none'
+}
+
+function getTopics(item) {
+  return Array.isArray(item?.topics) ? item.topics.filter(Boolean) : []
 }
 
 // 切帖子时重置

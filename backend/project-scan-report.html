@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WorldCoffee 项目扫描报告</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --card-hover: #1c2230;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-dim: #8b949e;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --red: #f85149;
+    --orange: #d29922;
+    --purple: #bc8cff;
+    --cyan: #39c5cf;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    line-height: 1.7;
+    padding: 0;
+  }
+  .hero {
+    background: linear-gradient(135deg, #1a1f2e 0%, #0d1117 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 48px 40px;
+  }
+  .hero h1 {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero .subtitle { color: var(--text-dim); font-size: 15px; }
+  .hero .meta {
+    display: flex; gap: 20px; flex-wrap: wrap; margin-top: 16px;
+  }
+  .hero .meta span {
+    background: var(--card); border: 1px solid var(--border);
+    padding: 4px 12px; border-radius: 20px; font-size: 13px; color: var(--text-dim);
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 32px 40px; }
+  h2 {
+    font-size: 22px; font-weight: 700; margin: 40px 0 16px;
+    padding-bottom: 8px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+  }
+  h2 .icon { font-size: 24px; }
+  h3 { font-size: 17px; font-weight: 600; margin: 24px 0 12px; color: var(--accent); }
+  p { margin-bottom: 12px; color: var(--text); }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px; transition: background 0.2s;
+  }
+  .card:hover { background: var(--card-hover); }
+  .card-title { font-weight: 600; font-size: 15px; margin-bottom: 8px; }
+  .card-desc { font-size: 13px; color: var(--text-dim); }
+  .tag {
+    display: inline-block; padding: 2px 10px; border-radius: 12px;
+    font-size: 12px; font-weight: 500; margin: 2px;
+  }
+  .tag-blue { background: rgba(88,166,255,0.15); color: var(--accent); }
+  .tag-green { background: rgba(63,185,80,0.15); color: var(--green); }
+  .tag-orange { background: rgba(210,153,34,0.15); color: var(--orange); }
+  .tag-purple { background: rgba(188,140,255,0.15); color: var(--purple); }
+  .tag-red { background: rgba(248,81,73,0.15); color: var(--red); }
+  .tag-cyan { background: rgba(57,197,207,0.15); color: var(--cyan); }
+
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+  th {
+    text-align: left; padding: 8px 12px; background: var(--card);
+    border: 1px solid var(--border); color: var(--text-dim); font-weight: 600;
+    white-space: nowrap;
+  }
+  td { padding: 8px 12px; border: 1px solid var(--border); }
+  tr:nth-child(even) td { background: rgba(22,27,34,0.5); }
+  td code { color: var(--cyan); font-family: "Fira Code", Consolas, monospace; font-size: 12px; }
+
+  .method-get { color: var(--green); font-weight: 700; }
+  .method-post { color: var(--accent); font-weight: 700; }
+  .method-put { color: var(--orange); font-weight: 700; }
+  .method-delete { color: var(--red); font-weight: 700; }
+  .method-patch { color: var(--purple); font-weight: 700; }
+
+  .flow {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px; margin: 12px 0;
+    font-family: "Fira Code", Consolas, monospace; font-size: 13px;
+    line-height: 1.9; overflow-x: auto; white-space: pre;
+  }
+  .flow .step { color: var(--accent); }
+  .flow .ok { color: var(--green); }
+  .flow .warn { color: var(--orange); }
+  .flow .err { color: var(--red); }
+  .flow .dim { color: var(--text-dim); }
+
+  .stat-row { display: flex; gap: 16px; flex-wrap: wrap; margin: 16px 0; }
+  .stat-box {
+    flex: 1; min-width: 130px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px; text-align: center;
+  }
+  .stat-box .num { font-size: 28px; font-weight: 700; color: var(--accent); }
+  .stat-box .label { font-size: 13px; color: var(--text-dim); margin-top: 4px; }
+
+  .warn-box {
+    background: rgba(248,81,73,0.08); border: 1px solid rgba(248,81,73,0.3);
+    border-radius: 10px; padding: 16px; margin: 12px 0;
+  }
+  .warn-box .warn-title { color: var(--red); font-weight: 600; margin-bottom: 8px; }
+  .warn-box ul { padding-left: 20px; }
+  .warn-box li { margin-bottom: 6px; font-size: 14px; }
+
+  .info-box {
+    background: rgba(88,166,255,0.06); border: 1px solid rgba(88,166,255,0.2);
+    border-radius: 10px; padding: 16px; margin: 12px 0;
+  }
+  .info-box .info-title { color: var(--accent); font-weight: 600; margin-bottom: 8px; }
+
+  .arch-tree {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px; margin: 12px 0;
+    font-family: "Fira Code", Consolas, monospace; font-size: 13px;
+    line-height: 1.8; overflow-x: auto;
+  }
+  .arch-tree .dir { color: var(--accent); }
+  .arch-tree .file { color: var(--text); }
+  .arch-tree .cmt { color: var(--text-dim); }
+
+  .tech-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  .tech-item {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 16px;
+  }
+  .tech-item .name { font-weight: 600; font-size: 14px; }
+  .tech-item .ver { font-size: 12px; color: var(--text-dim); }
+
+  .footer {
+    text-align: center; padding: 32px; color: var(--text-dim);
+    font-size: 13px; border-top: 1px solid var(--border); margin-top: 40px;
+  }
+  @media (max-width: 768px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .container { padding: 20px; }
+    .hero { padding: 32px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>WorldCoffee 项目扫描报告</h1>
+  <div class="subtitle">Spring Boot 3.4.1 + Java 21 咖啡社区后端 | 自动生成于 2026-07-09</div>
+  <div class="meta">
+    <span>Java 21</span>
+    <span>Spring Boot 3.4.1</span>
+    <span>MyBatis-Plus 3.5.7</span>
+    <span>Spring AI 1.1.2</span>
+    <span>MySQL 8 + Redis + RabbitMQ + ES 8</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- 概览统计 -->
+  <div class="stat-row">
+    <div class="stat-box"><div class="num">2</div><div class="label">Maven 模块</div></div>
+    <div class="stat-box"><div class="num">95</div><div class="label">Java 源文件</div></div>
+    <div class="stat-box"><div class="num">15</div><div class="label">Controller</div></div>
+    <div class="stat-box"><div class="num">115</div><div class="label">API 端点</div></div>
+    <div class="stat-box"><div class="num">22</div><div class="label">数据库表</div></div>
+    <div class="stat-box"><div class="num">7</div><div class="label">业务模块</div></div>
+  </div>
+
+  <!-- 技术栈 -->
+  <h2><span class="icon">📦</span> 技术栈</h2>
+  <div class="tech-grid">
+    <div class="tech-item"><div class="name">Spring Boot</div><div class="ver">3.4.1</div></div>
+    <div class="tech-item"><div class="name">Java</div><div class="ver">21 (LTS)</div></div>
+    <div class="tech-item"><div class="name">MyBatis-Plus</div><div class="ver">3.5.7</div></div>
+    <div class="tech-item"><div class="name">MySQL</div><div class="ver">8.0</div></div>
+    <div class="tech-item"><div class="name">Redis</div><div class="ver">+ Redisson 3.27</div></div>
+    <div class="tech-item"><div class="name">RabbitMQ</div><div class="ver">AMQP</div></div>
+    <div class="tech-item"><div class="name">Elasticsearch</div><div class="ver">8.10.4</div></div>
+    <div class="tech-item"><div class="name">Spring AI</div><div class="ver">1.1.2 (DashScope/Qwen)</div></div>
+    <div class="tech-item"><div class="name">Spring Security</div><div class="ver">+ JWT (jjwt 0.11.5)</div></div>
+    <div class="tech-item"><div class="name">SpringDoc OpenAPI</div><div class="ver">2.7.0</div></div>
+    <div class="tech-item"><div class="name">Hutool</div><div class="ver">5.8.32</div></div>
+    <div class="tech-item"><div class="name">Lombok</div><div class="ver">构造器注入</div></div>
+    <div class="tech-item"><div class="name">WebFlux</div><div class="ver">Reactor Flux (AI 流式)</div></div>
+    <div class="tech-item"><div class="name">Redis 向量库</div><div class="ver">JedisPooled (RAG)</div></div>
+  </div>
+
+  <!-- 模块架构 -->
+  <h2><span class="icon">🏗️</span> 模块架构</h2>
+  <div class="arch-tree"><span class="dir">worldcoffee/</span> <span class="cmt"># 父工程 pom</span>
+├── <span class="dir">worldcoffee-common/</span> <span class="cmt"># 公共模块 (jar)</span>
+│   └── <span class="dir">common/</span>
+│       ├── <span class="dir">config/</span>          <span class="cmt"># SecurityConfig, WebMvcConfig, OpenApiConfig, RabbitConfig, RedisPubSubConfig, GlobalExceptionHandler, RateLimitInterceptor</span>
+│       ├── <span class="dir">security/</span>        <span class="cmt"># JwtUtil, JwtAuthenticationFilter</span>
+│       ├── <span class="dir">redis/</span>           <span class="cmt"># NotificationMessageReceiver (SSE 推送)</span>
+│       └── <span class="dir">result/</span>          <span class="cmt"># Result&lt;T&gt;, Constant, ServiceException</span>
+│
+└── <span class="dir">worldcoffee-admin/</span> <span class="cmt"># 业务模块 (可执行 jar)</span>
+    └── <span class="dir">module/</span>
+        ├── <span class="dir">user/</span>            <span class="cmt"># 用户：注册/登录/资料/关注/头像/验证码/注销</span>
+        ├── <span class="dir">coffee/</span>          <span class="cmt"># 帖子：发帖/点赞/收藏/评论/搜索/举报/热帖/关注动态</span>
+        ├── <span class="dir">shop/</span>            <span class="cmt"># 商城：商品(ES)/分类/购物车/订单/地址/优惠券/秒杀/支付/物流/库存</span>
+        ├── <span class="dir">notification/</span>    <span class="cmt"># 通知：RabbitMQ + SSE 实时推送</span>
+        ├── <span class="dir">message/</span>         <span class="cmt"># 私信：RabbitMQ + SSE 即时聊天</span>
+        ├── <span class="dir">ai/</span>              <span class="cmt"># AI：Spring AI + RAG + Function Calling + 对话记忆</span>
+        └── <span class="dir">admin/</span>           <span class="cmt"># 后台管理：用户/商品/订单/营销/仪表盘</span></div>
+
+  <!-- API 端点清单 -->
+  <h2><span class="icon">🔌</span> API 端点清单 (115 个)</h2>
+
+  <h3>1. 用户模块 <span class="tag tag-blue">18 端点</span></h3>
+  <table>
+    <tr><th>方法</th><th>路径</th><th>功能</th><th>认证</th></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/users/register</code></td><td>注册</td><td><span class="tag tag-green">公开</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/users/login</code></td><td>登录</td><td><span class="tag tag-green">公开</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/users/me</code></td><td>我的信息</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-put">PUT</span></td><td><code>/api/users/me</code></td><td>修改资料</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/users/{id}</code></td><td>用户主页</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-patch">PATCH</span></td><td><code>/api/users/me/password</code></td><td>修改密码</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/users/{id}/follow</code></td><td>关注/取关</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/users/{id}/following</code></td><td>关注列表</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/users/{id}/followers</code></td><td>粉丝列表</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/users/search</code></td><td>搜索用户</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/users/avatar</code></td><td>上传头像</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/users/logout</code></td><td>登出</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/users/me/stats</code></td><td>个人统计</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/users/refresh</code></td><td>刷新 Token</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-delete">DELETE</span></td><td><code>/api/users/me</code></td><td>注销账号</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/users/batch</code></td><td>批量查询用户</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/users/sms/code</code></td><td>发送验证码</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-put">PUT</span></td><td><code>/api/users/me/phone</code></td><td>绑定手机号</td><td><span class="tag tag-orange">登录</span></td></tr>
+  </table>
+
+  <h3>2. 咖啡帖子模块 <span class="tag tag-blue">18 端点</span></h3>
+  <table>
+    <tr><th>方法</th><th>路径</th><th>功能</th><th>认证</th></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/coffee/posts</code></td><td>帖子列表</td><td><span class="tag tag-green">公开</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/coffee/posts</code></td><td>发帖</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/coffee/posts/{id}</code></td><td>帖子详情</td><td><span class="tag tag-green">公开</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/coffee/search</code></td><td>搜索帖子</td><td><span class="tag tag-green">公开</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/coffee/posts/{id}/like</code></td><td>点赞/取消</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/coffee/posts/{id}/favorite</code></td><td>收藏/取消</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/coffee/posts/{id}/comment</code></td><td>发表评论</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-delete">DELETE</span></td><td><code>/api/coffee/posts/{id}</code></td><td>删除帖子</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-put">PUT</span></td><td><code>/api/coffee/posts/{id}</code></td><td>修改帖子</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-delete">DELETE</span></td><td><code>/api/coffee/comments/{id}</code></td><td>删除评论</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/coffee/posts/my</code></td><td>我的帖子</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/coffee/favorites/my</code></td><td>我的收藏</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/coffee/likes/my</code></td><td>我的点赞</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/coffee/upload</code></td><td>上传图片</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/coffee/posts/hot</code></td><td>热门帖子</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/coffee/comments/{id}/like</code></td><td>评论点赞</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/coffee/posts/following</code></td><td>关注动态</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/coffee/posts/{id}/report</code></td><td>举报帖子</td><td><span class="tag tag-orange">登录</span></td></tr>
+  </table>
+
+  <h3>3. 商城模块 <span class="tag tag-blue">29 端点</span></h3>
+  <table>
+    <tr><th>方法</th><th>路径</th><th>功能</th><th>认证</th></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/shop/products</code></td><td>商品列表</td><td><span class="tag tag-green">公开</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/shop/products/{id}</code></td><td>商品详情</td><td><span class="tag tag-green">公开</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/shop/products/search</code></td><td>ES 搜索商品</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/shop/products</code></td><td>新增商品</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-put">PUT</span></td><td><code>/api/shop/products/{id}</code></td><td>修改商品</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-delete">DELETE</span></td><td><code>/api/shop/products/{id}</code></td><td>删除商品</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/shop/categories</code></td><td>分类列表</td><td><span class="tag tag-green">公开</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/shop/cart</code></td><td>加入购物车</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/shop/cart</code></td><td>我的购物车</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-put">PUT</span></td><td><code>/api/shop/cart/{id}</code></td><td>修改购物车数量</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-delete">DELETE</span></td><td><code>/api/shop/cart/{id}</code></td><td>删除购物车项</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/shop/orders</code></td><td>提交订单</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/shop/orders</code></td><td>我的订单</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/shop/orders/{id}</code></td><td>订单详情</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/shop/order/no/{orderNo}</code></td><td>按订单号查询</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-patch">PATCH</span></td><td><code>/api/shop/orders/{id}/cancel</code></td><td>取消订单</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-patch">PATCH</span></td><td><code>/api/shop/orders/{id}/status</code></td><td>更新订单状态</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/shop/orders/{id}/pay</code></td><td>发起支付</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/shop/addresses</code></td><td>地址列表</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/shop/addresses</code></td><td>新增地址</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-put">PUT</span></td><td><code>/api/shop/addresses/{id}</code></td><td>修改地址</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-delete">DELETE</span></td><td><code>/api/shop/addresses/{id}</code></td><td>删除地址</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-put">PUT</span></td><td><code>/api/shop/products/{id}/stock</code></td><td>修改库存</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/shop/orders/{id}/ship</code></td><td>发货</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/shop/orders/{id}/logistics</code></td><td>查询物流</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-patch">PATCH</span></td><td><code>/api/shop/orders/{id}/confirm</code></td><td>确认收货</td><td><span class="tag tag-orange">登录</span></td></tr>
+  </table>
+
+  <h3>4. 优惠券 / 秒杀 / 支付 <span class="tag tag-blue">9 端点</span></h3>
+  <table>
+    <tr><th>方法</th><th>路径</th><th>功能</th><th>认证</th></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/shop/coupons</code></td><td>可领取优惠券</td><td><span class="tag tag-green">公开</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/shop/coupons/{id}/claim</code></td><td>领取优惠券</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/shop/coupons/my</code></td><td>我的优惠券</td><td><span class="tag tag-green">公开</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/shop/seckill/activities</code></td><td>秒杀活动列表</td><td><span class="tag tag-green">公开</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/shop/seckill/buy</code></td><td>秒杀抢购</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/shop/seckill/captcha</code></td><td>获取验证码</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/shop/seckill/token</code></td><td>请求秒杀令牌</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/shop/pay/callback</code></td><td>Mock 支付回调</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/shop/pay/status/{orderNo}</code></td><td>查询支付状态</td><td><span class="tag tag-orange">登录</span></td></tr>
+  </table>
+
+  <h3>5. 通知 / 私信 / AI <span class="tag tag-blue">16 端点</span></h3>
+  <table>
+    <tr><th>方法</th><th>路径</th><th>功能</th><th>认证</th></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/notifications/subscribe</code></td><td>SSE 订阅</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/notifications</code></td><td>通知列表</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/notifications/unread-count</code></td><td>未读数量</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-put">PUT</span></td><td><code>/api/notifications/{id}/read</code></td><td>标记已读</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-put">PUT</span></td><td><code>/api/notifications/read-all</code></td><td>全部已读</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-delete">DELETE</span></td><td><code>/api/notifications/{id}</code></td><td>删除通知</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/messages</code></td><td>发送私信</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/messages/sessions</code></td><td>会话列表</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/messages/chat/{userId}</code></td><td>聊天记录</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-put">PUT</span></td><td><code>/api/messages/chat/{userId}/read</code></td><td>标记已读</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/messages/unread-count</code></td><td>未读总数</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/ai/chat</code></td><td>AI 对话 (Flux&lt;String&gt;)</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/ai/conversations</code></td><td>对话列表</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-delete">DELETE</span></td><td><code>/api/ai/conversations/{chatId}</code></td><td>删除对话</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/ai/conversations/{chatId}/messages</code></td><td>对话历史</td><td><span class="tag tag-orange">登录</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/ai/knowledge/upload</code></td><td>上传知识库</td><td><span class="tag tag-orange">登录</span></td></tr>
+  </table>
+
+  <h3>6. 管理后台 <span class="tag tag-blue">25 端点</span></h3>
+  <table>
+    <tr><th>方法</th><th>路径</th><th>功能</th><th>认证</th></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/admin/login</code></td><td>管理员登录</td><td><span class="tag tag-green">公开</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/admin/logout</code></td><td>管理员登出</td><td><span class="tag tag-red">ADMIN</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/admin/users</code></td><td>用户列表</td><td><span class="tag tag-red">ADMIN</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/admin/users/{id}/freeze</code></td><td>冻结用户</td><td><span class="tag tag-red">ADMIN</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/admin/users/{id}/unfreeze</code></td><td>解冻用户</td><td><span class="tag tag-red">ADMIN</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/admin/products</code></td><td>全量商品</td><td><span class="tag tag-red">ADMIN</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/admin/products</code></td><td>新增商品</td><td><span class="tag tag-red">ADMIN</span></td></tr>
+    <tr><td><span class="method-put">PUT</span></td><td><code>/api/admin/products/{id}</code></td><td>编辑商品</td><td><span class="tag tag-red">ADMIN</span></td></tr>
+    <tr><td><span class="method-delete">DELETE</span></td><td><code>/api/admin/products/{id}</code></td><td>删除商品</td><td><span class="tag tag-red">ADMIN</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/admin/products/{id}/toggle</code></td><td>上下架切换</td><td><span class="tag tag-red">ADMIN</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/admin/orders</code></td><td>全量订单</td><td><span class="tag tag-red">ADMIN</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/admin/orders/{id}</code></td><td>订单详情</td><td><span class="tag tag-red">ADMIN</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/admin/orders/{id}/ship</code></td><td>发货</td><td><span class="tag tag-red">ADMIN</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/admin/marketing/coupons</code></td><td>优惠券列表</td><td><span class="tag tag-red">ADMIN</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/admin/marketing/coupons</code></td><td>创建优惠券</td><td><span class="tag tag-red">ADMIN</span></td></tr>
+    <tr><td><span class="method-put">PUT</span></td><td><code>/api/admin/marketing/coupons/{id}</code></td><td>编辑优惠券</td><td><span class="tag tag-red">ADMIN</span></td></tr>
+    <tr><td><span class="method-delete">DELETE</span></td><td><code>/api/admin/marketing/coupons/{id}</code></td><td>删除优惠券</td><td><span class="tag tag-red">ADMIN</span></td></tr>
+    <tr><td><span class="method-post">POST</span></td><td><code>/api/admin/marketing/coupons/{id}/toggle</code></td><td>切换上下架</td><td><span class="tag tag-red">ADMIN</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/admin/marketing/coupons/{id}/products</code></td><td>关联商品</td><td><span class="tag tag-red">ADMIN</span></td></tr>
+    <tr><td><span class="method-put">PUT</span></td><td><code>/api/admin/marketing/coupons/{id}/products</code></td><td>设置关联商品</td><td><span class="tag tag-red">ADMIN</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/admin/marketing/coupons/{id}/participants</code></td><td>领取记录</td><td><span class="tag tag-red">ADMIN</span></td></tr>
+    <tr><td><span class="method-get">GET</span></td><td><code>/api/admin/dashboard</code></td><td>仪表盘统计</td><td><span class="tag tag-red">ADMIN</span></td></tr>
+  </table>
+
+  <!-- 数据库表结构 -->
+  <h2><span class="icon">🗄️</span> 数据库表结构 (22 张表 + 1 ES 索引)</h2>
+  <table>
+    <tr><th>#</th><th>模块</th><th>表名</th><th>实体类</th><th>字段数</th><th>说明</th></tr>
+    <tr><td>1</td><td>user</td><td><code>sys_user</code></td><td>User</td><td>7</td><td>用户主表</td></tr>
+    <tr><td>2</td><td>coffee</td><td><code>coffee_post</code></td><td>CoffeePost</td><td>13</td><td>帖子（含咖啡名/品牌/产地）</td></tr>
+    <tr><td>3</td><td>coffee</td><td><code>coffee_like</code></td><td>CoffeeLike</td><td>4</td><td>帖子点赞</td></tr>
+    <tr><td>4</td><td>coffee</td><td><code>coffee_favorite</code></td><td>CoffeeFavorite</td><td>4</td><td>帖子收藏</td></tr>
+    <tr><td>5</td><td>coffee</td><td><code>coffee_comment</code></td><td>CoffeeComment</td><td>6</td><td>评论</td></tr>
+    <tr><td>6</td><td>coffee</td><td><code>coffee_comment_like</code></td><td>CoffeeCommentLike</td><td>4</td><td>评论点赞</td></tr>
+    <tr><td>7</td><td>coffee</td><td><code>user_follow</code></td><td>UserFollow</td><td>4</td><td>关注关系</td></tr>
+    <tr><td>8</td><td>coffee</td><td><code>post_report</code></td><td>PostReport</td><td>6</td><td>帖子举报</td></tr>
+    <tr><td>9</td><td>shop</td><td><code>category</code></td><td>Category</td><td>4</td><td>商品分类</td></tr>
+    <tr><td>10</td><td>shop</td><td><code>coffee_product</code></td><td>CoffeeProduct</td><td>13</td><td>商品（产地/烘焙度/规格）</td></tr>
+    <tr><td>11</td><td>shop</td><td><code>cart_item</code></td><td>CartItem</td><td>5</td><td>购物车项</td></tr>
+    <tr><td>12</td><td>shop</td><td><code>coffee_order</code></td><td>CoffeeOrder</td><td>15</td><td>订单（含优惠券/物流）</td></tr>
+    <tr><td>13</td><td>shop</td><td><code>order_item</code></td><td>OrderItem</td><td>6</td><td>订单项（含快照）</td></tr>
+    <tr><td>14</td><td>shop</td><td><code>shipping_address</code></td><td>ShippingAddress</td><td>10</td><td>收货地址</td></tr>
+    <tr><td>15</td><td>shop</td><td><code>payment_record</code></td><td>PaymentRecord</td><td>7</td><td>支付记录</td></tr>
+    <tr><td>16</td><td>shop</td><td><code>logistics_record</code></td><td>LogisticsRecord</td><td>6</td><td>物流轨迹</td></tr>
+    <tr><td>17</td><td>shop</td><td><code>coupon</code></td><td>Coupon</td><td>11</td><td>优惠券（满减/折扣/秒杀）</td></tr>
+    <tr><td>18</td><td>shop</td><td><code>coupon_product</code></td><td>CouponProduct</td><td>3</td><td>券-商品关联（多对多）</td></tr>
+    <tr><td>19</td><td>shop</td><td><code>user_coupon</code></td><td>UserCoupon</td><td>5</td><td>用户领取记录</td></tr>
+    <tr><td>20</td><td>shop</td><td><code>seckill_event</code></td><td>SeckillEvent</td><td>8</td><td>秒杀事件溯源</td></tr>
+    <tr><td>21</td><td>notification</td><td><code>notification</code></td><td>Notification</td><td>9</td><td>通知</td></tr>
+    <tr><td>22</td><td>message</td><td><code>private_message</code></td><td>PrivateMessage</td><td>7</td><td>私信</td></tr>
+    <tr><td>23</td><td>ai</td><td><code>ai_conversation</code></td><td>AiConversation</td><td>6</td><td>AI 对话会话</td></tr>
+    <tr><td>--</td><td>shop</td><td><code>products</code> (ES)</td><td>EsProduct</td><td>8</td><td>ES 索引（IK 中文分词）</td></tr>
+    <tr><td>--</td><td>--</td><td><code>SPRING_AI_CHAT_MEMORY</code></td><td>--</td><td>--</td><td>Spring AI 自动建表</td></tr>
+  </table>
+
+  <!-- 核心业务流程 -->
+  <h2><span class="icon">⚡</span> 核心业务流程</h2>
+
+  <h3>秒杀抢购 <span class="tag tag-red">高并发</span> <span class="tag tag-purple">Redis Lua + MQ 异步 + 死信兜底</span></h3>
+  <div class="flow"><span class="dim">[1]</span> <span class="step">限流拦截器</span> RateLimitInterceptor (Lua 滑动窗口: 全局1s/100, 用户60s/5, IP 60s/10)
+<span class="dim">[2]</span> <span class="step">验证码校验</span> → Redis 60s TTL
+<span class="dim">[3]</span> <span class="step">秒杀令牌</span> UUID, Redis 60s TTL, 消费即删除
+<span class="dim">[4]</span> <span class="step">seckillBuy()</span> 核心逻辑:
+     ├─ 校验秒杀券 (type=3, status, 时间窗口)
+     ├─ <span class="ok">Redis DECREMENT 预扣库存</span> (seckill:stock:{couponId})
+     ├─ 防重: 查 user_coupon + DB 唯一索引兜底
+     ├─ 雪花算法生成订单号
+     ├─ 写 seckill_event 事件表 (状态 0=待发送)
+     ├─ 发 MQ → seckill.order.exchange
+     └─ 异常时 Redis INCREMENT 回滚库存
+<span class="dim">[5]</span> <span class="step">SeckillOrderConsumer</span> 异步消费:
+     ├─ Redis SETNX 幂等预检 (5min TTL)
+     ├─ 手动设置 SecurityContext (MQ 无 HTTP 上下文)
+     ├─ 调用 orderService.createOrder()
+     └─ 更新事件状态 2=已完成
+<span class="dim">[6]</span> 重试耗尽 → <span class="err">死信队列</span> seckill.order.dead.queue → 人工补偿</div>
+
+  <h3>支付与超时取消 <span class="tag tag-orange">RabbitMQ 延时队列</span></h3>
+  <div class="flow"><span class="dim">[1]</span> <span class="step">createPayment()</span> 校验订单 → 幂等检查 → 创建支付记录 → 发 15min 延时消息
+<span class="dim">[2]</span> 用户完成 Mock 支付 → <span class="step">handleCallback()</span> 幂等更新 → 订单 status=1
+<span class="dim">[3]</span> 15min 未支付 → RabbitMQ TTL 过期 → <span class="err">order.timeout.queue</span>
+<span class="dim">[4]</span> <span class="step">OrderTimeoutConsumer</span> → 查订单状态仍为 0 → 自动取消 + 回滚库存</div>
+
+  <h3>AI 对话 <span class="tag tag-purple">Spring AI + RAG + Function Calling</span></h3>
+  <div class="flow"><span class="dim">[1]</span> <span class="step">AiService.chat(message, chatId)</span>
+     ├─ 首次对话 → 创建 AiConversation (标题取前20字)
+     └─ 已有对话 → 更新 updatedAt
+<span class="dim">[2]</span> <span class="step">ChatClient</span> 调用 LLM (Qwen-Plus via DashScope):
+     ├─ MessageChatMemoryAdvisor → 按 chatId 恢复对话历史 (窗口20条, JDBC 持久化)
+     ├─ QuestionAnswerAdvisor → RAG 检索 (相似度>0.75, TopK=3, Redis 向量库)
+     └─ Function Calling → 自动调用 ProductTool / PostTool
+<span class="dim">[3]</span> 流式返回 <span class="ok">Flux&lt;String&gt;</span> → SSE 推送前端
+<span class="dim">[4]</span> 知识库上传 → TokenTextSplitter 切分 → Embedding → Redis 向量存储</div>
+
+  <h3>库存管理 <span class="tag tag-cyan">Redis Lua 原子操作</span></h3>
+  <div class="flow"><span class="dim">[启动]</span> @PostConstruct → MySQL 全量库存同步到 Redis (product:stock:{id})
+<span class="dim">[扣减]</span> <span class="step">stock.lua</span>: GET → 判断 ≥ qty → DECRBY → 返回 1 成功 / 0 不足
+<span class="dim">[同步]</span> Redis 扣减成功 → syncDeductToMySQL() 异步同步
+<span class="dim">[回滚]</span> <span class="step">stock_rollback.lua</span>: INCRBY 原子回滚
+<span class="dim">[管理]</span> updateStock() → MySQL + Redis 双写</div>
+
+  <h3>通知推送 <span class="tag tag-green">RabbitMQ + SSE</span></h3>
+  <div class="flow"><span class="dim">[触发]</span> 点赞/评论/关注 → <span class="step">RabbitNotificationService.send()</span> → 通知落库 + 发 MQ
+<span class="dim">[消费]</span> RabbitNotificationReceiver → 解析 "userId:type" → SSE 推送
+<span class="dim">[推送]</span> NotificationMessageReceiver → 遍历用户所有 SseEmitter → event("notification").data()
+<span class="dim">[清理]</span> @Scheduled(10min) → 心跳 ping → 清理死连接</div>
+
+  <!-- Lua 脚本 -->
+  <h2><span class="icon">📜</span> Lua 脚本 (3 个)</h2>
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-title"><span class="tag tag-cyan">stock.lua</span></div>
+      <div class="card-desc">原子扣减商品库存。读取→判断→写入三步原子执行，防超卖核心。返回 1=成功 / 0=不足。</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="tag tag-cyan">stock_rollback.lua</span></div>
+      <div class="card-desc">原子回滚库存。取消订单时 INCRBY 恢复 Redis 库存。</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="tag tag-cyan">rate_limit.lua</span></div>
+      <div class="card-desc">滑动窗口限流。基于 Redis ZSet + 时间戳 score，支持全局/用户/IP 三级限流。</div>
+    </div>
+  </div>
+
+  <!-- 技术亮点 -->
+  <h2><span class="icon">💡</span> 技术亮点</h2>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Redis Lua 原子扣库存</div>
+      <div class="card-desc">高并发下用 Lua 脚本保证"读取-判断-扣减"原子性，Redis 挡住并发压力，MySQL 最终一致。</div>
+    </div>
+    <div class="card">
+      <div class="card-title">RabbitMQ 死信 + 延时队列</div>
+      <div class="card-desc">秒杀失败走死信队列兜底补偿；订单超时用 TTL + DLX 实现 15 分钟自动取消。</div>
+    </div>
+    <div class="card">
+      <div class="card-title">事件溯源 (seckill_event)</div>
+      <div class="card-desc">每笔秒杀记录事件状态流转（0→1→2），支持失败追溯和人工补偿。</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Spring AI 全家桶</div>
+      <div class="card-desc">ChatMemory(JDBC持久化) + RAG(Redis向量库) + Function Calling(ES搜索) + 流式响应(Flux)。</div>
+    </div>
+    <div class="card">
+      <div class="card-title">SSE 长连接管理</div>
+      <div class="card-desc">ConcurrentHashMap 管理多标签页连接，定时心跳探测清理死连接，防内存泄漏。</div>
+    </div>
+    <div class="card">
+      <div class="card-title">订单快照设计</div>
+      <div class="card-desc">OrderItem 存储 productName + price 快照，商品改名/涨价不影响历史订单。</div>
+    </div>
+    <div class="card">
+      <div class="card-title">雪花算法订单号</div>
+      <div class="card-desc">Hutool Snowflake + 机器ID/数据中心ID配置，分布式唯一订单号。</div>
+    </div>
+    <div class="card">
+      <div class="card-title">三级限流防刷</div>
+      <div class="card-desc">Lua 滑动窗口实现全局/用户/IP 三级限流，秒杀场景防刷。</div>
+    </div>
+  </div>
+
+  <!-- 安全与质量观察 -->
+  <h2><span class="icon">⚠️</span> 安全与代码质量观察</h2>
+
+  <div class="warn-box">
+    <div class="warn-title">P0 - 敏感信息泄露（建议立即处理）</div>
+    <ul>
+      <li><strong>application.yaml 明文暴露 API Key</strong>：阿里云 DashScope 的 <code>sk-ws-...</code> API Key 直接写在配置文件中，若代码库公开将造成泄露。建议迁移到环境变量或密钥管理服务。</li>
+      <li><strong>数据库密码明文</strong>：MySQL 密码 <code>123456</code> 硬编码在配置中。</li>
+      <li><strong>JWT Secret 过弱</strong>：<code>abcdefghijklmnopqrstuvwxyz1234567890...</code> 是可预测的弱密钥。</li>
+      <li><strong>管理员密码明文</strong>：admin 密码 <code>admin123</code> 明文存储（配置注释中也提到了生产环境应改 BCrypt）。</li>
+    </ul>
+  </div>
+
+  <div class="warn-box">
+    <div class="warn-title">P1 - 权限配置问题</div>
+    <ul>
+      <li><strong><code>/api/shop/coupons/my</code> 权限过宽</strong>：SecurityConfig 中将该 GET 端点设为 <code>permitAll()</code>，但"我的优惠券"应需登录认证。未登录用户访问会因 SecurityContext 无 userId 而出错或返回空。</li>
+      <li><strong>商品管理接口缺乏管理员校验</strong>：<code>POST /api/shop/products</code>、<code>PUT /api/shop/products/{id}</code>、<code>DELETE</code> 等写操作仅要求登录（<code>authenticated()</code>），未校验 ADMIN 角色，普通用户也能增删改商品。</li>
+      <li><strong><code>POST /api/shop/orders/{id}/ship</code> 发货接口</strong>：注释标注"管理员"，但实际权限配置为普通登录即可调用。</li>
+    </ul>
+  </div>
+
+  <div class="warn-box">
+    <div class="warn-title">P2 - 代码规范与一致性</div>
+    <ul>
+      <li><strong>DTO 命名不统一</strong>：存在 <code>LoginFrom</code>、<code>CommentCreateFrom</code>（From）与 <code>RegisterForm</code>、<code>ProductForm</code>（Form）混用，建议统一为 <code>Form</code>。</li>
+      <li><strong>@Operation 注解未覆盖</strong>：Admin 系列 Controller、SeckillController、PaymentController、AiController 未添加 <code>@Operation</code> 注解，Swagger 文档不完整。</li>
+      <li><strong>AGENTS.md 文档过期</strong>：文档中模块描述缺少 admin 后台管理、秒杀、优惠券、支付、物流、库存等模块，与实际代码不符。</li>
+      <li><strong>SeckillController 缺少 SeckillForm</strong>：<code>/api/shop/seckill/buy</code> 引用了 <code>SeckillForm</code>，需确认该类是否存在。</li>
+    </ul>
+  </div>
+
+  <div class="info-box">
+    <div class="info-title">整体评价</div>
+    <p>这是一个功能完整、架构合理的咖啡社区后端项目。技术选型现代（Java 21 + Spring Boot 3.4 + Spring AI），业务覆盖面广（社区 + 电商 + AI），在高并发场景（秒杀/库存）的处理上运用了 Redis Lua + MQ 异步 + 死信兜底等业界标准方案，AI 模块的 RAG + Function Calling 集成也较为完整。主要改进方向集中在敏感信息管理和权限控制上。</p>
+  </div>
+
+</div>
+
+<div class="footer">
+  WorldCoffee 项目扫描报告 | 自动生成 | 2026-07-09
+</div>
+
+</body>
+</html>

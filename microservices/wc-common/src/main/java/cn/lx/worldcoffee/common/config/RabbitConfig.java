@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import java.util.HashMap;
 import java.util.Map;
 
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class RabbitConfig {
 
     // ─── 通知交换机 + 队列 ──────────────────────────
@@ -27,9 +27,9 @@ public class RabbitConfig {
     }
 
     @Bean
-    public Binding notificationBinding() {
-        return BindingBuilder.bind(notificationQueue())
-                .to(notificationExchange())
+    public Binding notificationBinding(Queue notificationQueue, TopicExchange notificationExchange) {
+        return BindingBuilder.bind(notificationQueue)
+                .to(notificationExchange)
                 .with(NOTIFICATION_ROUTING_KEY);
     }
 
@@ -49,9 +49,9 @@ public class RabbitConfig {
     }
 
     @Bean
-    public Binding chatBinding() {
-        return BindingBuilder.bind(chatQueue())
-                .to(chatExchange())
+    public Binding chatBinding(Queue chatQueue, TopicExchange chatExchange) {
+        return BindingBuilder.bind(chatQueue)
+                .to(chatExchange)
                 .with(CHAT_ROUTING_KEY_PREFIX + "*");
     }
 
@@ -75,9 +75,10 @@ public class RabbitConfig {
     }
 
     @Bean
-    public Binding seckillOrderDeadBinding() {
-        return BindingBuilder.bind(seckillOrderDeadQueue())
-                .to(seckillOrderDeadExchange())
+    public Binding seckillOrderDeadBinding(Queue seckillOrderDeadQueue,
+                                           TopicExchange seckillOrderDeadExchange) {
+        return BindingBuilder.bind(seckillOrderDeadQueue)
+                .to(seckillOrderDeadExchange)
                 .with(SECKILL_ORDER_DEAD_ROUTING_KEY);
     }
 
@@ -95,9 +96,9 @@ public class RabbitConfig {
     }
 
     @Bean
-    public Binding seckillOrderBinding() {
-        return BindingBuilder.bind(seckillOrderQueue())
-                .to(seckillOrderExchange())
+    public Binding seckillOrderBinding(Queue seckillOrderQueue, TopicExchange seckillOrderExchange) {
+        return BindingBuilder.bind(seckillOrderQueue)
+                .to(seckillOrderExchange)
                 .with(SECKILL_ORDER_ROUTING_KEY);
     }
 
@@ -128,16 +129,16 @@ public class RabbitConfig {
     }
 
     @Bean
-    public Binding orderTimeoutDelayBinding() {
-        return BindingBuilder.bind(orderTimeoutDelayQueue())
-                .to(orderTimeoutExchange())
+    public Binding orderTimeoutDelayBinding(Queue orderTimeoutDelayQueue, TopicExchange orderTimeoutExchange) {
+        return BindingBuilder.bind(orderTimeoutDelayQueue)
+                .to(orderTimeoutExchange)
                 .with(ORDER_TIMEOUT_DELAY_ROUTING_KEY);
     }
 
     @Bean
-    public Binding orderTimeoutBinding() {
-        return BindingBuilder.bind(orderTimeoutQueue())
-                .to(orderTimeoutExchange())
+    public Binding orderTimeoutBinding(Queue orderTimeoutQueue, TopicExchange orderTimeoutExchange) {
+        return BindingBuilder.bind(orderTimeoutQueue)
+                .to(orderTimeoutExchange)
                 .with(ORDER_TIMEOUT_ROUTING_KEY);
     }
 

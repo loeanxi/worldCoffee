@@ -23,7 +23,7 @@ export default {
           rose: '#E88B8B',
           sky: '#8DB4C7'
         },
-        // 语义化主题色（CSS 变量驱动，支持 light/dark 自动切换）
+        // 语义化主题色：由 CSS 变量驱动，支持 light/dark class 切换
         surface: {
           DEFAULT: 'var(--bg-primary)',
           soft: 'var(--bg-secondary)',

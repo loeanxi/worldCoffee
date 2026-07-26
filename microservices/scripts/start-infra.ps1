@@ -38,7 +38,7 @@ function Test-PortOpen([int]$port) {
 }
 
 if (-not (Test-CommandExists docker)) {
-  throw '未找到 docker 命令，请先启动 Docker Desktop。'
+  throw 'docker command not found. Start Docker Desktop first.'
 }
 
 $names = @(Get-ContainerNames)
@@ -48,10 +48,10 @@ foreach ($item in $expected) {
   if ($names -contains $item.Container) {
     $running = docker inspect -f '{{.State.Running}}' $item.Container 2>$null
     if ($running -ne 'true') {
-      Write-Host "启动已有容器 $($item.Container) ..."
+      Write-Host "Starting existing container $($item.Container) ..."
       docker start $item.Container | Out-Null
     } else {
-      Write-Host "容器 $($item.Container) 已运行"
+      Write-Host "Container $($item.Container) is already running."
     }
   } else {
     $missingServices.Add($item.Service)
@@ -60,15 +60,15 @@ foreach ($item in $expected) {
 
 if ($missingServices.Count -gt 0) {
   if (-not (Test-Path $composeFile)) {
-    throw "缺少 Docker Compose 文件：$composeFile"
+    throw "Docker Compose file not found: $composeFile"
   }
-  Write-Host "创建缺失的基础设施容器：$($missingServices -join ', ')"
+  Write-Host "Creating missing infra containers: $($missingServices -join ', ')"
   docker compose -f $composeFile up -d @($missingServices.ToArray())
 }
 
 if ($Wait) {
   foreach ($item in $expected) {
-    Write-Host "等待 $($item.Container) 端口 $($item.Port) ..."
+    Write-Host "Waiting for $($item.Container) port $($item.Port) ..."
     $ready = $false
     for ($i = 0; $i -lt 60; $i++) {
       if (Test-PortOpen $item.Port) {
@@ -78,9 +78,9 @@ if ($Wait) {
       Start-Sleep -Seconds 1
     }
     if (-not $ready) {
-      throw "$($item.Container) 端口 $($item.Port) 未就绪"
+      throw "$($item.Container) port $($item.Port) is not ready."
     }
   }
 }
 
-Write-Host '基础设施已启动。'
+Write-Host 'Infrastructure is ready.'

@@ -16,5 +16,8 @@ public class SysUser {
     private String phone;
     private Integer status;
     private String avatar;
+    private Integer points;         // 可用积分
+    private Integer totalPoints;    // 累计积分
+    private Integer memberLevel;    // 会员等级 1普通 2白银 3黄金 4铂金 5钻石
     private LocalDateTime createTime;
 }

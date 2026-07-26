@@ -16,10 +16,15 @@ public class PostDraft {
     private String title;
     private String content;
     private String images;
+    private String noteType;
+    private String videoUrl;
+    private String coverUrl;
+    private Integer videoDuration;
     private String coffeeName;
     private String coffeeBrand;
     private String location;
     private String topics;
+    private String productIds;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 }

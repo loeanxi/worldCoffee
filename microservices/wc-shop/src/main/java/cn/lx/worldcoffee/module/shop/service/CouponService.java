@@ -1,6 +1,7 @@
 package cn.lx.worldcoffee.module.shop.service;
 
 import cn.lx.worldcoffee.common.exception.ServiceException;
+import cn.lx.worldcoffee.common.security.SecurityUtils;
 import cn.lx.worldcoffee.module.shop.dao.CouponDao;
 import cn.lx.worldcoffee.module.shop.dao.CouponProductDao;
 import cn.lx.worldcoffee.module.shop.dao.UserCouponDao;
@@ -26,24 +27,9 @@ public class CouponService {
     private final UserCouponDao userCouponDao;
     private final CouponProductDao couponProductDao;
 
-    private Long getCurrentUserId() {
-        try {
-            //// 等价于（完整写法）
-            //Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            //var 是 Java 10 以后的关键字，意思是"让编译器自动推断类型"。
-            //var 不是"一种数据类型"——它只是个偷懒的写法，编译的时候 Java 会自动把 var 替换成真实的类型。
-            var auth = org.springframework.security.core.context.SecurityContextHolder
-                    .getContext().getAuthentication();
-            if (auth != null && auth.getPrincipal() != null) {
-                return Long.valueOf(auth.getPrincipal().toString());
-            }
-        } catch (Exception ignored) {}
-        return null;
-    }
-
     /** 可领取的优惠券列表 */
     public List<CouponVO> listAvailableCoupons() {
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         //SELECT * FROM coupon
         //WHERE status = 1                    -- 已上架的
         //  AND start_time <= NOW()           -- 已经开始的
@@ -92,7 +78,7 @@ public class CouponService {
 
     /** 用户领取优惠券 */
     public void claimCoupon(Long couponId) {
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         if (userId == null) throw new ServiceException("请先登录");
 
         Coupon coupon = couponDao.selectById(couponId);
@@ -123,7 +109,7 @@ public class CouponService {
 
     /** 我的优惠券 */
     public List<CouponVO> myCoupons() {
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         if (userId == null) throw new ServiceException("请先登录");
 
         List<UserCoupon> myList = userCouponDao.selectList(new LambdaQueryWrapper<UserCoupon>()
@@ -154,7 +140,7 @@ public class CouponService {
      * @return { discountAmount, couponName }
      */
     public Map<String, Object> applyCoupon(Long couponId, BigDecimal orderTotal) {
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         if (userId == null) throw new ServiceException("请先登录");
 
         // 1. 查 user_coupon 记录：必须属于当前用户 & 未使用

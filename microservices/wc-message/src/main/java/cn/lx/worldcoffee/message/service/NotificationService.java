@@ -1,5 +1,6 @@
 package cn.lx.worldcoffee.message.service;
 
+import cn.lx.worldcoffee.common.exception.ServiceException;
 import cn.lx.worldcoffee.common.security.SecurityUtils;
 import cn.lx.worldcoffee.message.dao.NotificationDao;
 import cn.lx.worldcoffee.message.domain.Notification;
@@ -89,7 +90,10 @@ public class NotificationService {
         );
     }
 
-    public void markAsRead(Long notificationId) {
+    public void markAsRead(Long notificationId, Long userId) {
+        Notification n = notificationDao.selectById(notificationId);
+        if (n == null) throw new ServiceException("通知不存在");
+        if (!n.getReceiverId().equals(userId)) throw new ServiceException("无权操作他人通知");
         notificationDao.update(null, new LambdaUpdateWrapper<Notification>()
                 .eq(Notification::getId, notificationId)
                 .set(Notification::getIsRead, 1));
@@ -102,7 +106,10 @@ public class NotificationService {
                 .set(Notification::getIsRead, 1));
     }
 
-    public void deleteNotification(Long notificationId) {
+    public void deleteNotification(Long notificationId, Long userId) {
+        Notification n = notificationDao.selectById(notificationId);
+        if (n == null) throw new ServiceException("通知不存在");
+        if (!n.getReceiverId().equals(userId)) throw new ServiceException("无权操作他人通知");
         notificationDao.deleteById(notificationId);
     }
 }

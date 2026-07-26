@@ -9,13 +9,13 @@ $script:failed = 0
 $script:warned = 0
 
 $services = @(
-  @{ Name = 'wc-gateway'; Port = 8080; Nacos = $true },
-  @{ Name = 'wc-shop'; Port = 8081; Nacos = $true },
-  @{ Name = 'wc-user'; Port = 8082; Nacos = $true },
-  @{ Name = 'wc-community'; Port = 8083; Nacos = $true },
-  @{ Name = 'wc-message'; Port = 8084; Nacos = $true },
-  @{ Name = 'wc-ai'; Port = 8085; Nacos = $true },
-  @{ Name = 'wc-admin'; Port = 8086; Nacos = $true }
+  @{ Name = 'wc-gateway'; Port = 8080 },
+  @{ Name = 'wc-shop'; Port = 8081 },
+  @{ Name = 'wc-user'; Port = 8082 },
+  @{ Name = 'wc-community'; Port = 8083 },
+  @{ Name = 'wc-message'; Port = 8084 },
+  @{ Name = 'wc-ai'; Port = 8085 },
+  @{ Name = 'wc-admin'; Port = 8086 }
 )
 
 $containers = @(
@@ -73,7 +73,7 @@ function Test-Http($method, $url, [int[]]$okStatuses = @(200)) {
   }
 }
 
-Write-Host '== Docker 基础设施 =='
+Write-Host '== Docker infrastructure =='
 foreach ($container in $containers) {
   $running = $false
   try {
@@ -82,19 +82,19 @@ foreach ($container in $containers) {
   if ($running -and (Test-PortOpen $container.Port)) {
     Write-Check PASS $container.Name "port=$($container.Port)"
   } elseif ($running) {
-    Write-Check WARN $container.Name "容器运行中，但端口 $($container.Port) 暂未打开"
+    Write-Check WARN $container.Name "container is running, port $($container.Port) is not open yet"
   } else {
-    Write-Check FAIL $container.Name '容器未运行'
+    Write-Check FAIL $container.Name 'container is not running'
   }
 }
 
 Write-Host ''
-Write-Host '== 服务端口与 Actuator 健康 =='
+Write-Host '== Service ports and actuator health =='
 foreach ($service in $services) {
   if (Test-PortOpen $service.Port) {
-    Write-Check PASS "$($service.Name) 端口" "port=$($service.Port)"
+    Write-Check PASS "$($service.Name) port" "port=$($service.Port)"
   } else {
-    Write-Check FAIL "$($service.Name) 端口" "port=$($service.Port)"
+    Write-Check FAIL "$($service.Name) port" "port=$($service.Port)"
     continue
   }
 
@@ -112,7 +112,7 @@ foreach ($service in $services) {
 }
 
 Write-Host ''
-Write-Host '== Nacos 注册状态 =='
+Write-Host '== Nacos registration =='
 foreach ($service in $services) {
   $urls = @(
     "$NacosBaseUrl/nacos/v1/ns/instance/list?serviceName=$($service.Name)",
@@ -131,12 +131,12 @@ foreach ($service in $services) {
   if ($ok) {
     Write-Check PASS "$($service.Name) registered"
   } else {
-    Write-Check WARN "$($service.Name) registered" 'Nacos 未查到实例或接口需要登录 token'
+    Write-Check WARN "$($service.Name) registered" 'Nacos returned no instance or requires console token'
   }
 }
 
 Write-Host ''
-Write-Host '== 网关路由自检 =='
+Write-Host '== Gateway route self-check =='
 try {
   $routes = Invoke-RestMethod -Uri "$GatewayBaseUrl/actuator/gateway/routes" -TimeoutSec 5
   $routeText = $routes | ConvertTo-Json -Depth 8
@@ -144,7 +144,7 @@ try {
     if ($routeText -like "*$routeId*") {
       Write-Check PASS "route $routeId"
     } else {
-      Write-Check FAIL "route $routeId" '未出现在 /actuator/gateway/routes'
+      Write-Check FAIL "route $routeId" 'missing from actuator route list'
     }
   }
 } catch {
@@ -168,15 +168,15 @@ foreach ($check in $routeChecks) {
 
 if (-not $SkipFrontend) {
   Write-Host ''
-  Write-Host '== 前端端口 =='
-  if (Test-PortOpen 3000) { Write-Check PASS 'frontend' 'http://localhost:3000' } else { Write-Check WARN 'frontend' '3000 未监听' }
-  if (Test-PortOpen 5173) { Write-Check PASS 'admin-frontend' 'http://localhost:5173' } else { Write-Check WARN 'admin-frontend' '5173 未监听' }
+  Write-Host '== Frontend ports =='
+  if (Test-PortOpen 3000) { Write-Check PASS 'frontend' 'http://localhost:3000' } else { Write-Check WARN 'frontend' '3000 is not listening' }
+  if (Test-PortOpen 5173) { Write-Check PASS 'admin-frontend' 'http://localhost:5173' } else { Write-Check WARN 'admin-frontend' '5173 is not listening' }
 }
 
 Write-Host ''
 if ($script:failed -gt 0) {
-  Write-Host "健康检查失败：$script:failed 项失败，$script:warned 项警告。" -ForegroundColor Red
+  Write-Host "Health check failed: $script:failed failed, $script:warned warnings." -ForegroundColor Red
   exit 1
 }
 
-Write-Host "健康检查通过：0 项失败，$script:warned 项警告。" -ForegroundColor Green
+Write-Host "Health check passed: 0 failed, $script:warned warnings." -ForegroundColor Green

@@ -14,6 +14,9 @@ public class CoffeeComment {
     private Long id;
     private Long userId;
     private Long postId;
+    private Long parentId;
+    private Long rootId;
+    private Long replyToUserId;
     private String content;
     private LocalDateTime createTime;
     private Integer likeCount;

@@ -8,9 +8,10 @@ spring:
     nacos:
       discovery:
         server-addr: 127.0.0.1:8848
+        username: nacos
+        password: nacos
       config:
-        server-addr: 127.0.0.1:8848
-        file-extension: yaml
+        enabled: false
   datasource:
     url: jdbc:mysql://localhost:3306/worldCoffee?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf8
     username: root
@@ -28,7 +29,20 @@ mybatis-plus:
     db-config:
       id-type: auto
 
-# 文件上传配置
-file:
-  upload:
-    path: D:\mycode\worldCoffee\worldCoffee\uploads\
+# MinIO 文件存储配置
+minio:
+  enabled: ${MINIO_ENABLED:true}
+  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+  public-endpoint: ${MINIO_PUBLIC_ENDPOINT:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  secret-key: ${MINIO_SECRET_KEY:minioadmin}
+  bucket: ${MINIO_BUCKET:worldcoffee}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always

@@ -16,6 +16,10 @@ public class CoffeePost {
     private String title;
     private String content;
     private String images;          // JSON string
+    private String noteType;
+    private String videoUrl;
+    private String coverUrl;
+    private Integer videoDuration;
     private String coffeeName;
     private String coffeeBrand;
     private String location;

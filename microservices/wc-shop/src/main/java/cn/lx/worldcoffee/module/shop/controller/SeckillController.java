@@ -2,6 +2,7 @@ package cn.lx.worldcoffee.module.shop.controller;
 
 import cn.lx.worldcoffee.common.exception.ServiceException;
 import cn.lx.worldcoffee.common.result.Result;
+import cn.lx.worldcoffee.common.security.SecurityUtils;
 import cn.lx.worldcoffee.module.shop.dao.CoffeeProductDao;
 import cn.lx.worldcoffee.module.shop.dao.CouponDao;
 import cn.lx.worldcoffee.module.shop.dao.CouponProductDao;
@@ -85,7 +86,7 @@ public class SeckillController {
     /** 秒杀抢购（领券 + 下单一步完成） */
     @PostMapping("/buy")
     public Result<SeckillOrderResultVO> buy(@RequestBody SeckillForm form) {
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         if (userId == null) throw new ServiceException("请先登录");
 
         // 1. 校验秒杀 token
@@ -125,7 +126,7 @@ public class SeckillController {
     //用户看到秒杀商品 点击以后获得验证码
     @GetMapping("/captcha")
     public Result<String> getCaptcha() {
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         if (userId == null) throw new ServiceException("请先登录");
         String captcha = seckillService.generateCaptcha(userId);
         return Result.success(captcha);
@@ -134,7 +135,7 @@ public class SeckillController {
     //用户输入验证码以后 请求秒杀token
     @PostMapping("/token")
     public Result<String> getToken(@RequestParam String captcha) {
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         if (userId == null) throw new ServiceException("请先登录");
         String token = seckillService.generateSeckillToken(userId, captcha);
         return Result.success(token);
@@ -143,7 +144,7 @@ public class SeckillController {
     //但是现在有一个问题 “查重->插入之间并没有并发的保护” 俩个人同时点就能通过检查 产生重复的订单
 //    @PostMapping("/buy")
 //    public Result<OrderVO> buy(@RequestBody SeckillForm form) {
-//        Long userId = getCurrentUserId();
+//        Long userId = SecurityUtils.getCurrentUserId();
 //        if (userId == null) throw new ServiceException("请先登录");
 //
 //        // 分布式锁 key：一个用户 + 一个活动 一把锁
@@ -211,14 +212,4 @@ public class SeckillController {
 //        }
 //    }
 
-    private Long getCurrentUserId() {
-        try {
-            var auth = org.springframework.security.core.context.SecurityContextHolder
-                    .getContext().getAuthentication();
-            if (auth != null && auth.getPrincipal() != null) {
-                return Long.valueOf(auth.getPrincipal().toString());
-            }
-        } catch (Exception ignored) {}
-        return null;
-    }
 }

@@ -6,10 +6,12 @@ export default defineConfig({
   server: {
     port: 3000,
     proxy: {
-      '/api': {
+      //接口代理
+           '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true
       },
+      //静态资源代理
       '/uploads': {
         target: 'http://localhost:8080',
         changeOrigin: true

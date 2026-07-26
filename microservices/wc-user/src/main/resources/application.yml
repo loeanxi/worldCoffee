@@ -8,9 +8,10 @@ spring:
     nacos:
       discovery:
         server-addr: 127.0.0.1:8848
+        username: nacos
+        password: nacos
       config:
-        server-addr: 127.0.0.1:8848
-        file-extension: yml
+        enabled: false
   datasource:
     url: jdbc:mysql://localhost:3306/worldCoffee?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
     username: root
@@ -35,9 +36,23 @@ jwt:
   secret: REDACTED_JWT_SECRET
   expire-time: 604800000  # 7天
 
-# 文件上传路径
-upload:
-  path: D:\mycode\worldCoffee\worldCoffee\uploads
+# MinIO 文件存储配置
+minio:
+  enabled: ${MINIO_ENABLED:true}
+  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+  public-endpoint: ${MINIO_PUBLIC_ENDPOINT:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  secret-key: ${MINIO_SECRET_KEY:minioadmin}
+  bucket: ${MINIO_BUCKET:worldcoffee}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
 
 # SMS配置
 sms:

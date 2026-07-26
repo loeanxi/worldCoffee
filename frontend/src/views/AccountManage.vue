@@ -1,8 +1,13 @@
 <template>
-  <div class="min-h-screen pb-8 bg-surface">
+  <ResponsivePageShell
+    title="账号管理"
+    subtitle="Profile & Security"
+    mobile-subtitle="资料与安全"
+    @back="router.back()"
+  >
     <!-- 顶部栏 -->
-    <header class="sticky top-0 z-30 bg-surface-elevated/90 backdrop-blur-xl border-b border-line/40">
-      <div class="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
+    <header v-if="false" class="account-header sticky top-0 z-30 bg-surface-elevated/90 backdrop-blur-xl border-b border-line/40">
+      <div class="account-header-inner mx-auto px-6 h-16 flex items-center justify-between">
         <button
           class="p-2 -ml-2 rounded-xl hover:bg-surface-soft transition-colors tap-scale"
           @click="router.back()"
@@ -15,10 +20,10 @@
       </div>
     </header>
 
-    <main class="max-w-2xl mx-auto px-4 pt-6 space-y-5 animate-fade-up">
+    <div class="account-main animate-fade-up">
       <!-- 头像卡片 -->
       <section
-        class="rounded-3xl p-6 bg-surface-elevated border border-line/40 cursor-pointer tap-scale"
+        class="account-avatar-card rounded-3xl p-6 bg-surface-elevated border border-line/40 cursor-pointer tap-scale"
         style="box-shadow: var(--shadow-card);"
         @click="triggerAvatarUpload"
       >
@@ -55,7 +60,7 @@
       </section>
 
       <!-- 个人信息卡片 -->
-      <section class="rounded-3xl p-6 bg-surface-elevated border border-line/40 space-y-5" style="box-shadow: var(--shadow-card);">
+      <section class="account-profile-card rounded-3xl p-6 bg-surface-elevated border border-line/40 space-y-5" style="box-shadow: var(--shadow-card);">
         <h3 class="text-[15px] font-semibold text-ink">个人资料</h3>
 
         <AppInput
@@ -92,7 +97,7 @@
       </section>
 
       <!-- 账号安全卡片 -->
-      <section class="rounded-3xl p-6 bg-surface-elevated border border-line/40 space-y-5" style="box-shadow: var(--shadow-card);">
+      <section class="account-security-card rounded-3xl p-6 bg-surface-elevated border border-line/40 space-y-5" style="box-shadow: var(--shadow-card);">
         <h3 class="text-[15px] font-semibold text-ink flex items-center gap-2">
           <Icon icon="material-symbols:lock-outline" class="w-5 h-5" style="color: var(--coffee-brown, #6D4C41);" />
           账号安全
@@ -159,7 +164,7 @@
           <span>{{ passwordLoading ? '修改中…' : '修改密码' }}</span>
         </button>
       </section>
-    </main>
+    </div>
 
     <!-- 隐藏的文件输入 -->
     <input
@@ -169,7 +174,7 @@
       class="hidden"
       @change="handleAvatarSelect"
     />
-  </div>
+  </ResponsivePageShell>
 </template>
 
 <script setup>
@@ -179,6 +184,7 @@ import { Icon } from '@iconify/vue'
 import { userApi, getApiError, normalizeUrl } from '../api'
 import { useAuth } from '../composables/useAuth'
 import AppInput from '../components/AppInput.vue'
+import ResponsivePageShell from '../layouts/ResponsivePageShell.vue'
 
 const router = useRouter()
 const toast = inject('toast')
@@ -442,3 +448,89 @@ async function fetchUser() {
 }
 fetchUser()
 </script>
+
+<style scoped>
+.account-page {
+  background:
+    radial-gradient(circle at 10% 0%, rgba(166, 106, 67, .16), transparent 28%),
+    radial-gradient(circle at 92% 14%, rgba(215, 204, 200, .22), transparent 30%),
+    linear-gradient(180deg, #fbf7f2 0%, var(--bg-primary) 56%);
+}
+.account-header {
+  box-shadow: 0 10px 28px rgba(62, 39, 35, .055);
+}
+.account-header-inner,
+.account-main {
+  width: min(1120px, 100%);
+}
+.account-header h1 {
+  font-size: 17px;
+  font-weight: 950;
+  letter-spacing: -.03em;
+}
+.account-main {
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  grid-template-areas:
+    "avatar profile"
+    "avatar security";
+  gap: 22px;
+  align-items: start;
+}
+.account-avatar-card {
+  grid-area: avatar;
+  position: sticky;
+  top: 88px;
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+}
+.account-profile-card {
+  grid-area: profile;
+}
+.account-security-card {
+  grid-area: security;
+}
+.account-avatar-card,
+.account-profile-card,
+.account-security-card {
+  background: color-mix(in srgb, var(--bg-elevated) 88%, transparent) !important;
+  border-color: color-mix(in srgb, var(--border) 70%, transparent) !important;
+  box-shadow: 0 16px 44px rgba(62, 39, 35, .07) !important;
+  backdrop-filter: blur(14px);
+}
+.account-avatar-card :deep(.flex.items-center.gap-4) {
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.account-avatar-card :deep(.w-\[72px\]) {
+  width: 112px;
+  height: 112px;
+  border-radius: 34px;
+}
+.account-profile-card h3,
+.account-security-card h3 {
+  font-size: 18px;
+  font-weight: 950;
+}
+@media (max-width: 900px) {
+  .account-header-inner,
+  .account-main {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+  .account-main {
+    display: block;
+  }
+  .account-avatar-card {
+    position: static;
+    min-height: auto;
+    margin-bottom: 16px;
+  }
+  .account-security-card {
+    margin-top: 16px;
+  }
+}
+</style>

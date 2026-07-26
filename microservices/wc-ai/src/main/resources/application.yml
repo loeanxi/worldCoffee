@@ -4,13 +4,16 @@ server:
 spring:
   application:
     name: wc-ai
+  main:
+    web-application-type: servlet
   cloud:
     nacos:
       discovery:
         server-addr: 127.0.0.1:8848
+        username: nacos
+        password: nacos
       config:
-        server-addr: 127.0.0.1:8848
-        file-extension: yaml
+        enabled: false
   datasource:
     url: jdbc:mysql://localhost:3306/worldCoffee?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: root
@@ -34,3 +37,12 @@ mybatis-plus:
   global-config:
     db-config:
       id-type: auto
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always

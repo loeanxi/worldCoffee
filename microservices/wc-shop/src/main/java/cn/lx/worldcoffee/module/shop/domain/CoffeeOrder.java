@@ -32,4 +32,7 @@ public class CoffeeOrder {
     private String trackingNo;      // 快递单号
     private LocalDateTime shippedTime;   // 发货时间
     private LocalDateTime deliveredTime; // 收货时间
+
+    // 退款相关
+    private Integer refundStatus;    // 退款状态 0无 1退款中 2已退款
 }

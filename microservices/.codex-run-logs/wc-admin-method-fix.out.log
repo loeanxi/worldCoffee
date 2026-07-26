@@ -68,3 +68,8 @@
 2026-07-14T03:00:19.053+08:00  INFO 41292 --- [wc-admin] [           main] c.a.c.n.registry.NacosServiceRegistry    : nacos registry, DEFAULT_GROUP wc-admin 192.168.88.1:8086 register finished
 2026-07-14T03:00:20.066+08:00  INFO 41292 --- [wc-admin] [           main] o.s.cloud.commons.util.InetUtils         : Cannot determine local hostname
 2026-07-14T03:00:20.079+08:00  INFO 41292 --- [wc-admin] [           main] c.lx.worldcoffee.admin.AdminApplication  : Started AdminApplication in 12.583 seconds (process running for 13.298)
+2026-07-14T03:00:47.106+08:00  INFO 41292 --- [wc-admin] [nio-8086-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-07-14T03:00:47.106+08:00  INFO 41292 --- [wc-admin] [nio-8086-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-07-14T03:00:47.108+08:00  INFO 41292 --- [wc-admin] [nio-8086-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 2 ms
+2026-07-14T03:00:47.318+08:00  INFO 41292 --- [wc-admin] [nio-8086-exec-2] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-07-14T03:00:47.332+08:00  INFO 41292 --- [wc-admin] [nio-8086-exec-2] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.

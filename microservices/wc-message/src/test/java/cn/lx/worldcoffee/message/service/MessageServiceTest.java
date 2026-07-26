@@ -72,7 +72,7 @@ class MessageServiceTest {
                     .isInstanceOf(ServiceException.class)
                     .hasMessage("不能给自己发消息");
 
-            verify(messageDao, never()).insert(any());
+            verify(messageDao, never()).insert(any(PrivateMessage.class));
             verify(rabbitTemplate, never()).convertAndSend(any(), any(), (Object) any());
         }
     }

@@ -1,25 +1,25 @@
 <template>
   <!-- 移动端底部导航 -->
-  <nav class="lg:hidden fixed bottom-0 inset-x-0 z-50">
-    <div class="mx-auto max-w-3xl px-2 pb-[max(env(safe-area-inset-bottom,0px),8px)]">
-      <div class="flex items-center justify-around gap-1 py-2 bg-surface-elevated/90 backdrop-blur-2xl rounded-3xl shadow-[0_-4px_24px_rgba(62,39,35,0.08),0_1px_2px_rgba(62,39,35,0.04)] border border-line/60">
+  <nav class="lg:hidden fixed bottom-0 inset-x-0 z-50 pointer-events-none">
+    <div class="mx-auto max-w-3xl px-0 pb-0">
+      <div class="pointer-events-auto flex items-center justify-around gap-1 pt-1 pb-[max(env(safe-area-inset-bottom,0px),7px)] bg-surface-elevated/94 backdrop-blur-2xl border-t border-line/70">
         <router-link
           v-for="item in tabs"
           :key="item.path"
           :to="item.path"
           :class="[
-            'relative flex flex-col items-center justify-center gap-0.5 py-1.5 px-3 rounded-2xl text-[10.5px] font-medium transition-all tap-scale',
+            'bottom-nav-item relative flex items-center justify-center w-12 h-10 rounded-[16px] transition-all tap-scale',
             isActive(item.path)
-              ? 'text-ink bg-surface-soft shadow-[0_1px_2px_rgba(62,39,35,0.04),0_2px_8px_rgba(62,39,35,0.06)]'
-              : 'text-ink-muted hover:text-ink hover:bg-surface-soft/60'
+              ? 'is-active'
+              : 'text-ink-muted hover:text-ink hover:bg-surface-soft/70'
           ]"
           :aria-label="item.label"
+          :title="item.label"
         >
-          <Icon :icon="isActive(item.path) ? item.activeIcon : item.icon" class="w-6 h-6" />
-          <span>{{ item.label }}</span>
+          <Icon :icon="isActive(item.path) ? item.activeIcon : item.icon" class="w-[23px] h-[23px]" />
           <span
             v-if="item.badge && item.badge > 0"
-            class="absolute top-0 right-1.5 min-w-[16px] h-4 px-1 text-[9.5px] font-bold text-white rounded-full bg-[#EF4444] flex items-center justify-center shadow-[0_1px_3px_rgba(62,39,35,0.2)]"
+            class="absolute top-1 right-1 min-w-[15px] h-[15px] px-1 text-[9px] font-bold text-white rounded-full bg-[#EF4444] flex items-center justify-center shadow-[0_1px_3px_rgba(62,39,35,0.2)]"
           >
             {{ item.badge > 99 ? '99+' : item.badge }}
           </span>
@@ -29,13 +29,16 @@
   </nav>
 
   <!-- 桌面端 / 平板侧边栏 (md breakpoint) -->
-  <aside class="hidden md:flex flex-col w-[240px] shrink-0 sticky top-0 h-screen py-5 px-3 border-r border-line/60 bg-surface-elevated/90 backdrop-blur-2xl z-40">
+  <aside
+    v-if="showDesktopAside"
+    class="wc-desktop-sidebar hidden lg:flex fixed inset-y-0 left-0 flex-col w-[224px] py-6 px-4 z-40"
+  >
     <!-- Logo -->
     <router-link
       to="/"
-      class="flex items-center gap-3 px-3 mb-6 hover:opacity-90 transition-opacity"
+      class="wc-sidebar-brand flex items-center gap-3 px-3 mb-6 transition-opacity"
     >
-      <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#6D4C41] to-[#3E2723] flex items-center justify-center shadow-[0_4px_14px_rgba(109,76,65,0.22)]">
+      <div class="wc-sidebar-logo w-10 h-10 rounded-xl flex items-center justify-center">
         <svg viewBox="0 0 40 40" class="w-6 h-6 text-white" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M8 14 Q8 12 10 12 L24 12 Q26 12 26 14 L25 28 Q25 32 21 32 L13 32 Q9 32 9 28 Z" fill="currentColor" opacity="0.95"/>
           <ellipse cx="17" cy="14" rx="8" ry="2" fill="#3E2723"/>
@@ -43,8 +46,8 @@
         </svg>
       </div>
       <div>
-        <div class="text-[15px] font-bold text-ink leading-tight">WorldCoffee</div>
-        <div class="text-[11px] text-ink-muted mt-0.5">咖啡 · 生活</div>
+        <div class="text-[15px] font-black text-ink leading-tight tracking-tight">WorldCoffee</div>
+        <div class="text-[10.5px] text-ink-muted mt-0.5 font-bold uppercase tracking-[0.08em]">coffee notes</div>
       </div>
     </router-link>
 
@@ -56,10 +59,10 @@
         :to="item.path"
         :aria-label="item.label"
         :class="[
-          'flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-[13.5px] font-medium transition-all tap-scale',
+          'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[13.5px] font-medium transition-all tap-scale',
           isActive(item.path)
-            ? 'text-ink bg-surface-soft shadow-[0_1px_2px_rgba(62,39,35,0.04),0_2px_8px_rgba(62,39,35,0.06)]'
-            : 'text-ink-muted hover:bg-surface-soft/60 hover:text-ink'
+            ? 'wc-sidebar-link-active text-ink'
+            : 'text-ink-muted hover:text-ink'
         ]"
       >
         <Icon :icon="isActive(item.path) ? item.activeIcon : item.icon" class="w-5 h-5 shrink-0" />
@@ -75,7 +78,7 @@
 
     <!-- 底部用户信息 -->
     <div v-if="isLoggedIn" class="mt-auto pt-4">
-      <div class="flex items-center gap-3 p-3 rounded-2xl bg-surface-soft shadow-[0_1px_2px_rgba(62,39,35,0.04),0_2px_8px_rgba(62,39,35,0.05)] cursor-pointer tap-scale">
+      <div class="wc-sidebar-user flex items-center gap-3 p-3 rounded-2xl cursor-pointer tap-scale">
         <div class="w-9 h-9 rounded-2xl overflow-hidden avatar-gradient-light flex items-center justify-center text-white text-sm font-semibold shrink-0">
           <img v-if="userAvatar" :src="userAvatar" class="w-full h-full object-cover" @error="onAvatarError" />
           <span v-else>{{ userNameInitial }}</span>
@@ -105,6 +108,8 @@ const route = useRoute()
 const { isLoggedIn, user, avatar: authAvatar } = useAuth()
 
 const activePath = computed(() => route.path)
+const noDesktopAsideRoutes = ['Home', 'CreatePost', 'Messages', 'Notifications', 'Me', 'Shop']
+const showDesktopAside = computed(() => !noDesktopAsideRoutes.includes(route.name))
 
 function isActive(path) {
   if (activePath.value === path) return true
@@ -149,3 +154,51 @@ const sideNavItems = computed(() => {
   return items
 })
 </script>
+
+<style scoped>
+.wc-desktop-sidebar {
+  background:
+    radial-gradient(circle at 12% 0%, rgba(238, 194, 123, .16), transparent 34%),
+    color-mix(in srgb, var(--bg-elevated) 86%, transparent);
+  border-right: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+  box-shadow: 10px 0 30px rgba(62, 39, 35, .045);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+.wc-sidebar-brand {
+  border-radius: 20px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.wc-sidebar-brand:hover {
+  background: color-mix(in srgb, var(--accent-cream) 42%, transparent);
+}
+.wc-sidebar-logo {
+  color: #FFF8E1;
+  background: linear-gradient(135deg, #A66A43, #3E2723);
+  box-shadow: 0 10px 22px rgba(109, 76, 65, .22);
+}
+nav a {
+  border: 1px solid transparent;
+}
+nav a:hover {
+  background: color-mix(in srgb, var(--accent-cream) 42%, transparent);
+  border-color: color-mix(in srgb, var(--border) 42%, transparent);
+}
+.wc-sidebar-link-active {
+  background: linear-gradient(135deg, rgba(238, 194, 123, .30), rgba(245, 230, 211, .72));
+  border-color: rgba(109, 76, 65, .10);
+  font-weight: 800;
+}
+.wc-sidebar-user {
+  background: color-mix(in srgb, var(--bg-secondary) 68%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 64%, transparent);
+  box-shadow: 0 10px 24px rgba(62, 39, 35, .055);
+}
+.wc-sidebar-user:hover {
+  background: color-mix(in srgb, var(--accent-cream) 48%, transparent);
+}
+:root.dark .wc-sidebar-link-active {
+  background: rgba(245, 230, 211, .10);
+}
+</style>

@@ -93,8 +93,31 @@ public class OrderService {
     @Transactional(rollbackFor = Exception.class)
     public OrderVO createOrder(CreateOrderFrom from) {
         Long userId = SecurityUtils.requireUserId();
+        return createOrderInternal(from, userId);
+    }
 
-        // 1. 查购物车
+    /**
+     * 普通下单：购物车 → 订单（内部方法，接受显式userId）。
+     *
+     * 流程：
+     *   1. 查购物车（只查当前用户的）
+     *   2. 批量查商品，校验都存在且上架、Redis 库存够
+     *   3. 生成订单号（雪花算法）
+     *   4. Redis Lua 原子扣库存（高并发不超卖）
+     *   5. 插入订单表（MySQL）
+     *   6. 批量插入订单明细（快照商品名+价格，防止商品改名后历史订单对不上）
+     *   7. MySQL 同步扣库存（最终一致性）
+     *   8. 清空购物车
+     *
+     * 事务说明：
+     *   @Transactional 管 MySQL 操作（步骤 5/6/7/8），管不了 Redis。
+     *   所以 Redis 扣完之后如果 MySQL 失败，在 catch 里手动回滚 Redis 库存。
+     *
+     * @param from 包含收货地址、备注、优惠券ID
+     * @param userId 用户ID（HTTP请求从SecurityUtils获取，MQ消费者从消息体传入）
+     * @return 创建好的订单 VO
+     */
+    private OrderVO createOrderInternal(CreateOrderFrom from, Long userId) {
         List<CartItem> cartItems = cartItemDao.selectList(
                 new LambdaQueryWrapper<CartItem>().eq(CartItem::getUserId, userId));
         if (cartItems.isEmpty()) throw new ServiceException("购物车是空的");
@@ -244,6 +267,23 @@ public class OrderService {
 
         if (seckillPrice != null) {
             // 覆盖订单总金额
+            CoffeeOrder coffeeOrder = orderDao.selectById(order.getId());
+            coffeeOrder.setTotalAmount(seckillPrice);
+            orderDao.updateById(coffeeOrder);
+            order.setTotalAmount(seckillPrice);
+        }
+        return order;
+    }
+
+    /**
+     * MQ消费者专用下单：无HTTP上下文，userId从消息体传入。
+     * 秒杀消费者（SeckillOrderConsumer）调用此方法，不经过 SecurityUtils。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public OrderVO createOrderForUser(CreateOrderFrom from, Long userId, BigDecimal seckillPrice) {
+        OrderVO order = createOrderInternal(from, userId);
+
+        if (seckillPrice != null) {
             CoffeeOrder coffeeOrder = orderDao.selectById(order.getId());
             coffeeOrder.setTotalAmount(seckillPrice);
             orderDao.updateById(coffeeOrder);

@@ -3,6 +3,128 @@
 > vite --host 127.0.0.1 --port 3000
 
 
-  [32m[1mVITE[22m v5.4.21[39m  [2mready in [0m[1m408[22m[2m[0m ms[22m
+  [32m[1mVITE[22m v5.4.21[39m  [2mready in [0m[1m717[22m[2m[0m ms[22m
 
   [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m3000[22m/[39m
+[2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
+[2m04:20:13[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/CreatePost.vue, /src/style.css[22m
+[2m04:20:25[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/CreatePost.vue, /src/style.css[22m
+[2m04:21:28[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/CreatePost.vue?vue&type=style&index=0&scoped=d39c67b4&lang.css[22m
+[2m04:21:46[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/BottomNav.vue, /src/style.css[22m
+[2m04:22:07[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/BottomNav.vue, /src/style.css[22m
+[2m04:29:43[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.vue, /src/style.css[22m
+[2m04:29:52[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/BottomNav.vue, /src/style.css[22m
+[2m04:34:40[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Messages.vue, /src/style.css[22m
+[2m04:35:28[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Notifications.vue, /src/style.css[22m
+[2m04:36:32[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Notifications.vue, /src/style.css[22m
+[2m04:43:50[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.vue, /src/style.css[22m
+[2m04:44:06[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/BottomNav.vue, /src/style.css[22m
+[2m04:45:15[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Me.vue, /src/style.css[22m
+[2m04:45:40[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Shop.vue, /src/style.css[22m
+[2m04:45:58[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Cart.vue, /src/style.css[22m
+[2m04:46:20[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Orders.vue, /src/style.css[22m
+[2m04:46:51[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/style.css[22m
+[2m04:47:24[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Me.vue?vue&type=style&index=0&scoped=584b7d70&lang.css[22m
+[2m04:52:33[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Cart.vue, /src/style.css[22m
+[2m04:52:33[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Me.vue, /src/style.css[22m
+[2m04:52:33[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Orders.vue, /src/style.css[22m
+[2m04:52:33[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Shop.vue, /src/style.css[22m
+[2m05:13:40[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Me.vue, /src/style.css, /src/views/Me.vue?vue&type=style&index=0&scoped=584b7d70&lang.css[22m
+[2m05:16:37[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Cart.vue, /src/style.css[22m
+[2m05:17:26[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Cart.vue?vue&type=style&index=0&scoped=7d4f60e4&lang.css[22m
+[2m05:18:21[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Orders.vue, /src/style.css[22m
+[2m05:19:25[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Orders.vue?vue&type=style&index=0&scoped=2dfe4d12&lang.css[22m
+[2m05:28:51[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/CreatePost.vue, /src/style.css[22m
+[2m05:29:13[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/CreatePost.vue?vue&type=style&index=0&scoped=d39c67b4&lang.css[22m
+[2m05:29:35[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Home.vue, /src/style.css[22m
+[2m05:29:52[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Home.vue, /src/style.css[22m
+[2m05:30:08[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Home.vue, /src/style.css[22m
+[2m05:30:24[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Home.vue, /src/style.css[22m
+[2m05:30:52[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Home.vue, /src/style.css[22m
+[2m05:31:52[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Home.vue, /src/style.css, /src/views/Home.vue?vue&type=style&index=0&scoped=2dc54a20&lang.css[22m
+[2m05:32:13[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/style.css[22m
+[2m05:53:30[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Home.vue, /src/style.css[22m
+[2m05:55:30[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Me.vue, /src/style.css[22m
+[2m05:55:49[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Me.vue, /src/style.css[22m
+[2m05:56:18[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Me.vue, /src/style.css[22m
+[2m05:56:30[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Me.vue, /src/style.css[22m
+[2m05:56:52[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Me.vue, /src/style.css[22m
+[2m05:57:06[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Me.vue, /src/style.css[22m
+[2m05:57:27[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Me.vue?vue&type=style&index=0&scoped=584b7d70&lang.css[22m
+[2m05:57:42[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Me.vue?vue&type=style&index=0&scoped=584b7d70&lang.css[22m
+[2m06:01:22[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/AIChat.vue, /src/style.css, /src/views/AIChat.vue?vue&type=style&index=0&scoped=db8eed24&lang.css[22m
+[2m06:02:23[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Settings.vue, /src/style.css[22m
+[2m06:09:50[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.vue, /src/style.css[22m
+[2m06:11:05[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Settings.vue, /src/style.css, /src/views/Settings.vue?vue&type=style&index=0&scoped=817427b0&lang.css[22m
+[2m06:22:29[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Shop.vue, /src/style.css[22m
+[2m06:22:29[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Cart.vue, /src/style.css[22m
+[2m06:22:29[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Me.vue, /src/style.css[22m
+[2m06:22:29[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Messages.vue, /src/style.css[22m
+[2m06:22:29[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Notifications.vue, /src/style.css[22m
+[2m06:22:29[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Orders.vue, /src/style.css[22m
+[2m06:22:29[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/AIChat.vue, /src/style.css[22m
+[2m06:29:10[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/views/cart/CartMobile.vue[22m
+[2m06:29:10[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/views/cart/CartWeb.vue[22m
+[2m06:29:10[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/views/orders/OrdersMobile.vue[22m
+[2m06:29:10[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/views/orders/OrdersWeb.vue[22m
+[2m06:30:04[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/style.css, /src/views/Me.vue[22m
+[2m06:30:04[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/style.css, /src/views/Me.vue[22m
+[2m06:35:47[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/style.css, /src/views/Messages.vue[22m
+[2m06:35:47[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/style.css, /src/views/Messages.vue[22m
+[2m06:36:27[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/style.css, /src/views/Notifications.vue[22m
+[2m06:36:27[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/style.css, /src/views/Notifications.vue[22m
+[2m06:37:01[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/views/cart/CartWeb.vue[22m
+[2m06:37:01[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/views/cart/CartMobile.vue[22m
+[2m06:37:51[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/views/cart/CartWeb.vue[22m
+[2m06:37:51[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/views/cart/CartMobile.vue[22m
+[2m06:38:43[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/views/cart/CartWeb.vue[22m
+[2m06:38:43[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/views/cart/CartMobile.vue[22m
+[2m06:40:15[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/views/cart/CartWeb.vue[22m
+[2m06:40:15[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/views/cart/CartMobile.vue[22m
+[2m06:41:13[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/views/cart/CartWeb.vue[22m
+[2m06:41:13[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/views/cart/CartMobile.vue[22m
+[2m06:44:04[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/views/orders/OrdersWeb.vue[22m
+[2m06:44:04[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/views/orders/OrdersMobile.vue[22m
+[2m06:45:42[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/views/orders/OrdersWeb.vue[22m
+[2m06:45:43[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/views/orders/OrdersMobile.vue[22m
+[2m06:54:50[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/style.css, /src/views/AIChat.vue[22m
+[2m06:54:50[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/style.css, /src/views/AIChat.vue[22m
+[2m06:55:44[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/views/cart/CartWeb.vue[22m
+[2m06:55:44[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/views/cart/CartMobile.vue[22m
+[2m06:56:26[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/views/cart/CartWeb.vue[22m
+[2m06:56:26[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/views/cart/CartMobile.vue[22m
+[2m07:03:35[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/messages/MessagesMobile.vue, /src/style.css[22m
+[2m07:03:35[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.vue, /src/style.css[22m
+[2m07:04:27[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/messages/MessagesWeb.vue, /src/style.css[22m
+[2m07:19:55[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/shop/ShopMobile.vue, /src/style.css, /src/views/shop/ShopMobile.vue?vue&type=style&index=0&scoped=559d5ea2&lang.css[22m
+[2m07:19:55[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/shop/ShopWeb.vue, /src/style.css, /src/views/shop/ShopWeb.vue?vue&type=style&index=0&scoped=a7e7e14e&lang.css[22m
+[2m07:19:55[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/views/cart/CartWeb.vue[22m
+[2m07:19:55[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/views/cart/CartMobile.vue[22m
+[2m07:19:55[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/views/orders/OrdersWeb.vue[22m
+[2m07:19:55[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/views/orders/OrdersMobile.vue[22m
+[2m07:19:55[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/notifications/NotificationsWeb.vue, /src/style.css[22m
+[2m07:19:55[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/notifications/NotificationsMobile.vue, /src/style.css[22m
+[2m07:19:55[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/ai-chat/AIChatWeb.vue, /src/style.css, /src/views/ai-chat/AIChatWeb.vue?vue&type=style&index=0&scoped=849d5d1a&lang.css[22m
+[2m07:19:55[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/ai-chat/AIChatMobile.vue, /src/style.css, /src/views/ai-chat/AIChatMobile.vue?vue&type=style&index=0&scoped=2fdd96b5&lang.css[22m
+[2m07:22:16[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/me/MeMobile.vue, /src/style.css[22m
+[2m07:22:16[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/me/MeWeb.vue, /src/style.css[22m
+[2m07:29:05[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/me/MeWeb.vue, /src/style.css[22m
+[2m07:29:05[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/me/MeMobile.vue, /src/style.css[22m
+[2m07:36:04[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/api/index.js[22m
+[2m07:50:55[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/style.css[22m
+[2m07:51:37[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/style.css[22m
+[2m07:53:26[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mtailwind.config.js[22m
+[2m07:54:10[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mtailwind.config.js[22m
+[2m07:56:35[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Home.vue, /src/style.css[22m
+[2m07:57:51[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Home.vue, /src/style.css, /src/views/Home.vue?vue&type=style&index=0&scoped=2dc54a20&lang.css[22m
+[2m07:58:59[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Home.vue, /src/style.css[22m
+[2m07:59:21[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Home.vue, /src/style.css[22m
+[2m07:59:42[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Home.vue, /src/style.css[22m
+[2m08:00:53[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Home.vue, /src/style.css[22m
+[2m08:01:17[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Home.vue, /src/style.css[22m
+[2m08:02:52[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Home.vue, /src/style.css[22m
+[2m08:04:30[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Home.vue, /src/style.css[22m
+[2m08:05:30[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/style.css[22m
+[2m08:07:08[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/style.css[22m
+[2m08:08:17[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/style.css[22m
+[2m08:09:10[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/Home.vue, /src/style.css[22m

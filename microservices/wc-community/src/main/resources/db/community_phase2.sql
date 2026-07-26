@@ -186,5 +186,24 @@ PREPARE add_draft_product_ids_stmt FROM @add_draft_product_ids_sql;
 EXECUTE add_draft_product_ids_stmt;
 DEALLOCATE PREPARE add_draft_product_ids_stmt;
 
-CREATE INDEX idx_coffee_comment_parent ON coffee_comment (post_id, parent_id, create_time);
-CREATE INDEX idx_coffee_comment_root ON coffee_comment (root_id, create_time);
+SET @add_comment_parent_idx_sql = (
+  SELECT IF(COUNT(*) = 0,
+    'CREATE INDEX idx_coffee_comment_parent ON coffee_comment (post_id, parent_id, create_time)',
+    'SELECT 1')
+  FROM INFORMATION_SCHEMA.STATISTICS
+  WHERE TABLE_SCHEMA = @schema_name AND TABLE_NAME = 'coffee_comment' AND INDEX_NAME = 'idx_coffee_comment_parent'
+);
+PREPARE add_comment_parent_idx_stmt FROM @add_comment_parent_idx_sql;
+EXECUTE add_comment_parent_idx_stmt;
+DEALLOCATE PREPARE add_comment_parent_idx_stmt;
+
+SET @add_comment_root_idx_sql = (
+  SELECT IF(COUNT(*) = 0,
+    'CREATE INDEX idx_coffee_comment_root ON coffee_comment (root_id, create_time)',
+    'SELECT 1')
+  FROM INFORMATION_SCHEMA.STATISTICS
+  WHERE TABLE_SCHEMA = @schema_name AND TABLE_NAME = 'coffee_comment' AND INDEX_NAME = 'idx_coffee_comment_root'
+);
+PREPARE add_comment_root_idx_stmt FROM @add_comment_root_idx_sql;
+EXECUTE add_comment_root_idx_stmt;
+DEALLOCATE PREPARE add_comment_root_idx_stmt;

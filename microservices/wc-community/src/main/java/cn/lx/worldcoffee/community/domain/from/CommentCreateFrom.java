@@ -9,4 +9,6 @@ public class CommentCreateFrom {
     @NotBlank(message = "评论不能为空")
     @Length(max = 500, message = "评论最多500字")
     private String content;
+    private Long parentId;
+    private Long replyToUserId;
 }

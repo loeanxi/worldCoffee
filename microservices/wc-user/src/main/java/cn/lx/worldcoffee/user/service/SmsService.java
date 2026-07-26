@@ -14,12 +14,13 @@ public class SmsService {
     private final StringRedisTemplate redisTemplate;
 
     /** 发送短信验证码 */
-    public void sendSmsCode(String phone) {
+    public String sendSmsCode(String phone) {
         String code = RandomUtil.randomNumbers(6);
         // 存 Redis，5分钟过期
         redisTemplate.opsForValue().set("sms:code:" + phone, code, 5, TimeUnit.MINUTES);
         // TODO: 实际调用短信服务商 API（阿里云/腾讯云等）
         System.out.println("【模拟短信】手机号：" + phone + "，验证码：" + code);
+        return code;
     }
 
     /** 校验短信验证码 */

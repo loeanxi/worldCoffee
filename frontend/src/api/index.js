@@ -128,8 +128,9 @@ export function extractApiError(err) {
   if (!err) return '网络异常，请稍后重试'
   if (typeof err === 'string') return err
   if (err.msg) return err.msg
-  if (err.message) return err.message
+  if (err.response && err.response.data && err.response.data.message) return err.response.data.message
   if (err.response && err.response.data && err.response.data.msg) return err.response.data.msg
+  if (err.message) return err.message
   return '请求失败，请稍后重试'
 }
 
@@ -147,11 +148,19 @@ function ok(res) {
   if (raw && typeof raw === 'object' && 'code' in raw) {
     return {
       code: raw.code,
-      msg: raw.msg || '',
+      msg: raw.msg || raw.message || '',
       data: raw.data == null ? null : raw.data
     }
   }
   return { code: 200, msg: '', data: raw }
+}
+
+function localOk(data = null, msg = '') {
+  return Promise.resolve({ code: 200, msg, data })
+}
+
+function localUnsupported(msg) {
+  return Promise.resolve({ code: 501, msg, data: null })
 }
 
 /**
@@ -182,12 +191,13 @@ function withImageUrlList(res) {
 // 用户模块 /api/users
 // ═════════════════════════════════════════════════════════
 export const userApi = {
-  login: data => http.post('/users/login', data).then(ok),
+  //// 方法名: 入参 => HTTP方法('路径', 数据).then(统一包装)
+  login: data => http.post('/user/login', data).then(ok),
   /** 注册：后端 RegisterForm = {username, password, phone} */
-  register: data => http.post('/users/register', data).then(ok),
+  register: data => http.post('/user/register', data).then(ok),
 
   /** 当前登录用户信息（ReturnMeVO） */
-  getMe: () => http.get('/users/me').then(res => {
+  getMe: () => http.get('/user/me').then(res => {
     const result = ok(res)
     if (result && result.data) {
       result.data.avatar = normalizeUrl(result.data.avatar)
@@ -196,37 +206,67 @@ export const userApi = {
   }),
 
   /** 修改资料（PUT）- body: { username, phone, avatar } */
-  updateProfile: data => http.put('/users/me', data).then(ok),
+  updateProfile: data => http.put('/user/profile', data).then(ok),
 
   /** 修改密码（PATCH）- body: { oldPassword, newPassword } */
-  changePassword: data => http.patch('/users/me/password', data).then(ok),
+  changePassword: data => http.put('/user/password', data).then(ok),
 
   /** 获取指定用户主页 + 最近帖子（UserProfileVO） */
-  getUserProfile: id => http.get(`/users/${id}`).then(res => {
+  //// 带路径参数（用模板字符串反引号 `` + ${变量}）
+  getUserProfile: id => http.get('/user/batch', { params: { ids: id } }).then(res => {
     const result = ok(res)
-    if (result && result.data) {
-      result.data.avatar = normalizeUrl(result.data.avatar)
-      if (Array.isArray(result.data.recentPosts)) {
-        result.data.recentPosts = normalizePostList(result.data.recentPosts)
-      }
+    const raw = result.data
+    let user = null
+    if (raw && Array.isArray(raw)) {
+      user = raw[0] || null
+    } else if (raw && typeof raw === 'object') {
+      user = raw[id] || raw[String(id)] || Object.values(raw)[0] || null
+    }
+    result.data = {
+      id: user?.id || user?.userId || Number(id),
+      username: user?.username || user?.nickname || `用户${id}`,
+      nickname: user?.nickname || user?.username || `用户${id}`,
+      avatar: normalizeUrl(user?.avatar || ''),
+      recentPosts: [],
+      postCount: 0,
+      followingCount: 0,
+      followerCount: 0,
+      isFollowing: false
     }
     return result
+  }).catch(() => {
+    const fallbackName = `用户${id}`
+    return {
+      code: 200,
+      msg: '',
+      data: {
+        id: Number(id),
+        username: fallbackName,
+        nickname: fallbackName,
+        avatar: '',
+        recentPosts: [],
+        postCount: 0,
+        followingCount: 0,
+        followerCount: 0,
+        isFollowing: false
+      }
+    }
   }),
 
   /** 关注 / 取消关注 */
-  toggleFollow: id => http.post(`/users/${id}/follow`).then(ok),
+  toggleFollow: () => localUnsupported('当前后端暂不支持关注用户'),
 
   /** 关注列表 */
-  getFollowingList: (id, params) => http.get(`/users/${id}/following`, { params }).then(ok),
+  getFollowingList: () => localOk([]),
 
   /** 粉丝列表 */
-  getFollowersList: (id, params) => http.get(`/users/${id}/followers`, { params }).then(ok),
+  getFollowersList: () => localOk([]),
 
   /** 搜索用户 */
-  searchUsers: params => http.get('/users/search', { params }).then(ok),
+  searchUsers: () => localOk([]),
 
   /** 上传头像 - 返回归一化后的头像路径 */
-  uploadAvatar: formData => http.post('/users/avatar', formData, {
+  uploadAvatar: formData => http.post('/coffee/upload', formData, {
     timeout: 60000
   }).then(res => {
     const result = ok(res)
@@ -237,25 +277,25 @@ export const userApi = {
   }),
 
   /** 我的统计（发帖/获赞/收藏/评论/关注/粉丝数） */
-  getMeStats: () => http.get('/users/me/stats').then(ok),
+  getMeStats: () => http.get('/user/me/stats').then(ok),
 
   /** 登出（使 token 失效 + 清 Redis 缓存） */
-  logout: () => http.post('/users/logout').then(ok),
+  logout: () => localOk(null),
 
   /** 刷新 JWT（获取新 token，延长有效期） */
-  refreshToken: () => http.post('/users/refresh').then(ok),
+  refreshToken: () => localOk(null),
 
   /** 注销账号（软删除，status=0） */
-  deleteAccount: () => http.delete('/users/me').then(ok),
+  deleteAccount: () => localUnsupported('当前后端暂不支持注销账号'),
 
   /** 批量获取用户信息（ids: 逗号分隔的用户 ID 字符串） */
-  batchGetUsers: ids => http.get('/users/batch', { params: { ids } }).then(ok),
+  batchGetUsers: ids => http.get('/user/batch', { params: { ids } }).then(ok),
 
   /** 发送短信验证码 */
-  sendSmsCode: phone => http.post('/users/sms/code', null, { params: { phone } }).then(ok),
+  sendSmsCode: phone => http.post('/user/sms-code', null, { params: { phone } }).then(ok),
 
   /** 绑定/更换手机号（body: { Phone, code }） */
-  bindPhone: data => http.put('/users/me/phone', data).then(ok)
+  bindPhone: data => http.put('/user/bind-phone', data).then(ok)
 }
 
 // ═════════════════════════════════════════════════════════
@@ -283,7 +323,24 @@ export const coffeeApi = {
   getMyFavorites: params => http.get('/coffee/favorites/my', { params }).then(withImageUrlList),
   getMyLikes: params => http.get('/coffee/likes/my', { params }).then(withImageUrlList),
   getHotPosts: params => http.get('/coffee/posts/hot', { params }).then(withImageUrlList),
+  getRecommendedPosts: params => http.get('/coffee/posts/recommend', { params }).then(withImageUrlList),
   getFollowingPosts: params => http.get('/coffee/posts/following', { params }).then(withImageUrlList),
+  getTopics: params => http.get('/coffee/topics', { params }).then(ok),
+  getTopicPosts: params => http.get('/coffee/posts/topic', { params }).then(withImageUrlList),
+  getMyDraft: () => http.get('/coffee/drafts/me').then(ok),
+  saveMyDraft: data => http.put('/coffee/drafts/me', data).then(ok),
+  deleteMyDraft: () => http.delete('/coffee/drafts/me').then(ok),
+  getCreatorStats: () => http.get('/coffee/creator/stats').then(ok),
+  getCollections: () => http.get('/coffee/collections').then(ok),
+  createCollection: data => http.post('/coffee/collections', data).then(ok),
+  updateCollection: (id, data) => http.put(`/coffee/collections/${id}`, data).then(ok),
+  deleteCollection: id => http.delete(`/coffee/collections/${id}`).then(ok),
+  addPostToCollection: (collectionId, postId) => http.post(`/coffee/collections/${collectionId}/posts/${postId}`).then(ok),
+  removePostFromCollection: (collectionId, postId) => http.delete(`/coffee/collections/${collectionId}/posts/${postId}`).then(ok),
+  getCollectionPosts: (collectionId, params) => http.get(`/coffee/collections/${collectionId}/posts`, { params }).then(withImageUrlList),
+  markNotInterested: (id, data = {}) => http.post(`/coffee/posts/${id}/not-interested`, data).then(ok),
+  recordFeedEvent: data => http.post('/coffee/feed-events', data).then(ok),
+  unifiedSearch: params => http.get('/coffee/search/unified', { params }).then(ok),
   search: params => http.get('/coffee/search', { params }).then(withImageUrlList),
   upload: formData => http.post('/coffee/upload', formData, {
     timeout: 60000

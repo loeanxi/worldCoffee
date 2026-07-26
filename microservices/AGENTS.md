@@ -28,3 +28,5 @@ History favors concise Conventional Commit prefixes such as `feat:`, `fix:`, `re
 ## Security & Configuration
 
 Do not commit real JWT secrets, database passwords, API keys, or machine-specific upload paths. Use environment variables or local profiles, and document any new required configuration in the pull request.
+
+Treat any command using `rm` as a high-risk action. Before running it, explicitly ask the user for confirmation and explain the target path and expected effect.

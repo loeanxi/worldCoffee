@@ -79,15 +79,15 @@ export function useAuth() {
       try {
         const res = await userApi.register({
           username: data.username,
-          nickname: data.nickname || data.username,
-          password: data.password
+          password: data.password,
+          phone: data.phone || ''
         })
         if (res && (res.code === 200 || res.code === 0 || res.success)) {
           // 注册成功直接登录
           const t = (res.data?.token) || 'ok'
           token.value = t
           user.value = {
-            id: res.data?.id,
+            id: res.data?.userId || res.data?.id,
             username: data.username,
             nickname: data.nickname || data.username,
             avatar: ''

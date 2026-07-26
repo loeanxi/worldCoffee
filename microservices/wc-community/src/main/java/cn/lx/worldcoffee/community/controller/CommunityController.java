@@ -2,11 +2,21 @@ package cn.lx.worldcoffee.community.controller;
 
 import cn.lx.worldcoffee.common.result.Result;
 import cn.lx.worldcoffee.community.domain.from.CommentCreateFrom;
+import cn.lx.worldcoffee.community.domain.from.FavoriteCollectionForm;
+import cn.lx.worldcoffee.community.domain.from.FeedEventCreateFrom;
+import cn.lx.worldcoffee.community.domain.from.NotInterestedForm;
 import cn.lx.worldcoffee.community.domain.from.PostCreateFrom;
 import cn.lx.worldcoffee.community.domain.from.ReportCreatFrom;
+import cn.lx.worldcoffee.community.domain.from.ReportHandleFrom;
 import cn.lx.worldcoffee.community.domain.vo.CommentVO;
+import cn.lx.worldcoffee.community.domain.vo.CreatorStatsVO;
+import cn.lx.worldcoffee.community.domain.vo.FavoriteCollectionVO;
 import cn.lx.worldcoffee.community.domain.vo.PostDetailVO;
+import cn.lx.worldcoffee.community.domain.vo.PostDraftVO;
 import cn.lx.worldcoffee.community.domain.vo.PostListVO;
+import cn.lx.worldcoffee.community.domain.vo.ReportReviewVO;
+import cn.lx.worldcoffee.community.domain.vo.TopicVO;
+import cn.lx.worldcoffee.community.domain.vo.UnifiedSearchVO;
 import cn.lx.worldcoffee.community.service.CommunityService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -35,6 +45,68 @@ public class CommunityController {
         return Result.success(communityService.listPosts(page, size, sort));
     }
 
+    @Operation(summary = "推荐 Feed", description = "按互动热度、新鲜度、关注关系和用户兴趣生成首页推荐流")
+    @GetMapping("/posts/recommend")
+    public Result<List<PostListVO>> recommendPosts(
+            @Parameter(description = "页码") @RequestParam(defaultValue = "1") Integer page,
+            @Parameter(description = "每页条数") @RequestParam(defaultValue = "10") Integer size,
+            @Parameter(description = "匿名访问会话ID") @RequestParam(required = false) String sessionId) {
+        return Result.success(communityService.recommendPosts(page, size, sessionId));
+    }
+
+    @Operation(summary = "记录 Feed 行为", description = "记录曝光、点击、停留和不感兴趣事件，用于推荐学习")
+    @PostMapping("/feed-events")
+    public Result<Void> recordFeedEvent(@Valid @RequestBody FeedEventCreateFrom from) {
+        communityService.recordFeedEvent(from);
+        return Result.success(null);
+    }
+
+    @Operation(summary = "不感兴趣", description = "显式隐藏该帖子，并作为推荐负反馈学习")
+    @PostMapping("/posts/{id}/not-interested")
+    public Result<Void> markNotInterested(
+            @PathVariable Long id,
+            @RequestBody(required = false) NotInterestedForm from) {
+        communityService.markNotInterested(id, from);
+        return Result.success(null);
+    }
+
+    @GetMapping("/topics")
+    public Result<List<TopicVO>> listTopics(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "20") Integer limit) {
+        return Result.success(communityService.listTopics(keyword, limit));
+    }
+
+    @GetMapping("/posts/topic")
+    public Result<List<PostListVO>> listPostsByTopic(
+            @RequestParam String topic,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size) {
+        return Result.success(communityService.listPostsByTopic(topic, page, size));
+    }
+
+    @GetMapping("/drafts/me")
+    public Result<PostDraftVO> getMyDraft() {
+        return Result.success(communityService.getMyDraft());
+    }
+
+    @PutMapping("/drafts/me")
+    public Result<Void> saveMyDraft(@RequestBody PostCreateFrom from) {
+        communityService.saveMyDraft(from);
+        return Result.success(null);
+    }
+
+    @DeleteMapping("/drafts/me")
+    public Result<Void> deleteMyDraft() {
+        communityService.deleteMyDraft();
+        return Result.success(null);
+    }
+
+    @GetMapping("/creator/stats")
+    public Result<CreatorStatsVO> creatorStats() {
+        return Result.success(communityService.getCreatorStats());
+    }
+
     @Operation(summary = "发帖", description = "创建图文分享或打卡记录，需要登录")
     @PostMapping("/posts")
     public Result<Void> createPost(@Valid @RequestBody PostCreateFrom from){
@@ -58,6 +130,14 @@ public class CommunityController {
         return Result.success(communityService.search(keyword,page,size));
     }
 
+    @GetMapping("/search/unified")
+    public Result<UnifiedSearchVO> unifiedSearch(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size) {
+        return Result.success(communityService.unifiedSearch(keyword, page, size));
+    }
+
     @Operation(summary = "点赞/取消点赞", description = "toggle 模式，返回 true=已点赞 false=已取消")
     @PostMapping("/posts/{id}/like")
     public Result<Boolean> toggleLike(
@@ -70,6 +150,49 @@ public class CommunityController {
     public Result<Boolean> toggleFavorite(
             @Parameter(description = "帖子ID") @PathVariable Long id){
         return Result.success(communityService.toggleFavorite(id));
+    }
+
+    @GetMapping("/collections")
+    public Result<List<FavoriteCollectionVO>> listCollections() {
+        return Result.success(communityService.listMyCollections());
+    }
+
+    @PostMapping("/collections")
+    public Result<FavoriteCollectionVO> createCollection(@Valid @RequestBody FavoriteCollectionForm form) {
+        return Result.success(communityService.createCollection(form));
+    }
+
+    @PutMapping("/collections/{id}")
+    public Result<FavoriteCollectionVO> updateCollection(
+            @PathVariable Long id,
+            @Valid @RequestBody FavoriteCollectionForm form) {
+        return Result.success(communityService.updateCollection(id, form));
+    }
+
+    @DeleteMapping("/collections/{id}")
+    public Result<Void> deleteCollection(@PathVariable Long id) {
+        communityService.deleteCollection(id);
+        return Result.success(null);
+    }
+
+    @PostMapping("/collections/{id}/posts/{postId}")
+    public Result<Void> addPostToCollection(@PathVariable Long id, @PathVariable Long postId) {
+        communityService.addPostToCollection(id, postId);
+        return Result.success(null);
+    }
+
+    @DeleteMapping("/collections/{id}/posts/{postId}")
+    public Result<Void> removePostFromCollection(@PathVariable Long id, @PathVariable Long postId) {
+        communityService.removePostFromCollection(id, postId);
+        return Result.success(null);
+    }
+
+    @GetMapping("/collections/{id}/posts")
+    public Result<List<PostListVO>> listCollectionPosts(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size) {
+        return Result.success(communityService.listCollectionPosts(id, page, size));
     }
 
     @Operation(summary = "发表评论", description = "对帖子发表评论，需要登录")
@@ -165,6 +288,21 @@ public class CommunityController {
             @Parameter(description = "帖子ID") @PathVariable Long id,
             @Valid @RequestBody ReportCreatFrom from) {
         communityService.reportPost(id, from);
+        return Result.success(null);
+    }
+    @GetMapping("/admin/community/reports")
+    public Result<List<ReportReviewVO>> listReports(
+            @RequestParam(required = false) Integer status,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size) {
+        return Result.success(communityService.listReports(status, page, size));
+    }
+
+    @PostMapping("/admin/community/reports/{id}/handle")
+    public Result<Void> handleReport(
+            @PathVariable Long id,
+            @Valid @RequestBody ReportHandleFrom from) {
+        communityService.handleReport(id, from);
         return Result.success(null);
     }
 }

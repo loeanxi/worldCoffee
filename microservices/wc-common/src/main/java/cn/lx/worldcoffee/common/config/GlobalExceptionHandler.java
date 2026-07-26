@@ -38,7 +38,6 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({HttpMediaTypeNotAcceptableException.class,
             HttpMediaTypeNotSupportedException.class,
-            HttpRequestMethodNotSupportedException.class,
             NoHandlerFoundException.class})
     public ResponseEntity<Map<String, Object>> handleFrameworkException(Exception e) {
         Map<String, Object> body = new HashMap<>();
@@ -46,6 +45,17 @@ public class GlobalExceptionHandler {
         body.put("msg", e.getMessage());
         body.put("data", null);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(body);
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<Map<String, Object>> handleMethodNotSupported(HttpRequestMethodNotSupportedException e) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("code", 405);
+        body.put("msg", e.getMessage());
+        body.put("data", null);
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(body);
     }

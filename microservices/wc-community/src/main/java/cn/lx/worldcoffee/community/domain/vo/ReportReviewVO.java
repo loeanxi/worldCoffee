@@ -19,6 +19,7 @@ public class ReportReviewVO {
     private String reason;
     private Integer status;
     private String statusText;
+    private String remark;
     private LocalDateTime createTime;
     private LocalDateTime handleTime;
 }

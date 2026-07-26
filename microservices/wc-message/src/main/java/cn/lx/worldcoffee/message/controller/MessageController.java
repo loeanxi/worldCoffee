@@ -1,16 +1,17 @@
 package cn.lx.worldcoffee.message.controller;
 
 import cn.lx.worldcoffee.common.result.Result;
+import cn.lx.worldcoffee.message.domain.from.SendMessageForm;
 import cn.lx.worldcoffee.message.domain.vo.MessageVO;
 import cn.lx.worldcoffee.message.domain.vo.SessionVO;
 import cn.lx.worldcoffee.message.service.MessageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @Tag(name = "私信模块", description = "用户间一对一私信")
 @RestController
@@ -22,13 +23,8 @@ public class MessageController {
 
     @Operation(summary = "发送私信", description = "给指定用户发送一条消息")
     @PostMapping
-    public Result<MessageVO> sendMessage(@RequestBody Map<String, Object> body) {
-        Long toId = Long.valueOf(body.get("toId").toString());
-        String content = (String) body.get("content");
-        Integer messageType = body.containsKey("messageType")
-                ? Integer.valueOf(body.get("messageType").toString())
-                : 1;
-        return Result.success(messageService.sendMessage(toId, content, messageType));
+    public Result<MessageVO> sendMessage(@Valid @RequestBody SendMessageForm form) {
+        return Result.success(messageService.sendMessage(form));
     }
 
     @Operation(summary = "会话列表", description = "当前用户的所有会话，按最后消息时间倒序")

@@ -23,8 +23,11 @@ public class NotificationReceiver {
 
     @RabbitListener(queues = "chat.queue.default")
     public void handleChatMessage(String message) {
-        // message格式: "fromId|||content"，需要解析出 toId
-        // 这里简化处理，实际应该从消息体解析完整信息
-        sseEmitterManager.sendNotification("broadcast", message);
+        // 消息格式: "fromId|||toId|||content"
+        String[] parts = message.split("\\|\\|\\|");
+        if (parts.length >= 3) {
+            String toId = parts[1];
+            sseEmitterManager.sendNotification(toId, "new_message");
+        }
     }
 }

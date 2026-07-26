@@ -1,16 +1,21 @@
 <template>
-  <div id="app-shell" class="min-h-screen bg-surface/50 relative overflow-hidden">
+  <div
+    id="app-shell"
+    class="min-h-screen bg-surface relative overflow-hidden transition-[padding] duration-300"
+    :class="[
+      { 'lg:pl-[224px]': showDesktopSidebar },
+      isDesktop ? 'wc-mode-web' : 'wc-mode-mobile'
+    ]"
+  >
     <!-- 背景装饰：在桌面端显示，为页面增加品牌调性 -->
-    <div class="hidden lg:block absolute inset-0 pointer-events-none -z-10">
+    <div class="hidden absolute inset-0 pointer-events-none -z-10">
       <div class="absolute -top-24 left-[10%] w-96 h-96 bg-amber/20 rounded-full blur-3xl animate-float" style="animation-delay: 0s" />
       <div class="absolute top-[40%] right-[5%] w-[28rem] h-[28rem] bg-ink/10 rounded-full blur-3xl animate-float" style="animation-delay: -2s" />
       <div class="absolute bottom-[-10%] left-[30%] w-80 h-80 bg-green/20 rounded-full blur-3xl animate-float" style="animation-delay: -4s" />
     </div>
 
     <router-view v-slot="{ Component, route }">
-      <Transition name="page" mode="out-in">
-        <component :is="Component" :key="route.fullPath" />
-      </Transition>
+      <component :is="Component" :key="route.fullPath" />
     </router-view>
 
     <BottomNav v-if="showBottomNav" :notifCount="notifCount" :messageCount="messageCount" />
@@ -45,14 +50,18 @@ import BottomNav from './components/BottomNav.vue'
 import { Icon } from '@iconify/vue'
 import { notificationApi, messageApi, createSSESubscriber, getApiError } from './api'
 import { useAuth } from './composables/useAuth'
+import { useViewportMode } from './composables/useViewportMode'
 
 const router = useRouter()
 const route = useRoute()
+const { isDesktop, mode } = useViewportMode()
 const notifCount = ref(0)
 const messageCount = ref(0)
 
 const hideNavRoutes = ['Login', 'Register', 'LogoPreview', 'ChatRoom', 'AIChat', 'Cart', 'Orders', 'CouponCenter', 'ProductDetail']
 const showBottomNav = computed(() => !hideNavRoutes.includes(route.name))
+const noDesktopSidebarRoutes = ['Home', 'CreatePost', 'Messages', 'Notifications', 'Me', 'Shop']
+const showDesktopSidebar = computed(() => showBottomNav.value && !noDesktopSidebarRoutes.includes(route.name))
 
 // ─── SSE 全局连接 ───────────────────────────────
 let sseClient = null
@@ -188,6 +197,11 @@ provide('toast', {
   refreshMessageCount: fetchMessageCount,
   logout: logoutAndToast,
   errorFromApi: getApiError
+})
+
+provide('viewportMode', {
+  isDesktop,
+  mode
 })
 
 // ─── 生命周期 ───────────────────────────────

@@ -56,7 +56,8 @@ public class NotificationController {
     @Operation(summary = "标记单条已读", description = "用户点击某条通知时调用，将 is_read 改为 1")
     @PutMapping("/{id}/read")
     public Result<Void> markAsRead(@Parameter(description = "通知ID") @PathVariable Long id) {
-        notificationService.markAsRead(id);
+        Long userId = SecurityUtils.requireUserId();
+        notificationService.markAsRead(id, userId);
         return Result.success(null);
     }
 
@@ -71,7 +72,8 @@ public class NotificationController {
     @Operation(summary = "删除通知", description = "用户删除自己不想看的单条通知")
     @DeleteMapping("/{id}")
     public Result<Void> deleteNotification(@Parameter(description = "通知ID") @PathVariable Long id) {
-        notificationService.deleteNotification(id);
+        Long userId = SecurityUtils.requireUserId();
+        notificationService.deleteNotification(id, userId);
         return Result.success(null);
     }
 }

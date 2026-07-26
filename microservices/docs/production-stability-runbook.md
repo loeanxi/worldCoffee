@@ -17,6 +17,12 @@ cd D:\mycode\worldCoffee\worldCoffee\microservices
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-all.ps1
 ```
 
+如果你之前在 IDEA 或旧脚本里已经启动过服务，端口可能被旧包占住。默认脚本为了安全不会乱杀端口进程，只会跳过。要明确替换旧服务，用：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-all.ps1 -ForceRestartPorts
+```
+
 启动脚本会做这些事：
 
 1. 启动 Docker 基础设施：MySQL、Redis、RabbitMQ、Nacos、Elasticsearch、MinIO、Chroma。
@@ -32,7 +38,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-all.ps1
 
 | 用途 | 地址 | 说明 |
 | --- | --- | --- |
-| 用户端 | <http://localhost:3000> | 小红书/咖啡社区主前端 |
+| 用户端 | <http://localhost:3000> | WorldCoffee 咖啡社区主前端 |
 | 管理后台 | <http://localhost:5173> | 管理后台前端 |
 | 网关 | <http://localhost:8080> | 所有前端 API 统一入口 |
 | Nacos 控制台 | <http://localhost:8848/nacos> | 服务注册中心 |
@@ -127,13 +133,17 @@ cd D:\mycode\worldCoffee\worldCoffee\microservices
 .\stop-all.bat
 ```
 
+注意：不要只关闭启动脚本窗口。Windows 上脚本启动出来的 Java 和 Node 子进程可能还会继续在后台运行，浏览器仍然能访问就是因为端口还被这些子进程占着。请用 `stop-all.bat` 停服务。
+
+`stop-all.bat` 会先按 `.run\pids` 里记录的 PID 停止服务；如果 PID 已经过期，还会兜底检查并释放 WorldCoffee 固定端口：`3000`、`5173`、`8080` 到 `8086`。
+
 同时停止 Docker 基础设施：
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\stop-all.ps1 -StopInfra
 ```
 
-说明：停止脚本只会读取 `.run/pids/*.pid`，停止由 `start-all.ps1` 记录的进程。不会扫描全系统乱杀 Java 或 Node 进程。
+说明：停止脚本只处理 WorldCoffee 的固定端口和 `.run/pids/*.pid` 记录的进程，不会扫描全系统乱杀所有 Java 或 Node 进程。
 
 ## 7. 日志与 traceId
 
@@ -251,6 +261,12 @@ cmd /c type wc-admin\src\main\resources\admin_governance.sql | docker exec -i my
 ```
 
 如果某个服务端口没开，说明下游微服务没起来。比如推荐流 503 通常看 `wc-community` 和 `wc-gateway`。
+
+如果端口开着但 `/actuator/health` 失败，常见原因是旧进程占着端口。用下面命令强制替换旧服务：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-all.ps1 -SkipBuild -SkipSql -SkipFrontend -ForceRestartPorts
+```
 
 ### 11.2 网关能开，接口 401
 

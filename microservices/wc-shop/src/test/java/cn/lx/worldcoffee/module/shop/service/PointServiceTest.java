@@ -55,7 +55,7 @@ class PointServiceTest {
         pointService.earnPointsFromOrder(100L, "ORD123", new BigDecimal("0.50"));
 
         verify(sysUserDao, never()).selectById(any());
-        verify(pointRecordDao, never()).insert(any());
+        verify(pointRecordDao, never()).insert(any(PointRecord.class));
     }
 
     @Test
@@ -98,7 +98,7 @@ class PointServiceTest {
         pointService.earnPointsFromReview(100L, 1L, 3);
 
         verify(sysUserDao, never()).selectById(any());
-        verify(pointRecordDao, never()).insert(any());
+        verify(pointRecordDao, never()).insert(any(PointRecord.class));
     }
 
     @Test

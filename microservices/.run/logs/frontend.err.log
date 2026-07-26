@@ -1,0 +1,251 @@
+[2m06:01:23[22m [33m[1m[vite][22m[39m [33mwarning: <button> cannot be child of <button>, according to HTML specifications. This can cause hydration errors or potentially disrupt future functionality.
+50 |                <em>{{ formatTime(conv.updatedAt || conv.createdAt) }}</em>
+51 |              </span>
+52 |              <button class="ai-history-delete" @click.stop="deleteConv(conv)" title="删除">
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+53 |                <Icon icon="material-symbols:delete-outline" class="w-4 h-4" />
+   |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+54 |              </button>
+   |  ^^^^^^^^^^^^^^^^^^^^^[39m
+  Plugin: [35mvite:vue[39m
+  File: [36mD:/mycode/worldCoffee/worldCoffee/frontend/src/views/AIChat.vue[39m
+[2m06:22:29[22m [31m[1m[vite][22m[39m Pre-transform error: Element is missing end tag.
+[2m06:22:29[22m [31m[1m[vite][22m[39m Pre-transform error: Element is missing end tag.
+[2m06:22:29[22m [31m[1m[vite][22m[39m Pre-transform error: Error parsing JavaScript expression: Unterminated string constant. (1:32)
+[2m06:22:29[22m [31m[1m[vite][22m[39m Pre-transform error: Error parsing JavaScript expression: Unterminated string constant. (1:32)
+[2m06:22:29[22m [31m[1m[vite][22m[39m Pre-transform error: Element is missing end tag.
+[2m06:22:29[22m [31m[1m[vite][22m[39m Pre-transform error: Element is missing end tag.
+[2m06:22:29[22m [31m[1m[vite][22m[39m Pre-transform error: Element is missing end tag.
+[2m06:22:29[22m [31m[1m[vite][22m[39m Pre-transform error: Element is missing end tag.
+[2m06:22:29[22m [31m[1m[vite][22m[39m Pre-transform error: Element is missing end tag.
+[2m06:22:29[22m [31m[1m[vite][22m[39m [31mInternal server error: Element is missing end tag.[39m
+  Plugin: [35mvite:vue[39m
+  File: [36mD:/mycode/worldCoffee/worldCoffee/frontend/src/views/shop/ShopWeb.vue[39m:247:15
+[33m  245|              <!-- 鍞絼 -->
+  246|              <div v-if="product.stock === 0" class="absolute inset-0 bg-brand/30 backdrop-blur-[2px] flex items-center justify-center">
+  247|                <span class="text-white font-bold text-sm px-4 py-1.5 rounded-full bg-brand/70">宸插敭缃?/span>
+     |                 ^
+  248|              </div>
+  249|            </div>[39m
+      at createCompilerError (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:1378:17)
+      at emitError (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:3014:5)
+      at Object.onclosetag (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:2381:13)
+      at Tokenizer.stateInClosingTagName (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:799:16)
+      at Tokenizer.parse (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:1157:16)
+      at Object.baseParse (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:3053:13)
+      at Object.parse (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-dom\dist\compiler-dom.cjs.js:910:23)
+      at Object.parse$1 [as parse] (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-sfc\dist\compiler-sfc.cjs.js:1824:24)
+      at createDescriptor (file:///D:/mycode/worldCoffee/worldCoffee/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:71:43)
+      at transformMain (file:///D:/mycode/worldCoffee/worldCoffee/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:2421:34)
+[2m06:22:29[22m [31m[1m[vite][22m[39m Pre-transform error: Element is missing end tag.
+[2m06:22:29[22m [31m[1m[vite][22m[39m [31mInternal server error: Element is missing end tag.[39m
+  Plugin: [35mvite:vue[39m
+  File: [36mD:/mycode/worldCoffee/worldCoffee/frontend/src/views/shop/ShopMobile.vue[39m:247:15
+[33m  245|              <!-- 鍞絼 -->
+  246|              <div v-if="product.stock === 0" class="absolute inset-0 bg-brand/30 backdrop-blur-[2px] flex items-center justify-center">
+  247|                <span class="text-white font-bold text-sm px-4 py-1.5 rounded-full bg-brand/70">宸插敭缃?/span>
+     |                 ^
+  248|              </div>
+  249|            </div>[39m
+      at createCompilerError (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:1378:17)
+      at emitError (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:3014:5)
+      at Object.onclosetag (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:2381:13)
+      at Tokenizer.stateInClosingTagName (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:799:16)
+      at Tokenizer.parse (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:1157:16)
+      at Object.baseParse (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:3053:13)
+      at Object.parse (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-dom\dist\compiler-dom.cjs.js:910:23)
+      at Object.parse$1 [as parse] (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-sfc\dist\compiler-sfc.cjs.js:1824:24)
+      at createDescriptor (file:///D:/mycode/worldCoffee/worldCoffee/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:71:43)
+      at transformMain (file:///D:/mycode/worldCoffee/worldCoffee/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:2421:34)
+[2m06:22:29[22m [31m[1m[vite][22m[39m [31mInternal server error: Error parsing JavaScript expression: Unterminated string constant. (1:32)[39m
+  Plugin: [35mvite:vue[39m
+  File: [36mD:/mycode/worldCoffee/worldCoffee/frontend/src/views/me/MeWeb.vue[39m:45:20
+[33m  43 |                <span :class="['profile-badge', user.status === 1 ? 'is-ok' : 'is-danger']">
+  44 |                  <Icon :icon="user.status === 1 ? 'material-symbols:check-circle' : 'material-symbols:error-outline'" class="w-3.5 h-3.5" />
+  45 |                  {{ user.status === 1 ? '璐﹀彿姝ｅ父' : '宸插喕缁? }}
+     |                      ^
+  46 |                </span>
+  47 |                <span v-if="user.phone" class="profile-badge is-phone">[39m
+      at createCompilerError (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:1378:17)
+      at emitError (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:3014:5)
+      at createExp (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:3007:7)
+      at Object.oninterpolation (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:2351:16)
+      at Tokenizer.stateInterpolationClose (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:596:18)
+      at Tokenizer.parse (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:1097:16)
+      at Object.baseParse (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:3053:13)
+      at Object.parse (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-dom\dist\compiler-dom.cjs.js:910:23)
+      at Object.parse$1 [as parse] (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-sfc\dist\compiler-sfc.cjs.js:1824:24)
+      at createDescriptor (file:///D:/mycode/worldCoffee/worldCoffee/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:71:43)
+[2m06:22:29[22m [31m[1m[vite][22m[39m [31mInternal server error: Error parsing JavaScript expression: Unterminated string constant. (1:32)[39m
+  Plugin: [35mvite:vue[39m
+  File: [36mD:/mycode/worldCoffee/worldCoffee/frontend/src/views/me/MeMobile.vue[39m:45:20
+[33m  43 |                <span :class="['profile-badge', user.status === 1 ? 'is-ok' : 'is-danger']">
+  44 |                  <Icon :icon="user.status === 1 ? 'material-symbols:check-circle' : 'material-symbols:error-outline'" class="w-3.5 h-3.5" />
+  45 |                  {{ user.status === 1 ? '璐﹀彿姝ｅ父' : '宸插喕缁? }}
+     |                      ^
+  46 |                </span>
+  47 |                <span v-if="user.phone" class="profile-badge is-phone">[39m
+      at createCompilerError (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:1378:17)
+      at emitError (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:3014:5)
+      at createExp (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:3007:7)
+      at Object.oninterpolation (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:2351:16)
+      at Tokenizer.stateInterpolationClose (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:596:18)
+      at Tokenizer.parse (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:1097:16)
+      at Object.baseParse (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:3053:13)
+      at Object.parse (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-dom\dist\compiler-dom.cjs.js:910:23)
+      at Object.parse$1 [as parse] (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-sfc\dist\compiler-sfc.cjs.js:1824:24)
+      at createDescriptor (file:///D:/mycode/worldCoffee/worldCoffee/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:71:43)
+[2m06:22:29[22m [31m[1m[vite][22m[39m [31mInternal server error: Element is missing end tag.[39m
+  Plugin: [35mvite:vue[39m
+  File: [36mD:/mycode/worldCoffee/worldCoffee/frontend/src/views/messages/MessagesWeb.vue[39m:39:11
+[33m  37 |            <p class="wc-message-eyebrow">WORLDCOFFEE INBOX</p>
+  38 |            <h2>娑堟伅宸ヤ綔鍙?/h2>
+  39 |            <p>绉佷俊鏄綘鍜屽叾浠栫敤鎴风殑涓€瀵逛竴鑱婂ぉ锛涙秷鎭腑蹇冭礋璐ｇ偣璧炪€佽瘎璁恒€佹敹钘忋€佸叧娉ㄨ繖浜涗簰鍔ㄦ彁閱掋€?/p>
+     |             ^
+  40 |          </div>
+  41 |          <div class="wc-message-tabs">[39m
+      at createCompilerError (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:1378:17)
+      at emitError (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:3014:5)
+      at Object.onclosetag (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:2381:13)
+      at Tokenizer.stateInClosingTagName (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:799:16)
+      at Tokenizer.parse (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:1157:16)
+      at Object.baseParse (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:3053:13)
+      at Object.parse (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-dom\dist\compiler-dom.cjs.js:910:23)
+      at Object.parse$1 [as parse] (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-sfc\dist\compiler-sfc.cjs.js:1824:24)
+      at createDescriptor (file:///D:/mycode/worldCoffee/worldCoffee/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:71:43)
+      at transformMain (file:///D:/mycode/worldCoffee/worldCoffee/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:2421:34)
+[2m06:22:29[22m [31m[1m[vite][22m[39m [31mInternal server error: Element is missing end tag.[39m
+  Plugin: [35mvite:vue[39m
+  File: [36mD:/mycode/worldCoffee/worldCoffee/frontend/src/views/messages/MessagesMobile.vue[39m:39:11
+[33m  37 |            <p class="wc-message-eyebrow">WORLDCOFFEE INBOX</p>
+  38 |            <h2>娑堟伅宸ヤ綔鍙?/h2>
+  39 |            <p>绉佷俊鏄綘鍜屽叾浠栫敤鎴风殑涓€瀵逛竴鑱婂ぉ锛涙秷鎭腑蹇冭礋璐ｇ偣璧炪€佽瘎璁恒€佹敹钘忋€佸叧娉ㄨ繖浜涗簰鍔ㄦ彁閱掋€?/p>
+     |             ^
+  40 |          </div>
+  41 |          <div class="wc-message-tabs">[39m
+      at createCompilerError (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:1378:17)
+      at emitError (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:3014:5)
+      at Object.onclosetag (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:2381:13)
+      at Tokenizer.stateInClosingTagName (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:799:16)
+      at Tokenizer.parse (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:1157:16)
+      at Object.baseParse (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:3053:13)
+      at Object.parse (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-dom\dist\compiler-dom.cjs.js:910:23)
+      at Object.parse$1 [as parse] (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-sfc\dist\compiler-sfc.cjs.js:1824:24)
+      at createDescriptor (file:///D:/mycode/worldCoffee/worldCoffee/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:71:43)
+      at transformMain (file:///D:/mycode/worldCoffee/worldCoffee/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:2421:34)
+[2m06:22:29[22m [31m[1m[vite][22m[39m [31mInternal server error: Element is missing end tag.[39m
+  Plugin: [35mvite:vue[39m
+  File: [36mD:/mycode/worldCoffee/worldCoffee/frontend/src/views/notifications/NotificationsWeb.vue[39m:25:11
+[33m  23 |            <p class="wc-message-eyebrow">WORLDCOFFEE INBOX</p>
+  24 |            <h2>娑堟伅宸ヤ綔鍙?/h2>
+  25 |            <p>杩欓噷鏀剁撼鎵€鏈変簰鍔ㄦ彁閱掞紱濡傛灉浣犳兂鐪嬩竴瀵逛竴鑱婂ぉ锛岃鍒囧埌绉佷俊銆?/p>
+     |             ^
+  26 |          </div>
+  27 |          <div class="wc-message-tabs">[39m
+      at createCompilerError (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:1378:17)
+      at emitError (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:3014:5)
+      at Object.onclosetag (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:2381:13)
+      at Tokenizer.stateInClosingTagName (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:799:16)
+      at Tokenizer.parse (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:1157:16)
+      at Object.baseParse (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:3053:13)
+      at Object.parse (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-dom\dist\compiler-dom.cjs.js:910:23)
+      at Object.parse$1 [as parse] (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-sfc\dist\compiler-sfc.cjs.js:1824:24)
+      at createDescriptor (file:///D:/mycode/worldCoffee/worldCoffee/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:71:43)
+      at transformMain (file:///D:/mycode/worldCoffee/worldCoffee/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:2421:34)
+[2m06:22:29[22m [31m[1m[vite][22m[39m [31mInternal server error: Element is missing end tag.[39m
+  Plugin: [35mvite:vue[39m
+  File: [36mD:/mycode/worldCoffee/worldCoffee/frontend/src/views/notifications/NotificationsMobile.vue[39m:25:11
+[33m  23 |            <p class="wc-message-eyebrow">WORLDCOFFEE INBOX</p>
+  24 |            <h2>娑堟伅宸ヤ綔鍙?/h2>
+  25 |            <p>杩欓噷鏀剁撼鎵€鏈変簰鍔ㄦ彁閱掞紱濡傛灉浣犳兂鐪嬩竴瀵逛竴鑱婂ぉ锛岃鍒囧埌绉佷俊銆?/p>
+     |             ^
+  26 |          </div>
+  27 |          <div class="wc-message-tabs">[39m
+      at createCompilerError (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:1378:17)
+      at emitError (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:3014:5)
+      at Object.onclosetag (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:2381:13)
+      at Tokenizer.stateInClosingTagName (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:799:16)
+      at Tokenizer.parse (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:1157:16)
+      at Object.baseParse (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:3053:13)
+      at Object.parse (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-dom\dist\compiler-dom.cjs.js:910:23)
+      at Object.parse$1 [as parse] (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-sfc\dist\compiler-sfc.cjs.js:1824:24)
+      at createDescriptor (file:///D:/mycode/worldCoffee/worldCoffee/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:71:43)
+      at transformMain (file:///D:/mycode/worldCoffee/worldCoffee/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:2421:34)
+[2m06:22:29[22m [31m[1m[vite][22m[39m [31mInternal server error: Element is missing end tag.[39m
+  Plugin: [35mvite:vue[39m
+  File: [36mD:/mycode/worldCoffee/worldCoffee/frontend/src/views/ai-chat/AIChatWeb.vue[39m:11:11
+[33m  9  |          <div class="ai-title">
+  10 |            <strong>WorldCoffee AI</strong>
+  11 |            <em>鍜栧暋鐏垫劅涓庨棶绛斿姪鎵?/em>
+     |             ^
+  12 |          </div>
+  13 |          <button class="ai-new-btn tap-scale" @click="startNewChat">[39m
+      at createCompilerError (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:1378:17)
+      at emitError (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:3014:5)
+      at Object.onclosetag (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:2381:13)
+      at Tokenizer.stateInClosingTagName (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:799:16)
+      at Tokenizer.parse (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:1157:16)
+      at Object.baseParse (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:3053:13)
+      at Object.parse (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-dom\dist\compiler-dom.cjs.js:910:23)
+      at Object.parse$1 [as parse] (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-sfc\dist\compiler-sfc.cjs.js:1824:24)
+      at createDescriptor (file:///D:/mycode/worldCoffee/worldCoffee/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:71:43)
+      at transformMain (file:///D:/mycode/worldCoffee/worldCoffee/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:2421:34)
+[2m06:22:29[22m [31m[1m[vite][22m[39m [31mInternal server error: Element is missing end tag.[39m
+  Plugin: [35mvite:vue[39m
+  File: [36mD:/mycode/worldCoffee/worldCoffee/frontend/src/views/ai-chat/AIChatMobile.vue[39m:11:11
+[33m  9  |          <div class="ai-title">
+  10 |            <strong>WorldCoffee AI</strong>
+  11 |            <em>鍜栧暋鐏垫劅涓庨棶绛斿姪鎵?/em>
+     |             ^
+  12 |          </div>
+  13 |          <button class="ai-new-btn tap-scale" @click="startNewChat">[39m
+      at createCompilerError (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:1378:17)
+      at emitError (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:3014:5)
+      at Object.onclosetag (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:2381:13)
+      at Tokenizer.stateInClosingTagName (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:799:16)
+      at Tokenizer.parse (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:1157:16)
+      at Object.baseParse (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-core\dist\compiler-core.cjs.js:3053:13)
+      at Object.parse (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-dom\dist\compiler-dom.cjs.js:910:23)
+      at Object.parse$1 [as parse] (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\@vue\compiler-sfc\dist\compiler-sfc.cjs.js:1824:24)
+      at createDescriptor (file:///D:/mycode/worldCoffee/worldCoffee/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:71:43)
+      at transformMain (file:///D:/mycode/worldCoffee/worldCoffee/frontend/node_modules/@vitejs/plugin-vue/dist/index.mjs:2421:34)
+[2m07:14:35[22m [33m[1m[vite][22m[39m [33mwarning: <button> cannot be child of <button>, according to HTML specifications. This can cause hydration errors or potentially disrupt future functionality.
+47 |                <em>{{ formatTime(conv.updatedAt || conv.createdAt) }}</em>
+48 |              </span>
+49 |              <button class="ai-history-delete" @click.stop="deleteConv(conv)" title="鍒犻櫎">
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+50 |                <Icon icon="material-symbols:delete-outline" class="w-4 h-4" />
+   |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+51 |              </button>
+   |  ^^^^^^^^^^^^^^^^^^^^^[39m
+  Plugin: [35mvite:vue[39m
+  File: [36mD:/mycode/worldCoffee/worldCoffee/frontend/src/views/ai-chat/AIChatWeb.vue[39m
+[2m07:14:35[22m [33m[1m[vite][22m[39m [33mwarning: <button> cannot be child of <button>, according to HTML specifications. This can cause hydration errors or potentially disrupt future functionality.
+47 |                <em>{{ formatTime(conv.updatedAt || conv.createdAt) }}</em>
+48 |              </span>
+49 |              <button class="ai-history-delete" @click.stop="deleteConv(conv)" title="鍒犻櫎">
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+50 |                <Icon icon="material-symbols:delete-outline" class="w-4 h-4" />
+   |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+51 |              </button>
+   |  ^^^^^^^^^^^^^^^^^^^^^[39m
+  Plugin: [35mvite:vue[39m
+  File: [36mD:/mycode/worldCoffee/worldCoffee/frontend/src/views/ai-chat/AIChatMobile.vue[39m
+[2m08:07:08[22m [31m[1m[vite][22m[39m [31mInternal server error: [postcss] D:/mycode/worldCoffee/worldCoffee/frontend/src/style.css:1100:1: Unexpected }[39m
+  Plugin: [35mvite:css[39m
+  File: [36mD:/mycode/worldCoffee/worldCoffee/frontend/src/style.css[39m:1100:0
+[33m  1098|  }
+  1099|    .home-layout .masonry > * { margin-bottom: 16px; }
+  1100|  }
+     |  ^
+  1101|  [39m
+      at Input.error (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\postcss\lib\input.js:135:16)
+      at Parser.unexpectedClose (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\postcss\lib\parser.js:594:22)
+      at Parser.end (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\postcss\lib\parser.js:337:12)
+      at Parser.parse (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\postcss\lib\parser.js:463:16)
+      at parse (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\postcss\lib\parse.js:11:12)
+      at new LazyResult (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\postcss\lib\lazy-result.js:165:16)
+      at Processor.process (D:\mycode\worldCoffee\worldCoffee\frontend\node_modules\postcss\lib\processor.js:53:14)
+      at compileCSS (file:///D:/mycode/worldCoffee/worldCoffee/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:36898:59)
+      at async TransformPluginContext.transform (file:///D:/mycode/worldCoffee/worldCoffee/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:36171:11)
+      at async PluginContainer.transform (file:///D:/mycode/worldCoffee/worldCoffee/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)

@@ -4,6 +4,7 @@ import cn.lx.worldcoffee.common.exception.ServiceException;
 import cn.lx.worldcoffee.common.security.SecurityUtils;
 import cn.lx.worldcoffee.message.dao.MessageDao;
 import cn.lx.worldcoffee.message.domain.PrivateMessage;
+import cn.lx.worldcoffee.message.domain.from.SendMessageForm;
 import cn.lx.worldcoffee.message.domain.vo.MessageVO;
 import cn.lx.worldcoffee.message.domain.vo.SessionVO;
 import cn.lx.worldcoffee.message.feign.UserFeignClient;
@@ -26,8 +27,10 @@ public class MessageService {
     private final UserFeignClient userFeignClient;
     private final RabbitTemplate rabbitTemplate;
 
-    public MessageVO sendMessage(Long toId, String content, Integer messageType) {
+    @Transactional(rollbackFor = Exception.class)
+    public MessageVO sendMessage(SendMessageForm form) {
         Long fromId = SecurityUtils.requireUserId();
+        Long toId = form.getToId();
 
         if (fromId.equals(toId)) throw new ServiceException("不能给自己发消息");
 
@@ -35,15 +38,15 @@ public class MessageService {
         PrivateMessage msg = new PrivateMessage();
         msg.setFromId(fromId);
         msg.setToId(toId);
-        msg.setContent(content);
-        msg.setMessageType(messageType != null ? messageType : 1);
+        msg.setContent(form.getContent());
+        msg.setMessageType(form.getMessageType() != null ? form.getMessageType() : 1);
         msg.setIsRead(0);
         msg.setCreateTime(LocalDateTime.now());
         messageDao.insert(msg);
 
-        // 发送到 RabbitMQ
+        // 发送到 RabbitMQ，消息格式: "fromId|||toId|||content"
         String routingKey = "chat." + toId;
-        String mqMessage = fromId + "|||" + content;
+        String mqMessage = fromId + "|||" + toId + "|||" + form.getContent();
         rabbitTemplate.convertAndSend("chat.exchange", routingKey, mqMessage);
 
         // 组装 VO
@@ -56,7 +59,7 @@ public class MessageService {
                 .fromName(fromUser != null ? fromUser.username() : "未知")
                 .fromAvatar(fromUser != null ? fromUser.avatar() : null)
                 .toId(toId)
-                .content(content)
+                .content(form.getContent())
                 .messageType(msg.getMessageType())
                 .isRead(false)
                 .createTime(msg.getCreateTime())

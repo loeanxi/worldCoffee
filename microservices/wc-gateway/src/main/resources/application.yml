@@ -1,0 +1,84 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: wc-gateway
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        username: nacos
+        password: nacos
+      config:
+        enabled: false
+    gateway:
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin Access-Control-Expose-Headers RETAIN_FIRST
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns:
+              - "http://localhost:*"
+              - "http://127.0.0.1:*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - PATCH
+              - OPTIONS
+            allowedHeaders: "*"
+            exposedHeaders:
+              - Authorization
+            allowCredentials: true
+      routes:
+        - id: wc-uploads
+          uri: lb://wc-user
+          predicates:
+            - Path=/uploads/**
+        - id: wc-admin
+          uri: lb://wc-admin
+          predicates:
+            - Path=/api/admin/**
+        - id: wc-shop
+          uri: lb://wc-shop
+          predicates:
+            - Path=/api/shop/**
+        - id: wc-community
+          uri: lb://wc-community
+          predicates:
+            - Path=/api/coffee/**
+        - id: wc-user
+          uri: lb://wc-user
+          predicates:
+            - Path=/api/user/**,/api/users/**
+        - id: wc-message-notification
+          uri: lb://wc-message
+          predicates:
+            - Path=/api/notifications/**
+        - id: wc-message-chat
+          uri: lb://wc-message
+          predicates:
+            - Path=/api/messages/**
+        - id: wc-ai
+          uri: lb://wc-ai
+          predicates:
+            - Path=/api/ai/**
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: true
