@@ -41,7 +41,7 @@ spring:
   ai:
     openai:
       base-url: https://dashscope.aliyuncs.com/compatible-mode
-      api-key: REDACTED_DASHSCOPE_KEY
+      api-key: ${ALIYUN_API_KEY:}  # 已从代码移除，改为读取环境变量 ALIYUN_API_KEY（旧 Key 已泄漏，请到阿里云百炼控制台吊销并轮换）
       chat:
         options:
           model: qwen-plus
@@ -63,7 +63,7 @@ spring:
 
 
 jwt:
-  secret: REDACTED_JWT_SECRET
+  secret: ${JWT_SECRET:}  # 已从代码移除，改为读取环境变量 JWT_SECRET（旧值已泄漏，请轮换）
   expire-time: 86400000
 
 upload:

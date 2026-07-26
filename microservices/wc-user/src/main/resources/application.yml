@@ -33,7 +33,7 @@ mybatis-plus:
 
 # JWT配置（与网关保持一致）
 jwt:
-  secret: REDACTED_JWT_SECRET
+  secret: ${MICROSERVICES_JWT_SECRET:}  # 已从代码移除，改为读取环境变量 MICROSERVICES_JWT_SECRET（旧值已泄漏，请轮换）
   expire-time: 604800000  # 7天
 
 # MinIO 文件存储配置
