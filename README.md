@@ -204,4 +204,4 @@ npm run dev      # http://localhost:5173
 
 ## 许可证
 
-...
+本仓库采用 [MIT License](LICENSE)。
