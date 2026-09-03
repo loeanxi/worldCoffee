@@ -1,5 +1,6 @@
 package cn.lx.worldcoffee.module.message.service;
 
+import cn.lx.worldcoffee.common.security.SecurityUtils;
 import cn.lx.worldcoffee.common.config.RabbitConfig;
 import cn.lx.worldcoffee.common.exception.ServiceException;
 import cn.lx.worldcoffee.common.redis.NotificationMessageReceiver;
@@ -31,21 +32,11 @@ public class MessageService {
 
 
     /** 从 Spring Security 拿当前登录用户ID */
-    private Long getCurrentUserId() {
-        try {
-            var auth = org.springframework.security.core.context.SecurityContextHolder
-                    .getContext().getAuthentication();
-            if (auth != null && auth.getPrincipal() != null) {
-                return Long.valueOf(auth.getPrincipal().toString());
-            }
-        } catch (Exception ignored) {}
-        return null;
-    }
 
     @Transactional(rollbackFor = Exception.class)
     public MessageVO sendMessage(Long toId, String content, Integer messageType) {
         // ─── 1. 校验当前用户是否登录 ───
-        Long fromId = getCurrentUserId();
+        Long fromId = SecurityUtils.getCurrentUserId();
         if (fromId == null) throw new ServiceException("请先登录");
 
         // ─── 2. 不能给自己发消息 ───
@@ -87,7 +78,7 @@ public class MessageService {
 
     public List<MessageVO> getChatHistory(Long otherUserId, int page, int size) {
         // ─── 1. 校验当前用户是否登录 ───
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         if (userId == null) throw new ServiceException("请先登录");
 
         // ─── 2. 查两人之间的所有消息 ───
@@ -171,7 +162,7 @@ public class MessageService {
      */
     public List<SessionVO> listSessions() {
         // ─── 1. 校验 ───
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         if (userId == null) throw new ServiceException("请先登录");
 
         // ─── 2. 查所有跟我有关的消息，按时间倒序 ───
@@ -249,7 +240,7 @@ public class MessageService {
     }
 
     public void markAsRead(Long otherUserId) {
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         if (userId == null) throw new ServiceException("请先登录");
 
         // 把对方发给我的未读消息全部标为已读
@@ -266,7 +257,7 @@ public class MessageService {
 
 
     public Long getUnreadCount() {
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         if (userId == null) return 0L;
 
         return messageDao.selectCount(

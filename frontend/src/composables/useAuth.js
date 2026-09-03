@@ -54,7 +54,8 @@ export function useAuth() {
         if (res && (res.code === 200 || res.code === 0 || res.success)) {
           // 后端 LoginVO: { token, userId, username ... }
           const payload = res.data || res.result || res
-          const t = payload.token || payload.access_token || 'ok'
+          const t = payload.token || payload.access_token
+          if (!t) return false // 没有 token 视为登录失败，不用假值冒充登录态
           const uid = payload.userId || payload.id
 
           token.value = t
@@ -83,8 +84,9 @@ export function useAuth() {
           phone: data.phone || ''
         })
         if (res && (res.code === 200 || res.code === 0 || res.success)) {
-          // 注册成功直接登录
-          const t = (res.data?.token) || 'ok'
+          // 注册成功直接登录（后端注册接口会返回 token）
+          const t = res.data?.token
+          if (!t) return false // 没有 token 视为失败，不用假值冒充登录态
           token.value = t
           user.value = {
             id: res.data?.userId || res.data?.id,

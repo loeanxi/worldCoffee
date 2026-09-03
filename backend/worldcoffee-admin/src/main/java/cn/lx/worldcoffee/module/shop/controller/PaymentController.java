@@ -29,15 +29,5 @@ public class PaymentController {
         return Result.success(paymentService.queryStatus(orderNo));
     }
 
-    private Long getCurrentUserId() {
-        try {
-            var auth = org.springframework.security.core.context.SecurityContextHolder
-                    .getContext().getAuthentication();
-            if (auth != null && auth.getPrincipal() != null) {
-                return Long.valueOf(auth.getPrincipal().toString());
-            }
-        } catch (Exception ignored) {}
-        return null;
-    }
 
 }

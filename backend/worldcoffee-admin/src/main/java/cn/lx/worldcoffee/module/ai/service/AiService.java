@@ -1,5 +1,6 @@
 package cn.lx.worldcoffee.module.ai.service;
 
+import cn.lx.worldcoffee.common.security.SecurityUtils;
 import cn.lx.worldcoffee.common.exception.ServiceException;
 import cn.lx.worldcoffee.module.ai.dao.AiConversationDao;
 import cn.lx.worldcoffee.module.ai.entity.AiConversation;
@@ -32,18 +33,9 @@ public class AiService {
     private final JdbcTemplate jdbcTemplate;
     private final VectorStore vectorStore;
 
-    public Long getCurrentUserId() {
-        try {
-            var auth = SecurityContextHolder.getContext().getAuthentication();
-            if (auth != null && auth.getPrincipal() != null) {
-                return Long.valueOf(auth.getPrincipal().toString());
-            }
-        } catch (Exception ignored) {}
-        return null;
-    }
 
     public Flux<String> chat(String message, String chatId) {
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         if (userId == null) throw new ServiceException("请先登录");
 
         if (aiConversationDao.selectCount(
@@ -75,7 +67,7 @@ public class AiService {
     }
 
     public List<AiConversation> listConversations() {
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         if (userId == null) throw new ServiceException("请先登录");
         return aiConversationDao.selectList(
                 new LambdaQueryWrapper<AiConversation>()
@@ -85,7 +77,7 @@ public class AiService {
     }
 
     public void deleteConversation(String chatId) {
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         if (userId == null) throw new ServiceException("请先登录");
         AiConversation conv = aiConversationDao.selectOne(
                 new LambdaQueryWrapper<AiConversation>().eq(AiConversation::getChatId, chatId));

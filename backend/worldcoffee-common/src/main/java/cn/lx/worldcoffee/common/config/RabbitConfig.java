@@ -4,7 +4,6 @@ import org.springframework.amqp.core.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import javax.swing.plaf.PanelUI;
 import java.util.HashMap;
 import java.util.Map;
 

@@ -15,8 +15,8 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/worldCoffee?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
-    username: root
-    password: 123456
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:123456}
     hikari:
       initialization-fail-timeout: -1
       minimum-idle: 2
@@ -27,8 +27,8 @@ spring:
   rabbitmq:
     host: localhost
     port: 5672
-    username: guest
-    password: guest
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
     virtual-host: /
     listener:
       simple:
@@ -54,7 +54,7 @@ snowflake:
   data-center-id: 1
 
 upload:
-  path: D:\mycode\worldCoffee\worldCoffee\uploads
+  path: ${UPLOAD_PATH:D:/mycode/worldCoffee/worldCoffee/uploads}
 
 management:
   endpoints:

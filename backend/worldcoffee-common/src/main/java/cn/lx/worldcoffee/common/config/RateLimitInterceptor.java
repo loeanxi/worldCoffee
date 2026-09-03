@@ -1,5 +1,6 @@
 package cn.lx.worldcoffee.common.config;
 
+import cn.lx.worldcoffee.common.security.SecurityUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -43,7 +44,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         // 只对秒杀 buy 接口限流
         if (!path.contains("/seckill/buy")) return true;
 
-        Long userId = getCurrentUserId(request);
+        Long userId = SecurityUtils.getCurrentUserId();
         String clientIp = getClientIp(request);
 
         // 全局限流：每秒 100
@@ -127,17 +128,6 @@ public class RateLimitInterceptor implements HandlerInterceptor {
             // Redis 异常时放行，避免误杀
             return true;
         }
-    }
-
-    private Long getCurrentUserId(HttpServletRequest request) {
-        try {
-            var auth = org.springframework.security.core.context.SecurityContextHolder
-                    .getContext().getAuthentication();
-            if (auth != null && auth.getPrincipal() != null) {
-                return Long.valueOf(auth.getPrincipal().toString());
-            }
-        } catch (Exception ignored) {}
-        return null;
     }
 
     private String getClientIp(HttpServletRequest request) {

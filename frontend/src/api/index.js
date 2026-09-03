@@ -155,14 +155,6 @@ function ok(res) {
   return { code: 200, msg: '', data: raw }
 }
 
-function localOk(data = null, msg = '') {
-  return Promise.resolve({ code: 200, msg, data })
-}
-
-function localUnsupported(msg) {
-  return Promise.resolve({ code: 501, msg, data: null })
-}
-
 /**
  * 用于返回帖子列表的 API（getPosts / getMyPosts 等）
  * 返回 { code, msg, data } 结构，data 为归一化后的数组或分页对象
@@ -212,58 +204,10 @@ export const userApi = {
   changePassword: data => http.put('/user/password', data).then(ok),
 
   /** 获取指定用户主页 + 最近帖子（UserProfileVO） */
-  //// 带路径参数（用模板字符串反引号 `` + ${变量}）
-  getUserProfile: id => http.get('/user/batch', { params: { ids: id } }).then(res => {
-    const result = ok(res)
-    const raw = result.data
-    let user = null
-    if (raw && Array.isArray(raw)) {
-      user = raw[0] || null
-    } else if (raw && typeof raw === 'object') {
-      user = raw[id] || raw[String(id)] || Object.values(raw)[0] || null
-    }
-    result.data = {
-      id: user?.id || user?.userId || Number(id),
-      username: user?.username || user?.nickname || `用户${id}`,
-      nickname: user?.nickname || user?.username || `用户${id}`,
-      avatar: normalizeUrl(user?.avatar || ''),
-      recentPosts: [],
-      postCount: 0,
-      followingCount: 0,
-      followerCount: 0,
-      isFollowing: false
-    }
-    return result
-  }).catch(() => {
-    const fallbackName = `用户${id}`
-    return {
-      code: 200,
-      msg: '',
-      data: {
-        id: Number(id),
-        username: fallbackName,
-        nickname: fallbackName,
-        avatar: '',
-        recentPosts: [],
-        postCount: 0,
-        followingCount: 0,
-        followerCount: 0,
-        isFollowing: false
-      }
-    }
-  }),
+  getUserProfile: id => http.get(`/user/${id}`).then(ok),
 
-  /** 关注 / 取消关注 */
-  toggleFollow: () => localUnsupported('当前后端暂不支持关注用户'),
-
-  /** 关注列表 */
-  getFollowingList: () => localOk([]),
-
-  /** 粉丝列表 */
-  getFollowersList: () => localOk([]),
-
-  /** 搜索用户 */
-  searchUsers: () => localOk([]),
+  /** 关注 / 取消关注（返回当前是否已关注） */
+  toggleFollow: id => http.post(`/user/${id}/follow`).then(ok),
 
   /** 上传头像 - 返回归一化后的头像路径 */
   uploadAvatar: formData => http.post('/coffee/upload', formData, {
@@ -279,14 +223,8 @@ export const userApi = {
   /** 我的统计（发帖/获赞/收藏/评论/关注/粉丝数） */
   getMeStats: () => http.get('/user/me/stats').then(ok),
 
-  /** 登出（使 token 失效 + 清 Redis 缓存） */
-  logout: () => localOk(null),
-
-  /** 刷新 JWT（获取新 token，延长有效期） */
-  refreshToken: () => localOk(null),
-
-  /** 注销账号（软删除，status=0） */
-  deleteAccount: () => localUnsupported('当前后端暂不支持注销账号'),
+  /** 登出（后端拉黑 token + 清 Redis 缓存，前端随后再清本地登录态） */
+  logout: () => http.post('/user/logout').then(ok),
 
   /** 批量获取用户信息（ids: 逗号分隔的用户 ID 字符串） */
   batchGetUsers: ids => http.get('/user/batch', { params: { ids } }).then(ok),

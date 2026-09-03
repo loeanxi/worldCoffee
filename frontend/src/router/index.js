@@ -32,7 +32,7 @@ const routes = [
   {
     path: '/me',
     name: 'Me',
-    component: () => import('../views/Me.vue'),
+    component: () => import('../views/me/Me.vue'),
     meta: { requiresAuth: true }
   },
   {
@@ -61,13 +61,13 @@ const routes = [
   {
     path: '/notifications',
     name: 'Notifications',
-    component: () => import('../views/Notifications.vue'),
+    component: () => import('../views/notifications/Notifications.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/messages',
     name: 'Messages',
-    component: () => import('../views/Messages.vue'),
+    component: () => import('../views/messages/Messages.vue'),
     meta: { requiresAuth: true }
   },
   {
@@ -80,7 +80,7 @@ const routes = [
   {
     path: '/shop',
     name: 'Shop',
-    component: () => import('../views/Shop.vue')
+    component: () => import('../views/shop/Shop.vue')
   },
   {
     path: '/shop/product/:id',
@@ -91,13 +91,13 @@ const routes = [
   {
     path: '/shop/cart',
     name: 'Cart',
-    component: () => import('../views/Cart.vue'),
+    component: () => import('../views/cart/Cart.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/shop/orders',
     name: 'Orders',
-    component: () => import('../views/Orders.vue'),
+    component: () => import('../views/orders/Orders.vue'),
     meta: { requiresAuth: true }
   },
   {
@@ -115,13 +115,8 @@ const routes = [
   {
     path: '/ai-chat',
     name: 'AIChat',
-    component: () => import('../views/AIChat.vue'),
+    component: () => import('../views/ai-chat/AIChat.vue'),
     meta: { requiresAuth: true }
-  },
-  {
-    path: '/logo-preview',
-    name: 'LogoPreview',
-    component: () => import('../views/LogoPreview.vue')
   },
   {
     path: '/:pathMatch(.*)*',

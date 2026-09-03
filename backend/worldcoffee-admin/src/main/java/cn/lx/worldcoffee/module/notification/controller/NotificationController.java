@@ -1,5 +1,6 @@
 package cn.lx.worldcoffee.module.notification.controller;
 
+import cn.lx.worldcoffee.common.security.SecurityUtils;
 import cn.lx.worldcoffee.common.redis.NotificationMessageReceiver;
 import cn.lx.worldcoffee.common.result.Result;
 import cn.lx.worldcoffee.common.exception.ServiceException;
@@ -29,15 +30,6 @@ public class NotificationController {
     private final NotificationService notificationService;
     private final CoffeeService coffeeService;
 
-    private Long getCurrentUserId(){
-        try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            if (auth != null && auth.getPrincipal() != null){
-                return Long.valueOf(auth.getPrincipal().toString());
-            }
-        }catch (Exception ignored){}
-        return null;
-    }
 
 
     /**
@@ -54,7 +46,7 @@ public class NotificationController {
     @Operation(summary = "SSE 订阅", description = "建立长连接，服务端实时推送新通知给前端")
     @GetMapping(value = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter subscribe() {
-        Long uId = getCurrentUserId();
+        Long uId = SecurityUtils.getCurrentUserId();
         if (uId == null) throw new ServiceException("请先登录");
         String userId = uId.toString();
         SseEmitter emitter = new SseEmitter(0L);  // 不过期
@@ -78,7 +70,7 @@ public class NotificationController {
             @Parameter(description = "unread / all") @RequestParam(defaultValue = "all") String filter,
             @Parameter(description = "页码") @RequestParam(defaultValue = "1") int page,
             @Parameter(description = "每页条数") @RequestParam(defaultValue = "20") int size) {
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         boolean unreadOnly = "unread".equals(filter);
         return Result.success(notificationService.listNotifications(userId, unreadOnly, page, size));
     }
@@ -90,7 +82,7 @@ public class NotificationController {
     @Operation(summary = "未读数量", description = "返回当前用户未读通知数，用于前端红点 badge")
     @GetMapping("/unread-count")
     public Result<Long> unreadCount() {
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         return Result.success(notificationService.countUnread(userId));
     }
 
@@ -117,7 +109,7 @@ public class NotificationController {
     @Operation(summary = "一键全部已读", description = "将当前用户所有未读通知批量标记为已读")
     @PutMapping("/read-all")
     public Result<Void> readAll() {
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         notificationService.markAllAsRead(userId);
         return Result.success(null);
     }
@@ -134,7 +126,7 @@ public class NotificationController {
 //    旧版方法
 //    @GetMapping("/unread")
 //    public Result<List<NotificationVO>> getUnread() {
-//        Long userId = getCurrentUserId();
+//        Long userId = SecurityUtils.getCurrentUserId();
 //        return Result.success(notificationService.listUnread(userId));
 //    }
 

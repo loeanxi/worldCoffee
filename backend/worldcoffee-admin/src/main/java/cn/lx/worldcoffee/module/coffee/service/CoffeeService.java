@@ -1,5 +1,6 @@
 package cn.lx.worldcoffee.module.coffee.service;
 
+import cn.lx.worldcoffee.common.security.SecurityUtils;
 import cn.hutool.json.JSONUtil;
 import cn.lx.worldcoffee.module.coffee.dao.*;
 import cn.lx.worldcoffee.module.coffee.domain.*;
@@ -50,15 +51,6 @@ public class CoffeeService {
 
     // ===== =======   工具方法 =======   =====
     /** 获取当前登录用户ID，未登录返回null */
-    private Long getCurrentUserId(){
-        try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            if (auth != null && auth.getPrincipal() != null){
-                return Long.valueOf(auth.getPrincipal().toString());
-            }
-        }catch (Exception ignored){}
-        return null;
-    }
     /** 截取文本前N个字 */
     private String truncate(String text, int maxLen) {
         if (text == null) return "";
@@ -198,7 +190,7 @@ public class CoffeeService {
         ).stream().collect(Collectors.toMap(User::getId, u -> u));
 
         // 2. 查当前用户点赞/收藏状态
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         Set<Long> likedPostIds = new HashSet<>();
         Set<Long> favoritedPostIds = new HashSet<>();
         if (currentUserId != null) {
@@ -278,7 +270,7 @@ public class CoffeeService {
 
     public void createPost(PostCreateFrom from) {
         // 1. 从 SecurityContext 拿当前登录用户ID
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         if (userId == null){
             throw new ServiceException("请先登录");
         }
@@ -330,7 +322,7 @@ public class CoffeeService {
         //  │
         //  ▼
         //CoffeeService.createPost(form)
-        //  │  1. getCurrentUserId() → 从SecurityContext拿userId=1
+        //  │  1. SecurityUtils.getCurrentUserId() → 从SecurityContext拿userId=1
         //  │  2. new CoffeePost() + 设各字段
         //  │  3. List<String> images → JSONUtil.toJsonStr() → JSON字符串
         //  │  4. postDao.insert(post) → INSERT INTO coffee_post ...
@@ -400,7 +392,7 @@ public class CoffeeService {
         // 6. 查当前用户是否点赞/收藏
         // SQL: SELECT COUNT(*) FROM coffee_like WHERE post_id = ? AND user_id = ?
         // SQL: SELECT COUNT(*) FROM coffee_favorite WHERE post_id = ? AND user_id = ?
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         boolean likedByMe = false;
         boolean favoritedByMe = false;
 
@@ -512,7 +504,7 @@ public class CoffeeService {
 
     public Boolean toggleLike(Long postId) {
         // 1. 拿当前登录用户ID
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         if (userId == null){
             throw new ServiceException("请先登录");
         }
@@ -564,7 +556,7 @@ public class CoffeeService {
     }
 
     public Boolean toggleFavorite(Long postId) {
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         if (userId == null){
             throw new ServiceException("请先登录");
         }
@@ -614,7 +606,7 @@ public class CoffeeService {
 
     public CommentVO addComment(Long postId, CommentCreateFrom from) {
         // 1. 拿当前登录用户
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         if (userId == null){
             throw new ServiceException("请先登录");
         }
@@ -684,7 +676,7 @@ public class CoffeeService {
     public void deletePost(Long id) {
 
         // 1. 拿当前登录用户
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         if (userId == null){
             throw new ServiceException("请先登录");
         }
@@ -699,7 +691,7 @@ public class CoffeeService {
     }
 
     public void updatePost(Long id, PostCreateFrom from) {
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         if (userId == null){throw  new ServiceException("请先登录");}
 
         // SQL: SELECT * FROM coffee_post WHERE id = ?
@@ -724,7 +716,7 @@ public class CoffeeService {
     }
 
     public void deleteComment(Long commentId) {
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         if (userId == null) throw new ServiceException("请先登录");
 
         // SQL: SELECT * FROM coffee_comment WHERE id = ?
@@ -757,7 +749,7 @@ public class CoffeeService {
     public List<PostListVO> getMyPosts(Integer page, Integer size) {
         //和 listPosts 的区别只有这一个地方：.eq(CoffeePost::getUserId, userId) 把查所有人的帖改成只查当前登录用户的帖，其余一模一样。
 
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         if (userId == null) throw new ServiceException("请先登录");
         // SQL: SELECT * FROM coffee_post WHERE user_id = ? AND status = 1
         //      ORDER BY create_time DESC LIMIT ?,?
@@ -774,7 +766,7 @@ public class CoffeeService {
     // 这和直接查 coffee_post 的 LIMIT 分页不同。
     // 但拿到帖子列表后直接扔给 buildPostListVO 就完事了，后半段全部复用。
     public List<PostListVO> getMyFavorites(Integer page, Integer size) {
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         if (userId == null) throw new ServiceException("请先登录");
 
         // 第1步：查收藏记录，拿到帖子ID列表
@@ -808,7 +800,7 @@ public class CoffeeService {
     public List<PostListVO> getMyLikes(Integer page, Integer size) {
         //收藏和点赞列表唯一区别：查收藏查 coffee_favorite 表，
         //点赞查 coffee_like 表，其余批量查帖子、批量查用户、组装VO全都一样。
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         if (userId == null) throw new ServiceException("请先登录");
 
         // SQL: SELECT post_id FROM coffee_like WHERE user_id = ? ORDER BY create_time DESC
@@ -916,7 +908,7 @@ public class CoffeeService {
     }
 
     public Boolean toggleCommentLike(Long commentId) {
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         if (userId == null) throw new ServiceException("请先登录");
 
 
@@ -962,7 +954,7 @@ public class CoffeeService {
     }
 
     public List<PostListVO> getFollowingPosts(Integer page, Integer size) {
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         if (userId == null) throw new ServiceException("请先登录");
 
         // SQL: SELECT followee_id FROM user_follow WHERE follower_id = ?
@@ -991,7 +983,7 @@ public class CoffeeService {
      * status 字段留给管理后台处理，目前默认 0
      */
     public void reportPost(Long postId, ReportCreatFrom from) {
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         if (userId == null) throw new ServiceException("请先登录");
 
         // 校验帖子存在

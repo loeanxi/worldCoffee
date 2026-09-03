@@ -1,5 +1,6 @@
 package cn.lx.worldcoffee.module.user.service;
 
+import cn.lx.worldcoffee.common.security.SecurityUtils;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import cn.lx.worldcoffee.common.security.JwtUtil;
@@ -52,15 +53,6 @@ public class UserService {
     private String uploadPath;
 
     /** 获取当前登录用户ID，未登录返回null */
-    public Long getCurrentUserId(){
-        try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            if (auth != null && auth.getPrincipal() != null){
-                return Long.valueOf(auth.getPrincipal().toString());
-            }
-        }catch (Exception ignored){}
-        return null;
-    }
 
     @Transactional(rollbackFor = Exception.class)
     public LoginVO register(RegisterForm form) {
@@ -192,7 +184,7 @@ public class UserService {
     }
 
     public void updateProfile(UpdateProfileFrom from) {
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         if (userId == null) throw new ServiceException("请xian登录qaq");
 
         // 1. 查当前用户
@@ -282,7 +274,7 @@ public class UserService {
                         .last("LIMIT 10")
         );
 
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         //select count(*) from user_follow where follower_id = ? and followee_id = ?
         boolean isFollowing = currentUserId != null && followDao.selectCount(new LambdaQueryWrapper<UserFollow>()
                 .eq(UserFollow::getFollowerId,currentUserId)
@@ -301,7 +293,7 @@ public class UserService {
     }
 
     public void changePassword(ChangePasswordFrom from) {
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         if (userId == null) throw new ServiceException("请先登录");
 
         // 1. 查当前用户（拿到加密后的旧密码）
@@ -326,7 +318,7 @@ public class UserService {
     }
 
     public Boolean toggleFollow(Long followeeId) {
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         if (userId == null) throw new ServiceException("请先登录");
         if (userId.equals(followeeId)) throw new ServiceException("不能关注自己");
 
@@ -377,7 +369,7 @@ public class UserService {
                 .stream().collect(Collectors.toMap(User::getId, u -> u));
 
         // 3. 查当前用户关注了其中哪些人（用于 isFollowing 字段）
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         Set<Long> myFollwees = new HashSet<>();
         if (currentUserId != null){
             myFollwees = followDao.selectList(new LambdaQueryWrapper<UserFollow>()
@@ -412,7 +404,7 @@ public class UserService {
         Map<Long, User> userMap = userDao.selectBatchIds(followerIds).stream()
                 .collect(Collectors.toMap(User::getId, u -> u));
 
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         Set<Long> myFollowees = new HashSet<>();
 
         if (currentUserId != null){
@@ -444,7 +436,7 @@ public class UserService {
         if (users.isEmpty()) return List.of();
 
         // 查当前用户关注了其中哪些人
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         Set<Long> myFollowees = new HashSet<>();
         if (currentUserId != null) {
             List<Long> userIds = users.stream().map(User::getId).collect(Collectors.toList());
@@ -465,7 +457,7 @@ public class UserService {
 
     public String uploadAvatar(MultipartFile file) {
         //接收文件 → 校验 → 存盘 → 拼URL → 写库 → 清缓存 → 返回
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         if (userId == null) throw new ServiceException("请先登录");
 
         // 1. 校验文件
@@ -552,7 +544,7 @@ public class UserService {
     }
 
     public UserStatsVO getMyStats() {
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         if (userId == null) throw new ServiceException("请先登录");
 
         // 1. 发帖数
@@ -676,13 +668,15 @@ public class UserService {
 
     public void deleteAccount(String authHeader) {
         // 1. 拿当前登录用户
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         if (userId == null) throw new ServiceException("请先登录");
         // 2. 查用户是否存在
         User user = userDao.selectById(userId);
         if (user == null) throw new ServiceException("用户不存在");
         if (user.getStatus() == 0) throw new ServiceException("账号已注销");
         // 3. 软删除：status 置为 0
+        user.setStatus(0);
+        userDao.updateById(user);
         stringRedisTemplate.delete("user:info" + userId);
         // 5. 把当前 token 加入黑名单（立即失效）
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -708,7 +702,7 @@ public class UserService {
                 .stream().collect(Collectors.toMap(User::getId, u -> u));
 
         // 3. 查当前用户关注了其中哪些人
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         Set<Long> myFollowees = new HashSet<>();
         if (currentUserId != null) {
             myFollowees = followDao.selectList(new LambdaQueryWrapper<UserFollow>()
@@ -730,7 +724,7 @@ public class UserService {
     }
 
     public void bindPhone(BindPhoneFrom form) {
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtils.getCurrentUserId();
         if (userId == null) throw new ServiceException("请先登录");
 
         // 1. 校验验证码
@@ -747,5 +741,8 @@ public class UserService {
         // 3. 更新
         User user = userDao.selectById(userId);
         user.setPhone(form.getPhone());
+        userDao.updateById(user);
+        // 清掉用户缓存，避免读到旧手机号
+        stringRedisTemplate.delete("user:info" + userId);
     }
 }

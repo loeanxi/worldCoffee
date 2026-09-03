@@ -58,7 +58,7 @@ const { isDesktop, mode } = useViewportMode()
 const notifCount = ref(0)
 const messageCount = ref(0)
 
-const hideNavRoutes = ['Login', 'Register', 'LogoPreview', 'ChatRoom', 'AIChat', 'Cart', 'Orders', 'CouponCenter', 'ProductDetail']
+const hideNavRoutes = ['Login', 'Register', 'ChatRoom', 'AIChat', 'Cart', 'Orders', 'CouponCenter', 'ProductDetail']
 const showBottomNav = computed(() => !hideNavRoutes.includes(route.name))
 const noDesktopSidebarRoutes = ['Home', 'CreatePost', 'Messages', 'Notifications', 'Me', 'Shop']
 const showDesktopSidebar = computed(() => showBottomNav.value && !noDesktopSidebarRoutes.includes(route.name))
@@ -131,7 +131,6 @@ function connectSSE(attempt = 0) {
       const trimmed = data.trim()
       if (trimmed.startsWith('chat:') || trimmed.startsWith('message:')) {
         messageCount.value = (Number(messageCount.value) || 0) + 1
-        try { window.dispatchEvent(new CustomEvent('sse-chat-message', { detail: { data } })) } catch (e) { /* ignore */ }
         fetchMessageCount()
         return
       }
@@ -143,7 +142,6 @@ function connectSSE(attempt = 0) {
           const isChatMsg = payload.type === 'chat' || payload.type === 'message' || payload.messageType || payload.chat
           if (isChatMsg) {
             messageCount.value = (Number(messageCount.value) || 0) + 1
-            try { window.dispatchEvent(new CustomEvent('sse-chat-message', { detail: { data, payload } })) } catch (e) { /* ignore */ }
             fetchMessageCount()
             return
           }

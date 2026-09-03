@@ -11,8 +11,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -41,19 +39,15 @@ public class SeckillOrderConsumer {
         }
 
         try {
-            // 2. 设置 SecurityContext，让 ShopService 能拿到 userId
-            UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(String.valueOf(msg.getUserId()), null, null);
-            SecurityContextHolder.getContext().setAuthentication(auth);
-
-            // 3. 创建订单
+            // 2. 创建订单（userId 从消息体显式传入，无需伪造 HTTP 安全上下文）
             CreateOrderFrom form = new CreateOrderFrom();
             form.setCouponId(msg.getCouponId());
             form.setAddress(msg.getAddress());
             form.setRemark(msg.getRemark());
 
-            orderService.createOrder(form, msg.getSeckillPrice());
+            orderService.createOrderForUser(form, msg.getUserId(), msg.getSeckillPrice());
 
-            // 4. 更新事件状态为已完成
+            // 3. 更新事件状态为已完成
             updateEventStatus(msg.getOrderNo(), 2);
 
         }catch (Exception e){
@@ -61,8 +55,6 @@ public class SeckillOrderConsumer {
             // 失败时删除 SETNX，让重试能进来
             redisTemplate.delete(key);
             throw e;  // 抛异常触发 MQ 重试
-        }finally {
-            SecurityContextHolder.clearContext();
         }
     }
 

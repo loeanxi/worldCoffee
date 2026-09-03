@@ -92,8 +92,28 @@ public class OrderService {
      */
     @Transactional(rollbackFor = Exception.class)
     public OrderVO createOrder(CreateOrderFrom from) {
-        Long userId = SecurityUtils.requireUserId();
+        return createOrderInternal(from, SecurityUtils.requireUserId());
+    }
 
+    /**
+     * MQ 消费者专用下单：无 HTTP 上下文，userId 从消息体传入。
+     * 秒杀消费者（SeckillOrderConsumer）调用此方法，不经过 SecurityUtils。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public OrderVO createOrderForUser(CreateOrderFrom from, Long userId, BigDecimal seckillPrice) {
+        OrderVO order = createOrderInternal(from, userId);
+
+        if (seckillPrice != null) {
+            // 覆盖订单总金额为秒杀价
+            CoffeeOrder coffeeOrder = orderDao.selectById(order.getId());
+            coffeeOrder.setTotalAmount(seckillPrice);
+            orderDao.updateById(coffeeOrder);
+            order.setTotalAmount(seckillPrice);
+        }
+        return order;
+    }
+
+    private OrderVO createOrderInternal(CreateOrderFrom from, Long userId) {
         // 1. 查购物车
         List<CartItem> cartItems = cartItemDao.selectList(
                 new LambdaQueryWrapper<CartItem>().eq(CartItem::getUserId, userId));
@@ -216,40 +236,6 @@ public class OrderService {
             rollbackRedisStock(cartItems, null);
             throw e;
         }
-    }
-
-    /**
-     * 秒杀专用下单：传秒杀价覆盖商品原价计算的总金额。
-     *
-     * 为什么不单独写一套 Lua：
-     *   这个方法调的是上面的 createOrder(from)，里面已经有 Lua 扣库存逻辑了。
-     *   秒杀下单只是在普通下单之后，把订单总金额改成秒杀价。
-     *
-     *   调用链：
-     *     createOrder(from, seckillPrice)    ← 秒杀入口
-     *         │
-     *         └─ createOrder(from)           ← 复用普通下单逻辑
-     *                 ├─ Redis Lua 扣库存
-     *                 ├─ MySQL 插入订单 + 明细
-     *                 └─ 清空购物车
-     *         │
-     *         └─ 覆盖订单金额为秒杀价
-     *
-     * @param from         收货地址、备注、优惠券ID
-     * @param seckillPrice 秒杀价（不为 null 时覆盖总金额）
-     */
-    @Transactional(rollbackFor = Exception.class)
-    public OrderVO createOrder(CreateOrderFrom from, BigDecimal seckillPrice) {
-        OrderVO order = createOrder(from);
-
-        if (seckillPrice != null) {
-            // 覆盖订单总金额
-            CoffeeOrder coffeeOrder = orderDao.selectById(order.getId());
-            coffeeOrder.setTotalAmount(seckillPrice);
-            orderDao.updateById(coffeeOrder);
-            order.setTotalAmount(seckillPrice);
-        }
-        return order;
     }
 
     // ==================== 查询订单 ====================

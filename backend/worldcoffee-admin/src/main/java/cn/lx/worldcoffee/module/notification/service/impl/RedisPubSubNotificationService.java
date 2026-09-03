@@ -1,5 +1,6 @@
 package cn.lx.worldcoffee.module.notification.service.impl;
 
+import cn.lx.worldcoffee.common.security.SecurityUtils;
 import cn.lx.worldcoffee.common.exception.ServiceException;
 import cn.lx.worldcoffee.module.notification.dao.NotificationDao;
 import cn.lx.worldcoffee.module.notification.domain.Notification;
@@ -32,15 +33,6 @@ public class RedisPubSubNotificationService implements NotificationService {
     private final UserDao userDao;
 
     /** 获取当前登录用户ID，未登录返回null */
-    private Long getCurrentUserId(){
-        try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            if (auth != null && auth.getPrincipal() != null){
-                return Long.valueOf(auth.getPrincipal().toString());
-            }
-        }catch (Exception ignored){}
-        return null;
-    }
 
     @Override
     public void send(NotificationEvent event) {
@@ -146,7 +138,7 @@ public class RedisPubSubNotificationService implements NotificationService {
     public void deleteNotification(Long notificationId) {
         // SQL: SELECT * FROM notification WHERE id = ?
         Notification n = notificationDao.selectById(notificationId);
-        if (n == null || !n.getReceiverId().equals(getCurrentUserId())) {
+        if (n == null || !n.getReceiverId().equals(SecurityUtils.getCurrentUserId())) {
             throw new ServiceException("无权操作");
         }
         // SQL: DELETE FROM notification WHERE id = ?

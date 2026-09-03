@@ -1066,8 +1066,11 @@ async function loadComments() {
   if (!selectedPost.value) return
   detailCommentsLoading.value = true
   try {
-    const res = await coffeeApi.getComments(selectedPost.value.id, { page: 1, size: 50 })
-    detailComments.value = extractList(res)
+    // 后端没有单独的评论列表接口，帖子详情响应内嵌 comments
+    const res = await coffeeApi.getPostDetail(selectedPost.value.id)
+    detailComments.value = (res && res.code === 200 && Array.isArray(res.data?.comments))
+      ? res.data.comments
+      : []
   } catch {
     // 静默
   } finally {
