@@ -38,3 +38,12 @@ uploads/
 
 # ===== WorkBuddy internal state =====
 .workbuddy/
+
+# ===== Runtime data / local-only artifacts =====
+minio-data/
+**/temp-libs/
+microservices/.run/
+microservices/.codex-run-logs/
+*.pid
+vite.config.js.timestamp-*
+.reasonix/
