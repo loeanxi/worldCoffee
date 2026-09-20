@@ -25,7 +25,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class RefundServiceTest {
+class RefundServiceTest extends MpTableInfoSupport {
 
     @Mock private RefundRecordDao refundDao;
     @Mock private CoffeeOrderDao orderDao;

@@ -7,6 +7,10 @@ import cn.lx.worldcoffee.message.domain.PrivateMessage;
 import cn.lx.worldcoffee.message.domain.from.SendMessageForm;
 import cn.lx.worldcoffee.message.domain.vo.MessageVO;
 import cn.lx.worldcoffee.message.feign.UserFeignClient;
+import com.baomidou.mybatisplus.core.MybatisConfiguration;
+import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
+import org.apache.ibatis.builder.MapperBuilderAssistant;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -30,6 +34,14 @@ class MessageServiceTest {
     @Mock private UserFeignClient userFeignClient;
     @Mock private RabbitTemplate rabbitTemplate;
     @InjectMocks private MessageService messageService;
+
+    @BeforeAll
+    static void initMpLambdaCache() {
+        // 纯单测无 Spring/MyBatis 启动流程，手动初始化 PrivateMessage 的
+        // lambda 列缓存，避免 "can not find lambda cache for this entity"
+        TableInfoHelper.initTableInfo(
+                new MapperBuilderAssistant(new MybatisConfiguration(), ""), PrivateMessage.class);
+    }
 
     @Test
     void sendMessage_正常发送() {

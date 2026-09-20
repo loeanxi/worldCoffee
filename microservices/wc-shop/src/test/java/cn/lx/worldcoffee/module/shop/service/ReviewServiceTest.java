@@ -28,7 +28,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class ReviewServiceTest {
+class ReviewServiceTest extends MpTableInfoSupport {
 
     @Mock private ProductReviewDao reviewDao;
     @Mock private CoffeeOrderDao orderDao;
