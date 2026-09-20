@@ -16,6 +16,21 @@ request.interceptors.request.use(config => {
   return config
 })
 
+/**
+ * HTTP 状态码 → 用户提示兜底映射
+ * （与 C 端 @wc/shared 的 HTTP_STATUS_MESSAGES 保持一致；admin-frontend 为独立工程，各自维护一份）
+ */
+const HTTP_STATUS_MESSAGES: Record<number, string> = {
+  400: '请求参数有误，请检查后重试',
+  404: '请求的内容不存在或已删除',
+  408: '请求超时，请稍后重试',
+  429: '操作太频繁，请稍后再试',
+  500: '服务器开小差了，请稍后重试',
+  502: '服务暂时不可用，请稍后重试',
+  503: '服务暂时不可用，请稍后重试',
+  504: '服务响应超时，请稍后重试'
+}
+
 request.interceptors.response.use(
   response => {
     const res = response.data
@@ -27,12 +42,17 @@ request.interceptors.response.use(
     return Promise.reject(new Error(message))
   },
   error => {
-    if (error.response?.status === 401 || error.response?.status === 403) {
+    const status = error.response?.status
+    if (status === 401 || status === 403) {
       ElMessage.error('登录已过期，请重新登录')
       sessionStorage.removeItem('admin_token')
       router.push('/login')
     } else {
-      ElMessage.error(error.response?.data?.message || error.response?.data?.msg || '网络错误')
+      const serverMsg = error.response?.data?.message || error.response?.data?.msg
+      const fallback = typeof status === 'number'
+        ? (HTTP_STATUS_MESSAGES[status] || `请求失败（${status}）`)
+        : '网络异常，请检查网络连接'
+      ElMessage.error(serverMsg || fallback)
     }
     return Promise.reject(error)
   }

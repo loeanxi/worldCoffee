@@ -124,15 +124,60 @@ function normalizePostList(posts) {
   return posts.map(normalizePostImageUrls)
 }
 
-/** 统一错误提取（供页面 .catch 用） */
+// ─── 统一错误码 → 用户提示映射 ─────────────────────
+/**
+ * HTTP 状态码兜底文案：服务端没有返回 msg 时使用。
+ * 与网关 / 全局异常处理器的约定保持一致。
+ */
+const HTTP_STATUS_MESSAGES: Record<number, string> = {
+  400: '请求参数有误，请检查后重试',
+  401: '登录已过期，请重新登录',
+  403: '没有权限执行此操作',
+  404: '请求的内容不存在或已删除',
+  408: '请求超时，请稍后重试',
+  429: '操作太频繁，请稍后再试',
+  500: '服务器开小差了，请稍后重试',
+  502: '服务暂时不可用，请稍后重试',
+  503: '服务暂时不可用，请稍后重试',
+  504: '服务响应超时，请稍后重试'
+}
+
+/**
+ * 业务错误码兜底文案：后端 Result.code !== 200 且 msg 为空时使用。
+ * （后端约定：code 与 HTTP 语义对齐，msg 为面向用户的具体描述）
+ */
+const BIZ_CODE_MESSAGES: Record<number, string> = {
+  401: '请先登录',
+  403: '没有权限执行此操作',
+  429: '操作太频繁，请稍后再试',
+  500: '系统繁忙，请稍后重试'
+}
+
+/**
+ * 统一错误提取（供页面 .catch 用）。
+ * 优先级：服务端业务 msg > HTTP 状态码映射 > 业务码映射 > 网络层兜底。
+ */
 export function extractApiError(err) {
   if (!err) return '网络异常，请稍后重试'
   if (typeof err === 'string') return err
-  if (err.msg) return err.msg
-  if (err.response && err.response.data && err.response.data.message) return err.response.data.message
-  if (err.response && err.response.data && err.response.data.msg) return err.response.data.msg
-  if (err.message) return err.message
-  return '请求失败，请稍后重试'
+
+  // 业务错误：响应拦截器对 code !== 200 的 Result 直接 reject 原对象（code 为数字）
+  if (typeof err.code === 'number') {
+    return err.msg || BIZ_CODE_MESSAGES[err.code] || '请求失败，请稍后重试'
+  }
+
+  // HTTP 错误（axios）：先看服务端返回的 msg，再按状态码映射
+  const status = err.response?.status
+  const serverMsg = err.response?.data?.msg || err.response?.data?.message
+  if (serverMsg) return serverMsg
+  if (typeof status === 'number') {
+    return HTTP_STATUS_MESSAGES[status] || `请求失败（${status}）`
+  }
+
+  // 网络层错误（无响应）
+  if (err.code === 'ERR_NETWORK' || err.message === 'Network Error') return '网络异常，请检查网络连接'
+  if (err.code === 'ECONNABORTED' || /timeout/i.test(err.message || '')) return '请求超时，请稍后重试'
+  return err.message || '请求失败，请稍后重试'
 }
 
 /** 别名导出，所有视图统一使用 getApiError */
