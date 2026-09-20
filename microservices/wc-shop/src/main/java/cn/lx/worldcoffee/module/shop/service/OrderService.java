@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -111,7 +112,16 @@ public class OrderService {
      *
      * 事务说明：
      *   @Transactional 管 MySQL 操作（步骤 5/6/7/8），管不了 Redis。
-     *   所以 Redis 扣完之后如果 MySQL 失败，在 catch 里手动回滚 Redis 库存。
+     *   Redis 扣库存是独立的原子操作，不在 Spring 事务边界内。
+     *
+     * 最终一致性策略：
+     *   1. Redis 扣库存成功 → MySQL 操作失败：catch 中尽力回滚 Redis，回滚失败记录 error 日志告警
+     *   2. MySQL 同步库存失败：不影响下单结果，后台定时任务校对 Redis 与 MySQL 库存差异
+     *   3. 回滚失败场景：人工介入核对，或通过库存对账任务自动修复
+     *
+     * 为什么不引入分布式事务（Seata 等）：
+     *   当前单库单服务，引入分布式事务成本高。用「Redis 预扣 + MySQL 确认 + 失败补偿」
+     *   的最终一致性方案，在业务可接受范围内平衡了性能与一致性。
      *
      * @param from 包含收货地址、备注、优惠券ID
      * @param userId 用户ID（HTTP请求从SecurityUtils获取，MQ消费者从消息体传入）
@@ -236,6 +246,8 @@ public class OrderService {
         } catch (Exception e) {
             // MySQL 失败 → 回滚 Redis 里已经扣了的库存
             // 传 null 表示全部回滚（不是"回滚到某个商品之前"）
+            // 注意：回滚失败不会阻断异常抛出，但会记录 error 日志，需要监控告警
+            log.warn("[OrderService] 订单创建失败，开始回滚 Redis 库存，userId={}, orderNo={}", userId, orderNo, e);
             rollbackRedisStock(cartItems, null);
             throw e;
         }
@@ -312,7 +324,30 @@ public class OrderService {
                 .last("LIMIT " + (page - 1) * size + "," + size);
         List<CoffeeOrder> orders = orderDao.selectList(wrapper);
 
-        return orders.stream().map(this::toOrderVO).collect(Collectors.toList());
+        // 批量查询优惠券，避免 N+1
+        Map<Long, String> couponNameMap = batchGetCouponNames(
+                orders.stream().map(CoffeeOrder::getCouponId).collect(Collectors.toSet())
+        );
+
+        return orders.stream()
+                .map(o -> toOrderVO(o, couponNameMap.get(o.getCouponId())))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 批量查询优惠券名称，解决列表页 N+1 问题
+     */
+    private Map<Long, String> batchGetCouponNames(java.util.Set<Long> couponIds) {
+        if (couponIds == null || couponIds.isEmpty()) return Map.of();
+        List<Long> ids = couponIds.stream().filter(java.util.Objects::nonNull).collect(Collectors.toList());
+        if (ids.isEmpty()) return Map.of();
+
+        List<Coupon> coupons = couponDao.selectBatchIds(ids);
+        Map<Long, String> map = new HashMap<>();
+        for (Coupon c : coupons) {
+            map.put(c.getId(), c.getName());
+        }
+        return map;
     }
 
     /**
@@ -330,7 +365,13 @@ public class OrderService {
         List<OrderItem> items = orderItemDao.selectList(
                 new LambdaQueryWrapper<OrderItem>().eq(OrderItem::getOrderId, orderId));
 
-        return toOrderVOWithItems(order, items);
+        String couponName = null;
+        if (order.getCouponId() != null) {
+            Coupon c = couponDao.selectById(order.getCouponId());
+            if (c != null) couponName = c.getName();
+        }
+
+        return toOrderVOWithItems(order, items, couponName);
     }
 
     /**
@@ -345,7 +386,13 @@ public class OrderService {
         List<OrderItem> items = orderItemDao.selectList(
                 new LambdaQueryWrapper<OrderItem>().eq(OrderItem::getOrderId, order.getId()));
 
-        return toOrderVOWithItems(order, items);
+        String couponName = null;
+        if (order.getCouponId() != null) {
+            Coupon c = couponDao.selectById(order.getCouponId());
+            if (c != null) couponName = c.getName();
+        }
+
+        return toOrderVOWithItems(order, items, couponName);
     }
 
     // ==================== 取消订单 ====================
@@ -474,25 +521,30 @@ public class OrderService {
     /**
      * Redis 库存回滚（下单过程中 Lua 扣了但后续 MySQL 失败时调用）。
      *
+     * 策略：尽力回滚，单条失败不阻断其他回滚，但记录 error 日志便于人工介入。
+     * 回滚失败意味着 Redis 库存比实际少，可能出现超卖风险，需要告警监控。
+     *
      * @param cartItems  本次下单的所有购物车项
      * @param failedItem 扣减失败的那一项（不为 null 时只回滚到它之前，为 null 时全部回滚）
      */
     private void rollbackRedisStock(List<CartItem> cartItems, CartItem failedItem) {
         for (CartItem c : cartItems) {
             if (failedItem != null && c.getProductId().equals(failedItem.getProductId())) break;
-            inventoryService.rollbackStock(c.getProductId(), c.getQuantity());
+            try {
+                inventoryService.rollbackStock(c.getProductId(), c.getQuantity());
+            } catch (Exception rollbackEx) {
+                // 回滚失败不能阻断其他回滚，但必须记录 error 便于人工补偿
+                log.error("[OrderService] Redis 库存回滚失败，productId={}, quantity={}, 需人工介入核对库存",
+                        c.getProductId(), c.getQuantity(), rollbackEx);
+            }
         }
     }
 
     /**
      * CoffeeOrder → OrderVO（不含明细，列表页用）。
+     * 使用预加载的 couponName 避免 N+1 查询。
      */
-    private OrderVO toOrderVO(CoffeeOrder o) {
-        String cName = null;
-        if (o.getCouponId() != null) {
-            Coupon c = couponDao.selectById(o.getCouponId());
-            if (c != null) cName = c.getName();
-        }
+    private OrderVO toOrderVO(CoffeeOrder o, String couponName) {
         return OrderVO.builder()
                 .id(o.getId())
                 .orderNo(o.getOrderNo())
@@ -503,15 +555,16 @@ public class OrderService {
                 .remark(o.getRemark())
                 .couponId(o.getCouponId())
                 .discountAmount(o.getDiscountAmount())
-                .couponName(cName)
+                .couponName(couponName)
                 .createTime(o.getCreateTime())
                 .build();
     }
 
     /**
      * CoffeeOrder + OrderItem 列表 → OrderVO（含明细，详情页用）。
+     * 使用预加载的 couponName 避免 N+1 查询。
      */
-    private OrderVO toOrderVOWithItems(CoffeeOrder order, List<OrderItem> items) {
+    private OrderVO toOrderVOWithItems(CoffeeOrder order, List<OrderItem> items, String couponName) {
         List<OrderVO.OrderItemVO> itemVOs = items.stream().map(i ->
                 OrderVO.OrderItemVO.builder()
                         .productId(i.getProductId())
@@ -519,12 +572,6 @@ public class OrderService {
                         .price(i.getPrice())
                         .quantity(i.getQuantity())
                         .build()).collect(Collectors.toList());
-
-        String cName = null;
-        if (order.getCouponId() != null) {
-            Coupon c = couponDao.selectById(order.getCouponId());
-            if (c != null) cName = c.getName();
-        }
 
         return OrderVO.builder()
                 .id(order.getId())
@@ -536,7 +583,7 @@ public class OrderService {
                 .remark(order.getRemark())
                 .couponId(order.getCouponId())
                 .discountAmount(order.getDiscountAmount())
-                .couponName(cName)
+                .couponName(couponName)
                 .createTime(order.getCreateTime())
                 .items(itemVOs)
                 .build();
