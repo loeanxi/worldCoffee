@@ -59,8 +59,20 @@
           <h2 class="text-xl font-semibold text-ink leading-snug">{{ post.title }}</h2>
           <p v-if="post.content" class="text-sm text-ink-soft leading-relaxed whitespace-pre-wrap">{{ post.content }}</p>
 
+          <!-- Video note -->
+          <div v-if="post.noteType === 'VIDEO' && post.videoUrl" class="w-full select-none">
+            <video
+              :src="normalizeUrl(post.videoUrl)"
+              :poster="normalizeUrl(post.coverUrl || '')"
+              controls
+              playsinline
+              preload="metadata"
+              class="w-full max-h-[70vh] bg-black object-contain rounded-2xl"
+            />
+          </div>
+
           <!-- Images (swipe gallery) -->
-          <div v-if="post.images && post.images.length" class="w-full select-none">
+          <div v-else-if="post.images && post.images.length" class="w-full select-none">
             <!-- 容器：4:3 比例 -->
             <div
               class="relative w-full overflow-hidden rounded-2xl bg-surface-soft"
@@ -323,7 +335,7 @@
 import { ref, onMounted, onUnmounted, inject } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Icon } from '@iconify/vue'
-import { coffeeApi, getApiError } from '@wc/shared'
+import { coffeeApi, getApiError, normalizeUrl } from '@wc/shared'
 import { useAuth } from '@wc/shared'
 import { formatTime } from '@wc/shared'
 import { AppButton } from '@wc/shared'

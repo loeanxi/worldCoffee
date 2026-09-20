@@ -70,6 +70,10 @@ export interface Post {
   images?: string[] | string
   coverImage?: string
   imageUrl?: string
+  noteType?: 'IMAGE' | 'VIDEO' | string
+  videoUrl?: string
+  coverUrl?: string
+  videoDuration?: number
   like_count?: number
   likeCount?: number
   commentCount?: number

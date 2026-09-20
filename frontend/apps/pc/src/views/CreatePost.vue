@@ -15,7 +15,7 @@
           <p class="hidden sm:block text-[10.5px] text-ink-muted mt-0.5">记录这一杯的味道、地点和小心情</p>
         </div>
         <button
-          :disabled="submitting"
+          :disabled="submitting || videoUploading"
           class="wc-create-top-submit hidden sm:inline-flex tap-scale"
           @click="handleSubmit"
         >
@@ -36,6 +36,30 @@
               <Icon icon="material-symbols:save-outline" class="w-4 h-4" />
               {{ hasDraft ? '草稿已保存' : '空白草稿' }}
             </span>
+          </div>
+
+          <!-- 笔记类型切换：图文 / 视频（互斥） -->
+          <div class="wc-create-section">
+            <div class="wc-notetype-tabs">
+              <button
+                type="button"
+                class="wc-notetype-tab"
+                :class="{ 'is-active': noteType === 'IMAGE' }"
+                @click="switchNoteType('IMAGE')"
+              >
+                <Icon icon="material-symbols:image-outline" class="w-4 h-4" />
+                图文
+              </button>
+              <button
+                type="button"
+                class="wc-notetype-tab"
+                :class="{ 'is-active': noteType === 'VIDEO' }"
+                @click="switchNoteType('VIDEO')"
+              >
+                <Icon icon="material-symbols:videocam-outline" class="w-4 h-4" />
+                视频
+              </button>
+            </div>
           </div>
 
           <div class="wc-create-section">
@@ -74,7 +98,7 @@
           </div>
 
           <!-- 图片上传 -->
-          <div class="wc-create-section">
+          <div v-if="noteType === 'IMAGE'" class="wc-create-section">
             <div class="flex items-end justify-between gap-3 mb-3">
               <label class="wc-create-label mb-0">图片 <span>最多 9 张</span></label>
               <p class="text-[11px] text-ink-muted">{{ uploadedImages.length }}/9</p>
@@ -108,6 +132,49 @@
             </div>
             <p v-if="uploading" class="text-xs text-ink-muted pl-1 pt-2 animate-pulse-soft">
               正在上传 {{ uploadProgress }}%…
+            </p>
+          </div>
+
+          <!-- 视频上传 -->
+          <div v-else class="wc-create-section">
+            <div class="flex items-end justify-between gap-3 mb-3">
+              <label class="wc-create-label mb-0">视频 <span>≤100MB，支持 mp4 / webm / mov</span></label>
+            </div>
+            <div v-if="videoPreviewUrl" class="wc-video-preview">
+              <video
+                :src="videoPreviewUrl"
+                controls
+                playsinline
+                preload="metadata"
+                class="w-full max-h-[320px] bg-black rounded-2xl"
+              />
+              <div class="flex items-center justify-between mt-2 px-1">
+                <span class="text-[11px] text-ink-muted">时长 {{ videoDurationText }}</span>
+                <button type="button" class="text-[11px] text-rose font-bold" @click="removeVideo">删除视频</button>
+              </div>
+              <div class="flex items-center gap-3 mt-2 px-1">
+                <template v-if="coverUrl">
+                  <img :src="coverUrl" class="w-16 h-16 object-cover rounded-xl border border-line/40" />
+                  <span class="text-[11px] text-ink-muted">封面已自动生成，可重新选择</span>
+                </template>
+                <span v-else class="text-[11px] text-ink-muted">封面自动生成失败或未上传，可手动选择</span>
+                <button type="button" class="text-[11px] underline text-brand shrink-0" @click="triggerCoverUpload">
+                  {{ coverUrl ? '更换封面' : '手动选封面' }}
+                </button>
+              </div>
+            </div>
+            <button
+              v-else
+              type="button"
+              class="wc-upload-add wc-video-add tap-scale"
+              @click="triggerVideoUpload"
+              aria-label="添加视频"
+            >
+              <Icon icon="material-symbols:videocam-outline" class="w-7 h-7" />
+              <span>添加视频</span>
+            </button>
+            <p v-if="videoUploading" class="text-xs text-ink-muted pl-1 pt-2 animate-pulse-soft">
+              视频上传中 {{ videoProgress }}%…
             </p>
           </div>
 
@@ -176,7 +243,7 @@
 
           <!-- 提交按钮 -->
           <button
-            :disabled="submitting"
+            :disabled="submitting || videoUploading"
             @click="handleSubmit"
             class="wc-create-submit tap-scale"
           >
@@ -238,6 +305,8 @@
     </main>
 
     <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="handleFileSelect" />
+    <input ref="videoInput" type="file" accept="video/mp4,video/webm,video/quicktime,video/x-m4v" class="hidden" @change="handleVideoSelect" />
+    <input ref="coverInput" type="file" accept="image/*" class="hidden" @change="handleCoverSelect" />
 
     <!-- 图片预览模态 -->
     <Teleport to="body">
@@ -265,7 +334,7 @@
 import { ref, reactive, computed, watch, onMounted, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
-import { coffeeApi, getApiError } from '@wc/shared'
+import { coffeeApi, getApiError, normalizeUrl } from '@wc/shared'
 import { getToken } from '@wc/shared'
 import { AppInput } from '@wc/shared'
 
@@ -307,9 +376,26 @@ const uploading = ref(false)
 const submitting = ref(false)
 const serverError = ref('')
 
+/* -------- 视频笔记状态 -------- */
+const noteType = ref('IMAGE') // 'IMAGE' | 'VIDEO'，互斥
+const videoInput = ref(null)
+const coverInput = ref(null)
+const videoUrl = ref('')          // 上传成功后服务端返回的地址
+const coverUrl = ref('')          // 截帧/手动封面上传后的地址
+const videoDuration = ref(0)      // 秒
+const videoPreviewUrl = ref('')   // 本地 blob 预览，或草稿恢复后的服务器地址
+const videoUploading = ref(false)
+const videoProgress = ref(0)
+
+const videoDurationText = computed(() => {
+  const d = videoDuration.value || 0
+  return `${Math.floor(d / 60)}:${String(Math.floor(d % 60)).padStart(2, '0')}`
+})
+
 const hasDraft = computed(() =>
   !!form.title || !!form.content || !!form.coffeeName || !!form.coffeeBrand ||
-  !!form.location || uploadedImages.value.length > 0 || form.topics.length > 0
+  !!form.location || uploadedImages.value.length > 0 || form.topics.length > 0 ||
+  !!videoUrl.value
 )
 
 /* -------- 草稿持久化 -------- */
@@ -328,6 +414,12 @@ onMounted(async () => {
           topics: Array.isArray(saved.topics) ? saved.topics : []
         })
         if (Array.isArray(saved.images)) uploadedImages.value = saved.images
+        // 视频字段兜底：旧草稿没有这些 key
+        noteType.value = saved.noteType === 'VIDEO' ? 'VIDEO' : 'IMAGE'
+        videoUrl.value = saved.videoUrl || ''
+        coverUrl.value = saved.coverUrl || ''
+        videoDuration.value = saved.videoDuration || 0
+        videoPreviewUrl.value = saved.videoUrl ? normalizeUrl(saved.videoUrl) : ''
       }
     }
   } catch (e) { /* ignore */ }
@@ -336,12 +428,17 @@ onMounted(async () => {
 
 watch(form, saveDraft, { deep: true })
 watch(uploadedImages, saveDraft, { deep: true })
+watch([noteType, videoUrl, coverUrl, videoDuration], saveDraft)
 
 function saveDraft() {
   try {
     localStorage.setItem(DRAFT_KEY, JSON.stringify({
       ...form,
-      images: uploadedImages.value
+      images: uploadedImages.value,
+      noteType: noteType.value,
+      videoUrl: videoUrl.value,
+      coverUrl: coverUrl.value,
+      videoDuration: videoDuration.value
     }))
   } catch (e) { /* ignore */ }
   scheduleServerDraftSave()
@@ -355,6 +452,8 @@ function clearDraft() {
   form.location = ''
   form.topics = []
   uploadedImages.value = []
+  noteType.value = 'IMAGE'
+  removeVideo()
   try { localStorage.removeItem(DRAFT_KEY) } catch (e) { /* ignore */ }
   if (getToken()) coffeeApi.deleteMyDraft().catch(() => {})
 }
@@ -374,6 +473,12 @@ async function loadServerDraft() {
       topics: Array.isArray(draft.topics) ? draft.topics : []
     })
     if (Array.isArray(draft.images)) uploadedImages.value = draft.images
+    // 视频字段兜底：旧草稿没有这些 key
+    noteType.value = draft.noteType === 'VIDEO' ? 'VIDEO' : 'IMAGE'
+    videoUrl.value = draft.videoUrl || ''
+    coverUrl.value = draft.coverUrl || ''
+    videoDuration.value = draft.videoDuration || 0
+    videoPreviewUrl.value = draft.videoUrl ? normalizeUrl(draft.videoUrl) : ''
   } catch {
     // keep local draft
   }
@@ -436,6 +541,158 @@ function previewImage(src) {
   previewSrc.value = src
 }
 
+/* -------- 视频上传 -------- */
+function switchNoteType(t) {
+  if (noteType.value === t) return
+  noteType.value = t
+  // 图文 / 视频互斥，切换时清空另一边
+  if (t === 'VIDEO') {
+    uploadedImages.value = []
+  } else {
+    removeVideo()
+  }
+}
+
+function triggerVideoUpload() {
+  videoInput.value?.click()
+}
+
+function triggerCoverUpload() {
+  coverInput.value?.click()
+}
+
+function readVideoMeta(url) {
+  return new Promise((resolve, reject) => {
+    const v = document.createElement('video')
+    v.preload = 'metadata'
+    v.onloadedmetadata = () => resolve({ duration: v.duration, width: v.videoWidth, height: v.videoHeight })
+    v.onerror = reject
+    v.src = url
+  })
+}
+
+/** canvas 截取首帧（限宽 720 控制封面体积）。必须用 blob URL，避免跨域污染 canvas */
+function captureFirstFrame(url, w, h) {
+  return new Promise((resolve, reject) => {
+    const v = document.createElement('video')
+    v.muted = true
+    v.playsInline = true
+    v.preload = 'auto'
+    v.onloadeddata = () => {
+      v.currentTime = Math.min(0.1, (v.duration || 1) / 10)
+    }
+    v.onseeked = () => {
+      try {
+        const canvas = document.createElement('canvas')
+        const scale = Math.min(1, 720 / (w || 720))
+        canvas.width = Math.round((w || 720) * scale)
+        canvas.height = Math.round((h || 1280) * scale)
+        canvas.getContext('2d').drawImage(v, 0, 0, canvas.width, canvas.height)
+        canvas.toBlob(b => (b ? resolve(b) : reject(new Error('toBlob failed'))), 'image/jpeg', 0.8)
+      } catch (err) {
+        reject(err)
+      }
+    }
+    v.onerror = reject
+    v.src = url
+  })
+}
+
+async function handleVideoSelect(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  const okTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-m4v']
+  if (!okTypes.includes(file.type)) {
+    toast.show('仅支持 mp4 / webm / mov 视频', 'error')
+    e.target.value = ''
+    return
+  }
+  if (file.size > 100 * 1024 * 1024) {
+    toast.show('视频不能超过 100MB', 'error')
+    e.target.value = ''
+    return
+  }
+
+  // 1) 本地预览（blob URL 同源，canvas 截帧不会被污染）
+  removeVideo()
+  const blobUrl = URL.createObjectURL(file)
+  videoPreviewUrl.value = blobUrl
+
+  // 2) 读取时长 + 3) 截首帧自动上传封面（失败可手动选封面，不阻塞视频上传）
+  try {
+    const meta = await readVideoMeta(blobUrl)
+    videoDuration.value = Math.round(meta.duration)
+    try {
+      const coverBlob = await captureFirstFrame(blobUrl, meta.width, meta.height)
+      const cfd = new FormData()
+      cfd.append('file', new File([coverBlob], 'cover.jpg', { type: 'image/jpeg' }))
+      const coverRes = await coffeeApi.upload(cfd)
+      if (coverRes && coverRes.code === 200) coverUrl.value = coverRes.data
+    } catch { /* 截帧失败，用户可手动选封面 */ }
+  } catch { /* 读时长失败不阻塞 */ }
+
+  // 4) 上传视频本体（真实进度）
+  videoUploading.value = true
+  videoProgress.value = 0
+  try {
+    const fd = new FormData()
+    fd.append('file', file)
+    const res = await coffeeApi.uploadVideo(fd, p => { videoProgress.value = p })
+    if (res && res.code === 200) {
+      videoUrl.value = res.data
+      toast.show('视频上传成功')
+    } else {
+      toast.show(res?.msg || '视频上传失败', 'error')
+    }
+  } catch (err) {
+    toast.show(getApiError(err), 'error')
+  } finally {
+    videoUploading.value = false
+    e.target.value = ''
+  }
+}
+
+async function handleCoverSelect(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  if (!file.type.startsWith('image/')) {
+    toast.show('请选择图片文件', 'error')
+    e.target.value = ''
+    return
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    toast.show('封面图不能超过 5MB', 'error')
+    e.target.value = ''
+    return
+  }
+  try {
+    const fd = new FormData()
+    fd.append('file', file)
+    const res = await coffeeApi.upload(fd)
+    if (res && res.code === 200) {
+      coverUrl.value = res.data
+      toast.show('封面上传成功')
+    } else {
+      toast.show(res?.msg || '封面上传失败', 'error')
+    }
+  } catch (err) {
+    toast.show(getApiError(err), 'error')
+  } finally {
+    e.target.value = ''
+  }
+}
+
+function removeVideo() {
+  if (videoPreviewUrl.value && videoPreviewUrl.value.startsWith('blob:')) {
+    URL.revokeObjectURL(videoPreviewUrl.value)
+  }
+  videoPreviewUrl.value = ''
+  videoUrl.value = ''
+  coverUrl.value = ''
+  videoDuration.value = 0
+  videoProgress.value = 0
+}
+
 function addTopic() {
   addTopicValue(topicInput.value)
   topicInput.value = ''
@@ -461,10 +718,15 @@ function appendPrompt(prompt) {
 }
 
 function buildPayload() {
+  const isVideo = noteType.value === 'VIDEO'
   return {
     title: form.title.trim(),
     content: form.content.trim(),
-    images: [...uploadedImages.value],
+    noteType: noteType.value,
+    images: isVideo ? [] : [...uploadedImages.value],
+    videoUrl: isVideo ? videoUrl.value || null : null,
+    coverUrl: isVideo ? coverUrl.value || null : null,
+    videoDuration: isVideo ? videoDuration.value || null : null,
     coffeeName: form.coffeeName.trim() || null,
     coffeeBrand: form.coffeeBrand.trim() || null,
     location: form.location.trim() || null,
@@ -476,6 +738,16 @@ function buildPayload() {
 async function handleSubmit() {
   errors.title = !form.title.trim() ? '请输入标题' : ''
   if (errors.title) return
+  if (noteType.value === 'VIDEO') {
+    if (videoUploading.value) {
+      serverError.value = '视频还在上传中，请稍候'
+      return
+    }
+    if (!videoUrl.value) {
+      serverError.value = '请先上传视频'
+      return
+    }
+  }
   serverError.value = ''
 
   submitting.value = true
@@ -748,6 +1020,36 @@ async function handleSubmit() {
 .wc-upload-add:hover {
   color: var(--text-primary);
   background: color-mix(in srgb, var(--accent-cream) 48%, transparent);
+}
+.wc-video-add {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 24px;
+}
+.wc-notetype-tabs {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-secondary) 70%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 62%, transparent);
+}
+.wc-notetype-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 18px;
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 800;
+  transition: all .2s ease;
+}
+.wc-notetype-tab.is-active {
+  color: #FFF8E1;
+  background: linear-gradient(135deg, #8D5A3B, #3E2723);
+  box-shadow: 0 8px 18px rgba(109, 76, 65, .22);
 }
 .wc-create-topic,
 .wc-create-suggest {

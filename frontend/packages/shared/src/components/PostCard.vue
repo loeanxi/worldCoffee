@@ -25,6 +25,13 @@
         <Icon icon="material-symbols:local-fire-department" class="w-3 h-3" />
         热帖
       </span>
+      <span
+        v-if="isVideo"
+        class="wc-video-badge absolute bottom-2 right-2 flex items-center gap-1"
+      >
+        <Icon icon="material-symbols:play-arrow" class="w-3 h-3" />
+        {{ videoDurationText }}
+      </span>
     </div>
 
     <div v-else class="brand-placeholder wc-feed-image-wrap flex items-center justify-center">
@@ -35,6 +42,13 @@
       >
         <Icon icon="material-symbols:local-fire-department" class="w-3 h-3" />
         热帖
+      </span>
+      <span
+        v-if="isVideo"
+        class="wc-video-badge absolute bottom-2 right-2 flex items-center gap-1"
+      >
+        <Icon icon="material-symbols:play-arrow" class="w-3 h-3" />
+        {{ videoDurationText }}
       </span>
     </div>
 
@@ -140,6 +154,15 @@ const authorName = computed(() => (
 ))
 
 const likeCount = computed(() => Number(props.post?.like_count ?? props.post?.likeCount ?? props.post?.likes ?? 0) || 0)
+
+/** 视频笔记：有 noteType=VIDEO 或带 videoUrl 即视为视频 */
+const isVideo = computed(() => props.post?.noteType === 'VIDEO' || !!props.post?.videoUrl)
+
+const videoDurationText = computed(() => {
+  const d = Number(props.post?.videoDuration) || 0
+  if (d <= 0) return '视频'
+  return `${Math.floor(d / 60)}:${String(Math.floor(d % 60)).padStart(2, '0')}`
+})
 
 const formattedLikeCount = computed(() => {
   const n = likeCount.value

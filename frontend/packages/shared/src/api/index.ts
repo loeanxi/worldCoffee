@@ -290,6 +290,19 @@ export const coffeeApi = {
       result.data = normalizeUrl(result.data)
     }
     return result
+  }),
+  /** 视频上传（≤100MB），onProgress 回调真实上传进度百分比 */
+  uploadVideo: (formData, onProgress) => http.post('/coffee/upload/video', formData, {
+    timeout: 300000,
+    onUploadProgress: e => {
+      if (onProgress && e.total) onProgress(Math.round((e.loaded / e.total) * 100))
+    }
+  }).then(res => {
+    const result = ok(res)
+    if (result && typeof result.data === 'string') {
+      result.data = normalizeUrl(result.data)
+    }
+    return result
   })
 }
 

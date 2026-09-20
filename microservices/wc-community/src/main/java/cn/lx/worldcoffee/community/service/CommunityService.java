@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -42,6 +43,10 @@ public class CommunityService {
     private static final String EVENT_CLICK = "CLICK";
     private static final String EVENT_DWELL = "DWELL";
     private static final String EVENT_DISLIKE = "DISLIKE";
+
+    private static final long MAX_VIDEO_SIZE = 100L * 1024 * 1024; // 100MB
+    private static final Set<String> VIDEO_TYPES = Set.of(
+            "video/mp4", "video/webm", "video/quicktime", "video/x-m4v");
 
     private final CoffeePostDao postDao;
     private final CoffeeLikeDao likeDao;
@@ -846,10 +851,15 @@ public class CommunityService {
         post.setTitle(from.getTitle());
         post.setContent(from.getContent());
 
-        if (from.getImages() != null && !from.getImages().isEmpty()) {
+        post.setNoteType(normalizeNoteType(from.getNoteType()));
+        if ("VIDEO".equals(post.getNoteType())) {
+            if (from.getVideoUrl() == null || from.getVideoUrl().isBlank()) {
+                throw new ServiceException("视频笔记必须上传视频");
+            }
+            // 视频笔记与图文互斥，忽略 images
+        } else if (from.getImages() != null && !from.getImages().isEmpty()) {
             post.setImages(JSONUtil.toJsonStr(from.getImages()));
         }
-        post.setNoteType(normalizeNoteType(from.getNoteType()));
         post.setVideoUrl(from.getVideoUrl());
         post.setCoverUrl(from.getCoverUrl());
         post.setVideoDuration(from.getVideoDuration());
@@ -1494,6 +1504,25 @@ public class CommunityService {
                 : ".png";
         String fileName = System.currentTimeMillis() + "_" + UUID.randomUUID().toString().substring(0, 8) + suffix;
         return fileStorageService.upload(file, "uploads/" + fileName);
+    }
+
+    public String uploadVideo(MultipartFile file) {
+        if (file.isEmpty()) throw new ServiceException("文件不能为空");
+        String contentType = file.getContentType();
+        if (contentType == null || !VIDEO_TYPES.contains(contentType.toLowerCase(Locale.ROOT))) {
+            throw new ServiceException("仅支持 mp4 / webm / mov 视频");
+        }
+        if (file.getSize() > MAX_VIDEO_SIZE) {
+            throw new ServiceException("视频不能超过 100MB");
+        }
+
+        String originalName = file.getOriginalFilename();
+        String suffix = originalName != null && originalName.contains(".")
+                ? originalName.substring(originalName.lastIndexOf(".")).toLowerCase(Locale.ROOT)
+                : ".mp4";
+        String datePath = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMM"));
+        String fileName = System.currentTimeMillis() + "_" + UUID.randomUUID().toString().substring(0, 8) + suffix;
+        return fileStorageService.upload(file, "uploads/videos/" + datePath + "/" + fileName);
     }
 
     public List<PostListVO> getHotPosts(Integer page, Integer size) {

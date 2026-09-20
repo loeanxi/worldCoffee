@@ -259,6 +259,13 @@ public class CommunityController {
         return Result.success(communityService.uploadImage(file));
     }
 
+    @Operation(summary = "上传视频", description = "上传视频文件（≤100MB，mp4/webm/mov），返回可访问的 URL 地址")
+    @PostMapping(value = "/upload/video", produces = "application/json")
+    public Result<String> uploadVideo(
+            @Parameter(description = "视频文件") @RequestParam("file") MultipartFile file) {
+        return Result.success(communityService.uploadVideo(file));
+    }
+
     @Operation(summary = "热门帖子", description = "按 like_count + comment_count + favorite_count 综合排序")
     @GetMapping("/posts/hot")
     public Result<List<PostListVO>> getHotPosts(

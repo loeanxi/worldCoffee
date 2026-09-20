@@ -525,6 +525,17 @@ svg { display: block; }
   backdrop-filter: blur(8px);
   box-shadow: 0 4px 12px rgba(0,0,0,.14);
 }
+.wc-video-badge {
+  min-height: 22px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: rgba(44, 24, 16, .62);
+  color: #FFF8E1;
+  font-size: 10px;
+  font-weight: 800;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px rgba(0,0,0,.14);
+}
 .wc-feed-title {
   letter-spacing: -0.01em;
 }
