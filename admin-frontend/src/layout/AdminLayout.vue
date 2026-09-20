@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
+import logoMark from '../assets/logo-mark.png'
 
 const router = useRouter()
 const route = useRoute()
@@ -28,8 +29,9 @@ function handleLogout() {
 <template>
   <el-container style="height: 100vh">
     <el-aside width="220px" style="background: #304156">
-      <div style="height: 60px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; font-weight: bold; border-bottom: 1px solid #3d4a5a">
-        ☕ World Coffee 后台
+      <div style="height: 60px; display: flex; align-items: center; justify-content: center; gap: 10px; color: #fff; font-size: 18px; font-weight: bold; border-bottom: 1px solid #3d4a5a">
+        <img :src="logoMark" alt="loean worldcoffee" style="width: 34px; height: 34px; background: #fff; border-radius: 8px; padding: 3px" />
+        <span>World Coffee 后台</span>
       </div>
       <el-menu
         :default-active="route.path"

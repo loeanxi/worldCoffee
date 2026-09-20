@@ -2,7 +2,7 @@
 <view class="login-page">
 
   <view class="brand">
-    <text class="brand-icon">☕</text>
+    <image class="brand-icon" src="/assets/logo-mark.png" mode="aspectFit" />
     <text class="brand-name">WorldCoffee</text>
     <text class="brand-slogan">一杯咖啡，一个社区</text>
   </view>

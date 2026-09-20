@@ -5,9 +5,9 @@
   <div class="min-h-screen bg-surface flex items-center justify-center px-4 py-10">
     <div class="w-full max-w-sm">
 
-      <!-- ===== 顶部 Logo ===== -->
+      <!-- ===== 顶部官方商标 ===== -->
       <div class="text-center mb-8">
-        <WorldCoffeeLogo :size="100" variant="full" />
+        <WorldCoffeeLogo :size="160" variant="full" />
       </div>
 
       <!-- ===== 登录卡片 ===== -->
