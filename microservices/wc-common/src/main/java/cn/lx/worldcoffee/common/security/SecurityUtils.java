@@ -1,6 +1,8 @@
 package cn.lx.worldcoffee.common.security;
 
 import cn.lx.worldcoffee.common.exception.ServiceException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -13,6 +15,8 @@ import jakarta.servlet.http.HttpServletRequest;
  */
 public class SecurityUtils {
 
+    private static final Logger log = LoggerFactory.getLogger(SecurityUtils.class);
+
     /**
      * 获取当前用户ID（可选），没有登录返回 null
      */
@@ -24,7 +28,17 @@ public class SecurityUtils {
             if (userIdStr != null && !userIdStr.isEmpty()) {
                 return Long.valueOf(userIdStr);
             }
-        } catch (Exception ignored) {}
+            // 请求头中没有 X-User-Id，属于正常未登录场景，不打日志
+        } catch (NullPointerException | ClassCastException e) {
+            // RequestContextHolder 未初始化或不是 Servlet 环境，属于框架层面异常
+            log.warn("[SecurityUtils] 获取当前用户ID失败：RequestContextHolder 环境异常", e);
+        } catch (NumberFormatException e) {
+            // X-User-Id 头部格式非法，可能是网关异常或恶意请求
+            log.warn("[SecurityUtils] X-User-Id 头部格式非法: {}", e.getMessage());
+        } catch (Exception e) {
+            // 其他未预期异常，记录日志但不抛出，避免影响业务
+            log.error("[SecurityUtils] 获取当前用户ID时发生未预期异常", e);
+        }
         return null;
     }
 
@@ -47,7 +61,11 @@ public class SecurityUtils {
             HttpServletRequest request = ((ServletRequestAttributes)
                     RequestContextHolder.getRequestAttributes()).getRequest();
             return request.getHeader("X-Username");
-        } catch (Exception ignored) {}
+        } catch (NullPointerException | ClassCastException e) {
+            log.warn("[SecurityUtils] 获取当前用户名失败：RequestContextHolder 环境异常", e);
+        } catch (Exception e) {
+            log.error("[SecurityUtils] 获取当前用户名时发生未预期异常", e);
+        }
         return null;
     }
 }
