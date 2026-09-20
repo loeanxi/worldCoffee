@@ -6,6 +6,8 @@
   "scripts": {
     "dev:mobile": "pnpm -F @wc/mobile dev",
     "dev:pc": "pnpm -F @wc/pc dev",
+    "dev:web": "pnpm -F @wc/pc dev",
+    "dev:app": "pnpm -F @wc/mobile dev",
     "dev": "pnpm dev:mobile",
     "build:mobile": "pnpm -F @wc/mobile build",
     "build:pc": "pnpm -F @wc/pc build",
