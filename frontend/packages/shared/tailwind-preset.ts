@@ -28,6 +28,13 @@ export default {
           rose: '#E88B8B',
           sky: '#8DB4C7'
         },
+        // loean 品牌绿环（新商标辅助色）：鼠尾草绿
+        loean: {
+          DEFAULT: '#7A9B84',
+          deep: '#5A7D64',
+          soft: 'rgba(122, 155, 132, 0.14)',
+          ring: '#8FAE97'
+        },
         // 语义化主题色：由 CSS 变量驱动，支持 light/dark class 切换
         surface: {
           DEFAULT: 'var(--bg-primary)',

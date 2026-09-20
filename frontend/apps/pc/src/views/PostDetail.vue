@@ -27,7 +27,8 @@
       </div>
     </div>
 
-    <main v-else-if="post" class="max-w-2xl mx-auto px-4 pt-6 space-y-5">
+    <main v-else-if="post" class="wc-post-layout mx-auto px-4 pt-6 gap-6 items-start">
+      <div class="wc-post-center min-w-0 space-y-5">
       <!-- Post Card -->
       <article class="glass-card-solid overflow-hidden animate-fade-up">
         <!-- Author -->
@@ -42,6 +43,13 @@
               <p class="text-[11px] text-ink-muted">{{ formatTime(post.createTime) }}</p>
             </div>
           </router-link>
+
+          <!-- 关注作者 -->
+          <button
+            v-if="isLoggedIn && post.userId !== currentUser?.id"
+            :class="['wc-follow-btn tap-scale', isFollowingAuthor && 'is-following']"
+            @click="toggleFollowAuthor"
+          >{{ isFollowingAuthor ? '已关注' : '关注' }}</button>
 
           <!-- 举报入口 -->
           <button
@@ -192,6 +200,13 @@
             <span>{{ comments.length }}</span>
           </span>
           <button
+            class="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm text-ink-muted hover:bg-surface-soft transition-all"
+            title="分享"
+            @click="sharePost"
+          >
+            <Icon icon="material-symbols:share-outline" class="w-5 h-5" />
+          </button>
+          <button
             v-if="isLoggedIn && post.userId === currentUser?.id"
             class="ml-auto text-sm text-red-400 hover:bg-red-50 px-3 py-2 rounded-xl transition-all flex items-center gap-1.5"
             @click="deletePost"
@@ -212,7 +227,7 @@
         </div>
 
         <div class="divide-y divide-line/40">
-          <div v-for="c in comments" :key="c.id" class="flex gap-3 p-4 group">
+          <div v-for="c in commentTree" :key="c.id" class="flex gap-3 p-4 group">
             <router-link :to="`/user/${c.userId}`" class="w-8 h-8 rounded-full brand-placeholder flex items-center justify-center text-ink text-xs font-bold flex-shrink-0 overflow-hidden">
               <img v-if="c._avatar || c.avatar" :src="c._avatar || c.avatar" :alt="c.username" class="w-full h-full object-cover" />
               <span v-else>{{ c.username?.charAt(0)?.toUpperCase() }}</span>
@@ -223,6 +238,23 @@
                 <span class="text-[11px] text-ink-muted">{{ formatTime(c.createTime) }}</span>
               </div>
               <p class="text-sm text-ink-soft mt-1 leading-relaxed">{{ c.content }}</p>
+
+              <!-- 楼中楼回复 -->
+              <div v-if="c.replies && c.replies.length" class="mt-2.5 space-y-2.5 rounded-xl bg-surface-soft/60 p-3">
+                <div v-for="r in c.replies" :key="r.id" class="flex gap-2">
+                  <router-link :to="`/user/${r.userId}`" class="w-6 h-6 rounded-full brand-placeholder flex items-center justify-center text-ink text-[10px] font-bold flex-shrink-0 overflow-hidden">
+                    <img v-if="r._avatar || r.avatar" :src="r._avatar || r.avatar" :alt="r.username" class="w-full h-full object-cover" />
+                    <span v-else>{{ r.username?.charAt(0)?.toUpperCase() }}</span>
+                  </router-link>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                      <span class="text-[12.5px] font-medium text-ink">{{ r.username }}</span>
+                      <span class="text-[10.5px] text-ink-muted">{{ formatTime(r.createTime) }}</span>
+                    </div>
+                    <p class="text-[12.5px] text-ink-soft mt-0.5 leading-relaxed">{{ r.content }}</p>
+                  </div>
+                </div>
+              </div>
             </div>
             <button
               v-if="isLoggedIn && (c.userId === currentUser?.id || post.userId === currentUser?.id)"
@@ -254,6 +286,47 @@
           <router-link to="/login" class="text-sm text-brand font-medium">登录后参与评论</router-link>
         </div>
       </section>
+      </div>
+
+      <!-- 右栏：作者卡 + 相关推荐 -->
+      <aside class="wc-post-rail">
+        <section class="wc-rail-card">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-full brand-gradient-btn flex items-center justify-center font-bold overflow-hidden shrink-0">
+              <img v-if="post._avatar || post.avatar" :src="post._avatar || post.avatar" class="w-full h-full object-cover" />
+              <span v-else>{{ post.username?.charAt(0)?.toUpperCase() }}</span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="text-[13px] font-bold text-ink truncate">{{ post.username }}</div>
+              <div class="text-[10.5px] text-ink-muted">咖啡创作者</div>
+            </div>
+          </div>
+          <button
+            v-if="isLoggedIn && post.userId !== currentUser?.id"
+            :class="['wc-follow-btn w-full justify-center mt-3 tap-scale', isFollowingAuthor && 'is-following']"
+            @click="toggleFollowAuthor"
+          >{{ isFollowingAuthor ? '已关注' : '关注作者' }}</button>
+        </section>
+
+        <section v-if="relatedPosts.length" class="wc-rail-card">
+          <div class="wc-rail-title mb-2">
+            <Icon icon="material-symbols:auto-awesome-outline" class="w-4 h-4 text-brand-green" />
+            相关推荐
+          </div>
+          <div class="flex flex-col gap-2">
+            <router-link
+              v-for="rp in relatedPosts"
+              :key="rp.id"
+              :to="`/posts/${rp.id}`"
+              class="wc-rail-highlight tap-scale"
+            >
+              <img v-if="rp._image || rp._images?.[0]" :src="rp._image || rp._images?.[0]" class="w-9 h-9 rounded-lg object-cover shrink-0" />
+              <span v-else class="wc-rail-dot" />
+              <span class="text-[12px] font-medium text-ink-soft line-clamp-2 flex-1">{{ rp.title || rp.content }}</span>
+            </router-link>
+          </div>
+        </section>
+      </aside>
     </main>
 
     <!-- Not Found -->
@@ -332,7 +405,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, inject } from 'vue'
+import { ref, computed, onMounted, onUnmounted, inject } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import { coffeeApi, getApiError, normalizeUrl } from '@wc/shared'
@@ -545,6 +618,32 @@ function galleryNext() {
   const total = post.value?.images?.length || 0
   if (currentImage.value < total - 1) currentImage.value++
 }
+
+// 桌面端键盘导航：左右方向键切换图片
+function onKeydown(e) {
+  if (!post.value?.images?.length || post.value.images.length < 2) return
+  const tag = document.activeElement?.tagName
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return
+  if (e.key === 'ArrowLeft') galleryPrev()
+  else if (e.key === 'ArrowRight') galleryNext()
+}
+
+// 楼中楼：把回复挂到根评论下（依据 parentId / rootId）
+const commentTree = computed(() => {
+  const list = comments.value || []
+  const byId = new Map()
+  const roots = []
+  for (const c of list) byId.set(c.id, { ...c, replies: [] })
+  for (const c of list) {
+    const node = byId.get(c.id)
+    const parentId = c.parentId ?? c.parent_id
+    const rootId = c.rootId ?? c.root_id
+    const anchor = (rootId != null && byId.get(rootId)) || (parentId != null && byId.get(parentId)) || null
+    if (anchor && anchor.id !== c.id) anchor.replies.push(node)
+    else roots.push(node)
+  }
+  return roots
+})
 function onGalleryImgError(e) {
   if (e && e.target) e.target.style.display = 'none'
 }
@@ -563,7 +662,39 @@ function resetGallery() {
 onUnmounted(() => {
   if (_mouseMoveHandler) window.removeEventListener('mousemove', _mouseMoveHandler)
   if (_mouseUpHandler) window.removeEventListener('mouseup', _mouseUpHandler)
+  window.removeEventListener('keydown', onKeydown)
 })
+
+// ===== 关注作者 / 分享 / 相关推荐 =====
+const isFollowingAuthor = ref(false)
+function toggleFollowAuthor() {
+  isFollowingAuthor.value = !isFollowingAuthor.value
+  toast.show(isFollowingAuthor.value ? '已关注作者' : '已取消关注', 'success')
+}
+
+function sharePost() {
+  const url = window.location.href
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(url)
+      .then(() => toast.show('链接已复制', 'success'))
+      .catch(() => toast.show('分享失败', 'error'))
+  } else {
+    toast.show('链接：' + url, 'success')
+  }
+}
+
+const relatedRaw = ref([])
+const relatedPosts = computed(() => relatedRaw.value.filter(p => p.id !== post.value?.id).slice(0, 4))
+async function fetchRelated() {
+  try {
+    const res = await coffeeApi.getRecommendedPosts({ page: 1, size: 6 })
+    const d = res && res.data
+    const list = Array.isArray(d) ? d : (d?.data || d?.records || d?.list || [])
+    relatedRaw.value = Array.isArray(list) ? list : []
+  } catch (e) {
+    relatedRaw.value = []
+  }
+}
 
 async function fetchPost() {
   const id = route.params.id
@@ -677,7 +808,11 @@ async function deletePost() {
   }
 }
 
-onMounted(fetchPost)
+onMounted(() => {
+  fetchPost()
+  fetchRelated()
+  window.addEventListener('keydown', onKeydown)
+})
 </script>
 
 <style scoped>

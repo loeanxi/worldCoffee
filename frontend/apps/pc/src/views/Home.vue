@@ -13,7 +13,7 @@
         </router-link>
 
         <!-- 搜索框（居中，咖啡社区搜索） -->
-        <div class="hidden lg:flex items-center justify-center flex-1 ml-6">
+        <div class="flex items-center justify-center flex-1 ml-6">
           <div class="wc-home-search relative w-full max-w-[560px]">
             <Icon icon="material-symbols:search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted pointer-events-none"/>
             <input
@@ -31,7 +31,7 @@
           </div>
         </div>
 
-        <div class="lg:hidden flex-1" />
+        <div class="hidden flex-1" />
 
         <!-- 右侧按钮 -->
         <div class="flex items-center gap-2 shrink-0 ml-2">
@@ -42,7 +42,7 @@
           </button>
 
           <!-- 桌面端：通知 -->
-          <router-link v-if="isLoggedIn" to="/notifications" class="wc-home-icon-btn hidden lg:inline-flex relative tap-scale">
+          <router-link v-if="isLoggedIn" to="/notifications" class="wc-home-icon-btn inline-flex relative tap-scale">
             <Icon icon="material-symbols:notifications-outline" class="w-4 h-4 text-ink-soft" />
             <span v-if="notifCount > 0" class="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-[#D46A3D] text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white">
               {{ notifCount > 99 ? '99+' : notifCount }}
@@ -50,46 +50,37 @@
           </router-link>
 
           <!-- 桌面端：发布 -->
-          <button v-if="isLoggedIn" type="button" class="wc-home-primary-action hidden lg:inline-flex items-center gap-1.5 tap-scale" @click="openComposer">
+          <button v-if="isLoggedIn" type="button" class="wc-home-primary-action inline-flex items-center gap-1.5 tap-scale" @click="openComposer">
             <Icon icon="material-symbols:add" class="w-4 h-4" />
             发布
           </button>
 
           <!-- 桌面端：未登录 → 登录按钮 -->
-          <router-link v-else to="/login" class="wc-home-primary-action hidden lg:inline-flex items-center gap-1.5 tap-scale">
+          <router-link v-else to="/login" class="wc-home-primary-action inline-flex items-center gap-1.5 tap-scale">
             登录
           </router-link>
 
           <!-- 桌面端：头像（小圆形） -->
-          <router-link v-if="isLoggedIn" to="/me" class="hidden lg:inline-flex w-9 h-9 rounded-full overflow-hidden tap-scale ring-1 ring-gray-200">
+          <router-link v-if="isLoggedIn" to="/me" class="inline-flex w-9 h-9 rounded-full overflow-hidden tap-scale ring-1 ring-gray-200">
             <img v-if="userAvatar" :src="userAvatar" class="w-full h-full object-cover" alt="avatar" />
             <div v-else class="w-full h-full bg-surface-soft flex items-center justify-center text-ink-soft text-[11px] font-bold">{{ usernameInitial }}</div>
           </router-link>
 
           <!-- 移动端：搜索 + 更多菜单 -->
-          <button class="wc-home-mobile-btn lg:hidden tap-scale" @click="openSearch" aria-label="搜索">
+          <button class="wc-home-mobile-btn hidden tap-scale" @click="openSearch" aria-label="搜索">
             <Icon icon="material-symbols:search" class="w-5 h-5 text-ink" />
           </button>
-          <button class="wc-home-mobile-btn lg:hidden tap-scale" @click.stop="menuOpen = !menuOpen" aria-label="打开菜单">
+          <button class="wc-home-mobile-btn hidden tap-scale" @click.stop="menuOpen = !menuOpen" aria-label="打开菜单">
             <Icon icon="material-symbols:menu" class="w-5 h-5 text-ink" />
           </button>
         </div>
       </div>
 
-      <!-- 移动端：分类 tab（保持不变） -->
-      <div class="lg:hidden home-mobile-channels scrollbar-hide">
-        <button v-for="tab in tabs" :key="tab.key" :class="['home-channel-tab tap-scale', activeTab === tab.key && !isSearching && !activeTopic ? 'is-active' : '']" @click="switchTab(tab.key)">
-          {{ tab.label }}
-        </button>
-        <button v-for="topic in topicTabs" :key="topic" :class="['home-channel-tab tap-scale', activeTopic === topic ? 'is-active' : '']" @click="searchTopic(topic)">
-          {{ topic }}
-        </button>
-      </div>
     </header>
 
     <!-- 桌面端菜单弹窗（保持不变） -->
     <Transition name="fade">
-      <div v-if="menuOpen" class="fixed inset-0 z-50 lg:hidden" @click="menuOpen = false">
+      <div v-if="menuOpen" class="fixed inset-0 z-50 hidden" @click="menuOpen = false">
         <div class="absolute inset-0 bg-black/25 backdrop-blur-[2px]" />
         <div
           class="absolute right-3 top-14 w-48 overflow-hidden rounded-2xl bg-surface-elevated border border-line shadow-[0_18px_44px_rgba(33,28,24,.18)] animate-fade-up"
@@ -116,7 +107,7 @@
     <div class="wc-home-main max-w-[1480px] mx-auto px-4 xl:px-6 pt-[120px] lg:pt-[88px] pb-28 lg:pb-10">
 
       <!-- ========== 移动端：帖子列表 ========== -->
-      <div class="lg:hidden">
+      <div class="hidden">
         <!-- 瀑布流帖子 -->
         <section v-if="!loading || posts.length" class="masonry">
           <article
@@ -201,9 +192,16 @@
       </div>
 
       <!-- ========== 桌面端：左导航 + 中间瀑布流 ========== -->
-      <div class="wc-home-desktop-layout hidden lg:grid items-start">
+      <div class="wc-home-desktop-layout grid items-start">
         <!-- 左栏：导航（固定宽度 + 粘性定位跟随滚动） -->
         <nav class="wc-side-nav shrink-0 sticky top-[84px]">
+          <!-- 品牌标识（对齐原型：侧栏顶部 Logo） -->
+          <router-link to="/" class="wc-side-brand tap-scale">
+            <WorldCoffeeLogoMini :size="30" variant="icon" />
+            <span class="wc-side-brand-text">WorldCoffee</span>
+          </router-link>
+          <div class="my-3 h-px bg-line-soft" />
+
           <div class="wc-side-section flex flex-col gap-1">
             <button
               v-for="item in leftNavItems"
@@ -217,7 +215,8 @@
               @click="item.action ? item.action() : (item.key && switchTab(item.key))"
             >
               <Icon :icon="item.icon" :class="['w-4 h-4 shrink-0', activeTab === item.key ? 'text-brand' : 'text-ink-muted group-hover:text-ink']" />
-              <span class="text-[12.5px] truncate">{{ item.label }}</span>
+              <span class="text-[12.5px] truncate flex-1">{{ item.label }}</span>
+              <span v-if="item.badge" class="wc-side-badge">{{ item.badge > 99 ? '99+' : item.badge }}</span>
             </button>
           </div>
 
@@ -344,6 +343,74 @@
             <span v-else>继续下滑加载更多</span>
           </div>
         </div>
+
+        <!-- ========== 右栏：发现（热门话题 / 推荐创作者 / 品牌卡） ========== -->
+        <aside class="wc-right-rail flex">
+          <!-- 热门话题 -->
+          <section class="wc-rail-card">
+            <div class="wc-rail-title mb-2">
+              <Icon icon="material-symbols:local-fire-department" class="w-4 h-4 text-amber" />
+              热门话题
+            </div>
+            <div class="flex flex-col gap-0.5">
+              <button
+                v-for="(topic, i) in trendingTopics"
+                :key="topic"
+                class="wc-rail-topic tap-scale"
+                @click="searchTopic(topic)"
+              >
+                <span :class="['wc-rail-rank', i < 3 && 'is-top']">{{ i + 1 }}</span>
+                <span class="text-[12.5px] font-medium text-ink-soft truncate">#{{ topic }}</span>
+              </button>
+            </div>
+          </section>
+
+          <!-- 推荐创作者 -->
+          <section v-if="recommendedCreators.length" class="wc-rail-card">
+            <div class="wc-rail-title mb-2">
+              <Icon icon="material-symbols:group-add-outline" class="w-4 h-4 text-brand-green" />
+              推荐创作者
+            </div>
+            <div class="flex flex-col gap-2">
+              <div v-for="c in recommendedCreators" :key="c.id" class="flex items-center gap-2">
+                <router-link :to="`/user/${c.id}`" class="flex items-center gap-2 min-w-0 flex-1 tap-scale">
+                  <img v-if="c.avatar" :src="c.avatar" class="w-8 h-8 rounded-full object-cover shrink-0" :alt="c.name" />
+                  <div v-else class="w-8 h-8 rounded-full avatar-gradient-honey flex items-center justify-center text-white text-[11px] font-bold shrink-0">{{ c.name.charAt(0).toUpperCase() }}</div>
+                  <span class="text-[12px] font-medium text-ink truncate">{{ c.name }}</span>
+                </router-link>
+                <button class="wc-rail-follow-btn tap-scale">关注</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- 近期活动 -->
+          <section class="wc-rail-card">
+            <div class="wc-rail-title mb-2">
+              <Icon icon="material-symbols:event-outline" class="w-4 h-4 text-brand-green" />
+              近期活动
+            </div>
+            <div class="flex flex-col gap-2">
+              <button v-for="ev in upcomingEvents" :key="ev.title" class="wc-rail-highlight tap-scale">
+                <span class="wc-rail-dot" />
+                <div class="min-w-0 flex-1 text-left">
+                  <div class="text-[12px] font-semibold text-ink truncate">{{ ev.title }}</div>
+                  <div class="text-[10.5px] text-ink-muted">{{ ev.date }}</div>
+                </div>
+              </button>
+            </div>
+          </section>
+
+          <!-- 品牌卡 -->
+          <section class="wc-rail-card">
+            <div class="flex items-center gap-2.5">
+              <WorldCoffeeLogoMini :size="34" variant="icon" />
+              <div class="min-w-0">
+                <div class="text-[12px] font-bold text-ink leading-tight">loean worldcoffee</div>
+                <div class="text-[10px] text-ink-muted">记录每一杯好咖啡</div>
+              </div>
+            </div>
+          </section>
+        </aside>
 
       </div>
     </div>
@@ -669,6 +736,10 @@ const notifCount = computed(() => {
   const v = toast?.notifCount?.value
   return typeof v === 'number' ? v : 0
 })
+const messageCount = computed(() => {
+  const v = toast?.messageCount?.value
+  return typeof v === 'number' ? v : 0
+})
 
 const imgErrors = ref({})
 const selectedPost = ref(null)
@@ -692,15 +763,43 @@ const tabs = [
 ]
 const topicTabs = ['咖啡馆', '手冲', '拉花', '甜品', '冷萃']
 
-// 桌面端左侧导航（咖啡社区：发现/关注 + 功能入口）
+// 右侧发现栏：热门话题（话题+热词去重取前六）
+const trendingTopics = computed(() => [...new Set([...topicTabs, ...hotTags])].slice(0, 6))
+// 右侧发现栏：推荐创作者（从信息流作者去重，排除自己）
+const recommendedCreators = computed(() => {
+  const seen = new Set()
+  const list = []
+  for (const p of posts.value) {
+    const author = p.author || {}
+    const id = author.id ?? p.userId
+    const name = author.nickname || p.username
+    if (!id || seen.has(id) || !name) continue
+    if (user.value && String(id) === String(user.value.id)) continue
+    seen.add(id)
+    list.push({ id, name, avatar: normalizeUrl(author.avatar || p._avatar || '') })
+    if (list.length >= 4) break
+  }
+  return list
+})
+
+// 桌面端左侧导航（咖啡社区：发现/关注 + 功能入口 + 消息/通知徽章）
 const leftNavItems = computed(() => [
   { key: 'recommend', label: '发现', icon: 'material-symbols:explore-outline' },
   { key: 'latest', label: '最新', icon: 'material-symbols:bolt-outline' },
   ...(isLoggedIn.value ? [{ key: 'following', label: '关注', icon: 'material-symbols:person-add-outline' }] : []),
+  { key: null, label: '商城', icon: 'material-symbols:storefront-outline', action: () => router.push('/shop') },
+  { key: null, label: '消息', icon: 'material-symbols:chat-bubble-outline', badge: messageCount.value, action: () => router.push(isLoggedIn.value ? '/messages' : '/login') },
+  { key: null, label: '通知', icon: 'material-symbols:notifications-outline', badge: notifCount.value, action: () => router.push(isLoggedIn.value ? '/notifications' : '/login') },
   { key: null, label: '发布笔记', icon: 'material-symbols:edit-note-outline', action: () => openComposer() },
   { key: null, label: '我的收藏', icon: 'material-symbols:bookmark-outline', action: () => router.push(isLoggedIn.value ? '/me' : '/login') },
   { key: null, label: 'AI 助手', icon: 'material-symbols:smart-toy-outline', action: () => router.push('/ai-chat') }
 ])
+
+// 右侧发现栏：近期活动
+const upcomingEvents = [
+  { title: '城市咖啡节 · 上海站', date: '10.01 - 10.03' },
+  { title: '手冲工作坊 · 第 12 期', date: '10.12 周六' }
+]
 
 // --- 工具函数 ---
 function extractList(res) {

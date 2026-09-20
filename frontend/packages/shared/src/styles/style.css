@@ -365,16 +365,117 @@ svg { display: block; }
   z-index: 1;
 }
 .wc-home-desktop-layout {
-  grid-template-columns: 168px minmax(0, 880px);
-  gap: 28px;
+  grid-template-columns: 190px minmax(0, 1fr) 280px;
+  gap: 24px;
   justify-content: center;
 }
 @media (min-width: 1536px) {
   .wc-home-desktop-layout {
-    grid-template-columns: 178px minmax(0, 920px);
-    gap: 32px;
+    grid-template-columns: 200px minmax(0, 1fr) 300px;
+    gap: 28px;
   }
 }
+/* 右侧发现栏：粘性跟随滚动 */
+.wc-right-rail {
+  position: sticky;
+  top: 84px;
+  max-height: calc(100vh - 104px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  scrollbar-width: none;
+}
+.wc-right-rail::-webkit-scrollbar { display: none; }
+.wc-rail-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .02em;
+  color: var(--text-primary);
+}
+.wc-rail-rank {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--bg-secondary) 80%, transparent);
+}
+.wc-rail-rank.is-top { color: #FFF8E1; background: linear-gradient(135deg, #D48A5D, #8D5A3B); }
+.wc-rail-topic {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 7px 8px;
+  border-radius: 12px;
+  text-align: left;
+  transition: background .2s var(--ease-smooth);
+}
+.wc-rail-topic:hover { background: color-mix(in srgb, var(--accent-cream) 55%, transparent); }
+.wc-rail-follow-btn {
+  flex: none;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--brand-green-deep);
+  background: var(--brand-green-soft);
+  border: 1px solid color-mix(in srgb, var(--brand-green) 40%, transparent);
+  transition: all .2s var(--ease-smooth);
+}
+.wc-rail-follow-btn:hover { background: var(--brand-green); color: #FFF8E1; }
+:root.dark .wc-rail-follow-btn { color: var(--brand-green); }
+
+/* 帖子详情：中阅读列 + 右栏 */
+.wc-post-layout {
+  display: flex;
+  max-width: 1080px;
+}
+.wc-post-center {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 720px;
+}
+.wc-post-rail {
+  position: sticky;
+  top: 84px;
+  width: 280px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+/* 关注按钮（品牌绿） */
+.wc-follow-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #FFF8E1;
+  background: var(--brand-green);
+  border: 1px solid var(--brand-green);
+  transition: all .2s var(--ease-smooth);
+}
+.wc-follow-btn:hover { background: var(--brand-green-deep); border-color: var(--brand-green-deep); }
+.wc-follow-btn.is-following {
+  color: var(--brand-green-deep);
+  background: var(--brand-green-soft);
+  border-color: color-mix(in srgb, var(--brand-green) 40%, transparent);
+}
+:root.dark .wc-follow-btn.is-following { color: var(--brand-green); }
 .wc-side-nav {
   max-height: calc(100vh - 104px);
 }
@@ -384,7 +485,37 @@ svg { display: block; }
   background: color-mix(in srgb, var(--bg-elevated) 70%, transparent);
   border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
   box-shadow: 0 10px 30px rgba(62, 39, 35, .055);
+  -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
+}
+/* 侧栏顶部品牌标识 */
+.wc-side-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 8px;
+  border-radius: 14px;
+}
+.wc-side-brand:hover { background: color-mix(in srgb, var(--accent-cream) 48%, transparent); }
+.wc-side-brand-text {
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+}
+/* 侧栏导航徽章（消息/通知未读数） */
+.wc-side-badge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #D46A3D;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .wc-side-nav-item {
   height: 38px;
@@ -419,26 +550,39 @@ svg { display: block; }
 .wc-feed-main {
   padding: 0 2px;
 }
+/* PC 端独立：信息流恒定 3 列大卡片（对齐原型） */
+.wc-feed-main .masonry {
+  column-count: 3;
+  column-gap: 16px;
+}
 .wc-channel-bar {
   position: sticky;
   top: 64px;
   z-index: 10;
-  padding: 9px;
-  border-radius: 22px;
-  background: color-mix(in srgb, var(--bg-elevated) 72%, transparent);
-  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
-  box-shadow: 0 10px 24px rgba(62, 39, 35, .045);
-  backdrop-filter: blur(16px);
+  padding: 2px 4px 12px;
+  gap: 8px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 .wc-channel-btn {
-  height: 34px;
-  padding: 0 14px;
-  border-radius: 999px;
-  font-size: 12.5px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 0;
+  font-size: 15px;
+  font-weight: 600;
 }
-.wc-channel-btn:hover,
+.wc-channel-btn:hover {
+  background: transparent;
+  color: var(--text-primary);
+}
 .wc-channel-btn.is-active {
-  background: color-mix(in srgb, var(--accent-cream) 62%, transparent);
+  background: transparent;
+  color: var(--text-primary);
+  font-weight: 800;
 }
 .wc-channel-active-line {
   width: 18px;
@@ -862,6 +1006,13 @@ svg { display: block; }
 .bg-amber-soft { background-color: rgba(238, 194, 123, 0.18); }
 .bg-emerald-soft { background-color: rgba(124, 174, 140, 0.18); }
 
+/* loean 品牌绿工具类（双主题自动切换） */
+.text-brand-green { color: var(--brand-green-deep); }
+.bg-brand-green { background-color: var(--brand-green); }
+.bg-brand-green-soft { background-color: var(--brand-green-soft); }
+.border-brand-green { border-color: var(--brand-green); }
+:root.dark .text-brand-green { color: var(--brand-green); }
+
 /* 圆形背景 — logo（主题感知）*/
 :root {
   --logo-bg-from: #8D6E63;  /* 浅主题：较浅的咖啡棕 */
@@ -992,6 +1143,10 @@ input, textarea, select, button {
   --danger-fg: #FF2442;
   --info-bg: rgba(141, 180, 199, 0.18);
   --info-fg: #2563EB;
+  /* loean 品牌绿环（新商标辅助色） */
+  --brand-green: #7A9B84;
+  --brand-green-deep: #5A7D64;
+  --brand-green-soft: rgba(122, 155, 132, 0.14);
   --shadow-xs: 0 1px 2px rgba(33, 28, 24, 0.03);
   --shadow-sm: 0 2px 10px rgba(33, 28, 24, 0.045);
   --shadow-card: 0 2px 12px rgba(33, 28, 24, 0.05);
@@ -1034,6 +1189,10 @@ input, textarea, select, button {
   --danger-fg: #FF6B7D;
   --info-bg: rgba(141, 180, 199, 0.18);
   --info-fg: #A5C0D0;
+  /* loean 品牌绿环（深色主题提亮） */
+  --brand-green: #8FB39A;
+  --brand-green-deep: #6E9379;
+  --brand-green-soft: rgba(143, 179, 154, 0.16);
   --shadow-xs: 0 1px 2px rgba(10, 5, 3, .28);
   --shadow-sm: 0 3px 12px rgba(10, 5, 3, .24);
   --shadow-card: 0 5px 18px rgba(10, 5, 3, .28);

@@ -66,7 +66,7 @@
     </header>
 
     <!-- Main -->
-    <main class="max-w-6xl mx-auto px-3 md:px-6 pt-4 pb-8">
+    <main class="max-w-7xl mx-auto px-3 md:px-6 pt-4 pb-8">
       <!-- 秒杀轮播 -->
       <div v-if="seckillActivities.length > 0" class="mb-5">
         <div
@@ -131,6 +131,13 @@
                     立即秒杀
                   </button>
                 </div>
+                <!-- 已抢进度 -->
+                <div v-if="act.totalStock" class="mt-2">
+                  <div class="h-1.5 rounded-full bg-line/40 overflow-hidden">
+                    <div class="h-full rounded-full bg-gradient-to-r from-red-500 to-orange-500" :style="{ width: seckillPercent(act) + '%' }"></div>
+                  </div>
+                  <div class="text-[10px] text-ink-muted mt-1">已抢 {{ seckillPercent(act) }}%</div>
+                </div>
               </div>
             </div>
           </div>
@@ -148,6 +155,65 @@
           </div>
         </div>
       </div>
+
+      <!-- 桌面两栏：左筛选面板 + 右内容 -->
+      <div class="flex gap-5 items-start">
+        <!-- 左筛选面板 -->
+        <aside class="wc-shop-filter block w-[212px] shrink-0">
+          <div class="wc-shop-filter-card">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-[13px] font-bold text-ink flex items-center gap-1.5">
+                <Icon icon="material-symbols:tune" class="w-4 h-4 text-brand" />
+                筛选
+              </span>
+              <button v-if="hasActiveFilter" class="text-[11px] text-brand-green font-semibold tap-scale" @click="resetFilters">重置</button>
+            </div>
+
+            <!-- 价格上限 -->
+            <div class="mb-4">
+              <div class="text-[11.5px] font-semibold text-ink-soft mb-2">价格上限</div>
+              <div class="flex flex-wrap gap-1.5">
+                <button
+                  v-for="p in priceOptions"
+                  :key="p"
+                  :class="['wc-shop-chip tap-scale', priceMax === p ? 'is-active' : '']"
+                  @click="priceMax = (priceMax === p ? null : p)"
+                >{{ p === 999 ? '¥999+' : '¥' + p + '内' }}</button>
+              </div>
+            </div>
+
+            <!-- 烘焙度 -->
+            <div class="mb-4">
+              <div class="text-[11.5px] font-semibold text-ink-soft mb-2">烘焙度</div>
+              <label v-for="r in roastOptions" :key="r" class="flex items-center gap-2 py-1 cursor-pointer">
+                <input
+                  type="checkbox"
+                  class="w-3.5 h-3.5 rounded"
+                  style="accent-color: var(--brand-green);"
+                  :checked="filterRoast.includes(r)"
+                  @change="toggleFilter(filterRoast, r)"
+                />
+                <span class="text-[12px] text-ink-soft">{{ r }}</span>
+              </label>
+            </div>
+
+            <!-- 产地 -->
+            <div v-if="originOptions.length">
+              <div class="text-[11.5px] font-semibold text-ink-soft mb-2">产地</div>
+              <div class="flex flex-wrap gap-1.5">
+                <button
+                  v-for="o in originOptions"
+                  :key="o"
+                  :class="['wc-shop-chip tap-scale', filterOrigin.includes(o) ? 'is-active' : '']"
+                  @click="toggleFilter(filterOrigin, o)"
+                >{{ o }}</button>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- 右内容 -->
+        <div class="flex-1 min-w-0">
 
       <!-- 分类过滤 -->
       <div class="flex gap-2 overflow-x-auto no-scrollbar mb-4">
@@ -176,8 +242,28 @@
         </button>
       </div>
 
+      <!-- 排序栏 + 视图切换 -->
+      <div class="flex items-center justify-between gap-3 mb-4">
+        <div class="flex items-center gap-1 overflow-x-auto no-scrollbar">
+          <button
+            v-for="s in sortOptions"
+            :key="s.key"
+            :class="['wc-shop-sort tap-scale', sortBy === s.key ? 'is-active' : '']"
+            @click="sortBy = s.key"
+          >{{ s.label }}</button>
+        </div>
+        <div class="flex items-center gap-1 shrink-0">
+          <button :class="['wc-shop-viewbtn tap-scale', viewMode === 'grid' ? 'is-active' : '']" title="网格视图" @click="viewMode = 'grid'">
+            <Icon icon="material-symbols:grid-view-rounded" class="w-4 h-4" />
+          </button>
+          <button :class="['wc-shop-viewbtn tap-scale', viewMode === 'list' ? 'is-active' : '']" title="列表视图" @click="viewMode = 'list'">
+            <Icon icon="material-symbols:view-list-rounded" class="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
       <!-- 骨架屏 -->
-      <div v-if="loading && products.length === 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+      <div v-if="loading && products.length === 0" class="grid grid-cols-3 gap-4">
         <div v-for="n in 8" :key="n" class="rounded-2xl overflow-hidden bg-surface-elevated shadow-[0_1px_2px_rgba(62,39,35,0.04),0_2px_8px_rgba(62,39,35,0.05)]">
           <div class="skeleton aspect-square" />
           <div class="p-3 space-y-2.5">
@@ -192,7 +278,7 @@
       </div>
 
       <!-- 空状态 -->
-      <div v-else-if="!loading && products.length === 0" class="py-20 text-center">
+      <div v-else-if="!loading && displayProducts.length === 0" class="py-20 text-center">
         <div class="w-28 h-28 mx-auto mb-4 rounded-3xl brand-placeholder flex items-center justify-center shadow-inner">
           <WorldCoffeeLogoMini :size="56" :with-circle="false" />
         </div>
@@ -200,10 +286,10 @@
         <p class="text-[13px] text-ink-muted">商城正在备货中，敬请期待</p>
       </div>
 
-      <!-- 商品网格 -->
-      <div v-else class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+      <!-- 商品网格（grid 视图） -->
+      <div v-else-if="viewMode === 'grid'" class="grid grid-cols-3 gap-4">
         <article
-          v-for="(product, i) in products"
+          v-for="(product, i) in displayProducts"
           :key="product.id"
           class="group bg-surface-elevated rounded-2xl overflow-hidden shadow-[0_1px_2px_rgba(62,39,35,0.04),0_2px_8px_rgba(62,39,35,0.05)] border border-transparent hover:border-line/50 hover:shadow-[0_4px_20px_rgba(62,39,35,0.12)] transition-all duration-300 cursor-pointer animate-fade-up"
           :style="{ animationDelay: `${(i % 12) * 40}ms` }"
@@ -288,6 +374,42 @@
         </article>
       </div>
 
+      <!-- 商品列表（list 视图） -->
+      <div v-else class="flex flex-col gap-3">
+        <article
+          v-for="product in displayProducts"
+          :key="product.id"
+          class="wc-shop-list-item group flex gap-3 bg-surface-elevated rounded-2xl p-3 border border-transparent hover:border-line/50 hover:shadow-[0_4px_20px_rgba(62,39,35,0.10)] transition-all cursor-pointer"
+          @click="goToDetail(product)"
+        >
+          <div class="relative w-24 h-24 sm:w-28 sm:h-28 shrink-0 rounded-xl overflow-hidden bg-surface-soft">
+            <img v-if="product.images && product.images.length" :src="product.images[0]" :alt="product.name" class="w-full h-full object-cover" loading="lazy" />
+            <div v-else class="w-full h-full brand-placeholder flex items-center justify-center"><WorldCoffeeLogoMini :size="28" :with-circle="false" /></div>
+          </div>
+          <div class="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+            <div>
+              <h3 class="text-[13.5px] font-bold text-brand line-clamp-1">{{ product.name }}</h3>
+              <div class="flex flex-wrap items-center gap-1 mt-1.5">
+                <span v-if="product.roastLevel" class="bg-surface-soft text-brand text-[10.5px] px-1.5 py-0.5 rounded-md font-medium">{{ product.roastLevel }}</span>
+                <span v-if="product.origin" class="bg-blue-50/70 text-blue-600 text-[10.5px] px-1.5 py-0.5 rounded-md font-medium">{{ product.origin }}</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-baseline gap-0.5">
+                <span class="text-[11px] text-amber font-bold">¥</span>
+                <span class="text-lg font-bold text-brand leading-none">{{ formatPrice(product.price) }}</span>
+                <span class="ml-2 text-[11px] text-ink-muted">{{ formatSales(product.sales) }} 已售</span>
+              </div>
+              <button
+                :disabled="!!addCartLoading[product.id] || product.stock === 0"
+                class="px-3 py-1.5 rounded-lg text-[11.5px] font-bold brand-gradient-btn tap-scale disabled:opacity-40"
+                @click.stop="handleAddToCart(product)"
+              >{{ product.stock === 0 ? '已售罄' : '加入购物车' }}</button>
+            </div>
+          </div>
+        </article>
+      </div>
+
       <!-- 加载更多 -->
       <div v-if="hasMore && products.length > 0" class="flex justify-center py-8">
         <button
@@ -307,6 +429,8 @@
           <div class="w-12 h-px bg-line/50"></div>
           <span>— 已经到底啦 —</span>
           <div class="w-12 h-px bg-line/50"></div>
+        </div>
+      </div>
         </div>
       </div>
     </main>
@@ -449,6 +573,57 @@ const categories = ref([])
 const searchKeyword = ref('')
 const isSearchMode = ref(false)
 
+// ─── 筛选 / 排序 / 视图 ───────────────────────
+const sortBy = ref('default')
+const viewMode = ref('grid')
+const filterRoast = ref([])
+const filterOrigin = ref([])
+const priceMax = ref(null)
+const priceOptions = [50, 100, 200, 999]
+const roastOptions = ['浅焙', '中焙', '深焙']
+const sortOptions = [
+  { key: 'default', label: '综合' },
+  { key: 'sales', label: '销量' },
+  { key: 'priceAsc', label: '价格从低到高' },
+  { key: 'priceDesc', label: '价格从高到低' },
+  { key: 'newest', label: '新品' }
+]
+
+const originOptions = computed(() => {
+  const set = new Set()
+  for (const p of products.value) if (p.origin) set.add(p.origin)
+  return [...set].slice(0, 8)
+})
+
+// 展示列表：在已加载商品上做客户端筛选 + 排序
+const displayProducts = computed(() => {
+  let list = [...products.value]
+  if (filterRoast.value.length) list = list.filter(p => filterRoast.value.includes(p.roastLevel))
+  if (filterOrigin.value.length) list = list.filter(p => filterOrigin.value.includes(p.origin))
+  if (priceMax.value != null) list = list.filter(p => Number(p.price) <= priceMax.value)
+  switch (sortBy.value) {
+    case 'sales': list.sort((a, b) => (b.sales || 0) - (a.sales || 0)); break
+    case 'priceAsc': list.sort((a, b) => Number(a.price) - Number(b.price)); break
+    case 'priceDesc': list.sort((a, b) => Number(b.price) - Number(a.price)); break
+    case 'newest': list.sort((a, b) => new Date(b.createTime || 0) - new Date(a.createTime || 0)); break
+  }
+  return list
+})
+
+const hasActiveFilter = computed(() => filterRoast.value.length > 0 || filterOrigin.value.length > 0 || priceMax.value != null)
+
+function toggleFilter(arr, value) {
+  const i = arr.indexOf(value)
+  if (i >= 0) arr.splice(i, 1); else arr.push(value)
+}
+
+function resetFilters() {
+  filterRoast.value = []
+  filterOrigin.value = []
+  priceMax.value = null
+  sortBy.value = 'default'
+}
+
 // ─── 秒杀相关 ───────────────────────────────
 const seckillActivities = ref([])
 
@@ -486,6 +661,15 @@ function formatSales(sales) {
   if (sales >= 10000) return (sales / 10000).toFixed(1) + 'w'
   if (sales >= 1000) return (sales / 1000).toFixed(1) + 'k'
   return sales
+}
+
+// 秒杀已抢百分比
+function seckillPercent(act) {
+  const total = Number(act.totalStock) || 0
+  const stock = Number(act.stock) || 0
+  if (!total) return 0
+  const p = Math.round(((total - stock) / total) * 100)
+  return Math.max(0, Math.min(100, p))
 }
 
 function extractList(res) {
@@ -805,5 +989,71 @@ onUnmounted(() => {
 }
 .no-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+/* 左筛选面板 */
+.wc-shop-filter {
+  position: sticky;
+  top: 80px;
+}
+.wc-shop-filter-card {
+  padding: 16px;
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--bg-elevated) 82%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  box-shadow: 0 10px 30px rgba(62, 39, 35, .05);
+  backdrop-filter: blur(14px);
+}
+.wc-shop-chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--bg-secondary) 70%, transparent);
+  border: 1px solid transparent;
+  transition: all .18s ease;
+}
+.wc-shop-chip:hover { background: var(--bg-elevated); }
+.wc-shop-chip.is-active {
+  color: #FFF8E1;
+  background: var(--brand-green);
+  border-color: var(--brand-green);
+}
+
+/* 排序栏 */
+.wc-shop-sort {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+  transition: all .18s ease;
+}
+.wc-shop-sort:hover { color: var(--text-primary); }
+.wc-shop-sort.is-active {
+  color: var(--text-primary);
+  font-weight: 800;
+  background: color-mix(in srgb, var(--accent-cream) 62%, transparent);
+}
+
+/* 视图切换按钮 */
+.wc-shop-viewbtn {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--bg-secondary) 70%, transparent);
+  transition: all .18s ease;
+}
+.wc-shop-viewbtn:hover { color: var(--text-primary); }
+.wc-shop-viewbtn.is-active {
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-xs);
 }
 </style>

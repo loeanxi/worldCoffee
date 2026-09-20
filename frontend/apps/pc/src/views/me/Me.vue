@@ -69,6 +69,26 @@
               编辑资料
             </button>
           </div>
+
+          <!-- 快捷入口 -->
+          <div class="profile-quick-links">
+            <button class="profile-quick-item tap-scale" @click="router.push('/me')">
+              <Icon icon="material-symbols:bookmark-outline" class="w-4 h-4" />
+              <span>收藏夹</span>
+            </button>
+            <button class="profile-quick-item tap-scale" @click="router.push('/shop/orders')">
+              <Icon icon="material-symbols:receipt-long-outline" class="w-4 h-4" />
+              <span>我的订单</span>
+            </button>
+            <button class="profile-quick-item tap-scale" @click="router.push('/shop/coupons')">
+              <Icon icon="material-symbols:confirmation-number-outline" class="w-4 h-4" />
+              <span>优惠券</span>
+            </button>
+            <button class="profile-quick-item tap-scale" @click="router.push('/settings')">
+              <Icon icon="material-symbols:settings-outline" class="w-4 h-4" />
+              <span>设置</span>
+            </button>
+          </div>
         </section>
 
         <section v-else class="profile-user-card wc-web-card animate-pulse">
@@ -468,8 +488,19 @@ onMounted(() => {
   position: relative;
   height: 112px;
   background:
+    radial-gradient(circle at 82% 30%, rgba(122, 155, 132, .30), transparent 42%),
     linear-gradient(135deg, rgba(109, 76, 65, .92), rgba(166, 106, 67, .66)),
     radial-gradient(circle at 20% 20%, rgba(255, 248, 225, .36), transparent 32%);
+}
+.profile-cover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: .5;
+  background-image:
+    radial-gradient(circle at 25% 25%, rgba(255, 248, 225, .16) 2.5px, transparent 3px),
+    radial-gradient(circle at 75% 65%, rgba(255, 248, 225, .12) 2px, transparent 2.5px);
+  background-size: 46px 46px, 34px 34px;
 }
 .profile-cover::after {
   content: '';
@@ -601,6 +632,32 @@ onMounted(() => {
   background: color-mix(in srgb, var(--bg-secondary) 76%, transparent);
   border: 1px solid var(--divider);
 }
+/* 快捷入口网格 */
+.profile-quick-links {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 0 22px 20px;
+}
+.profile-quick-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 4px;
+  border-radius: 14px;
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--bg-secondary) 60%, transparent);
+  border: 1px solid transparent;
+  transition: all .2s var(--ease-smooth);
+}
+.profile-quick-item:hover {
+  color: var(--brand-green-deep);
+  background: var(--brand-green-soft);
+  border-color: color-mix(in srgb, var(--brand-green) 30%, transparent);
+}
+.profile-quick-item span { font-size: 11px; font-weight: 600; }
+:root.dark .profile-quick-item:hover { color: var(--brand-green); }
 .profile-center { min-width: 0; }
 .profile-hero-row {
   min-height: 112px;
