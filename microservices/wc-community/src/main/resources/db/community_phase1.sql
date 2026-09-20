@@ -53,7 +53,7 @@ SET @add_remark_sql = (
   SELECT IF(
     COUNT(*) = 0,
     'ALTER TABLE post_report ADD COLUMN remark VARCHAR(255) NULL COMMENT ''Moderator handling note'' AFTER status',
-    'SELECT 1'
+    'DO 0'
   )
   FROM INFORMATION_SCHEMA.COLUMNS
   WHERE TABLE_SCHEMA = @schema_name
@@ -68,7 +68,7 @@ SET @add_handle_time_sql = (
   SELECT IF(
     COUNT(*) = 0,
     'ALTER TABLE post_report ADD COLUMN handle_time DATETIME NULL COMMENT ''Moderation handling time'' AFTER remark',
-    'SELECT 1'
+    'DO 0'
   )
   FROM INFORMATION_SCHEMA.COLUMNS
   WHERE TABLE_SCHEMA = @schema_name

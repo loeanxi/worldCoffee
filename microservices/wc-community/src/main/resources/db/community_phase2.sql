@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS coffee_post_product (
 SET @add_post_note_type_sql = (
   SELECT IF(COUNT(*) = 0,
     'ALTER TABLE coffee_post ADD COLUMN note_type VARCHAR(12) NOT NULL DEFAULT ''IMAGE'' COMMENT ''笔记类型：IMAGE图文，VIDEO视频'' AFTER images',
-    'SELECT 1')
+    'DO 0')
   FROM INFORMATION_SCHEMA.COLUMNS
   WHERE TABLE_SCHEMA = @schema_name AND TABLE_NAME = 'coffee_post' AND COLUMN_NAME = 'note_type'
 );
@@ -68,7 +68,7 @@ DEALLOCATE PREPARE add_post_note_type_stmt;
 SET @add_post_video_url_sql = (
   SELECT IF(COUNT(*) = 0,
     'ALTER TABLE coffee_post ADD COLUMN video_url VARCHAR(500) NULL COMMENT ''视频笔记播放地址'' AFTER note_type',
-    'SELECT 1')
+    'DO 0')
   FROM INFORMATION_SCHEMA.COLUMNS
   WHERE TABLE_SCHEMA = @schema_name AND TABLE_NAME = 'coffee_post' AND COLUMN_NAME = 'video_url'
 );
@@ -79,7 +79,7 @@ DEALLOCATE PREPARE add_post_video_url_stmt;
 SET @add_post_cover_url_sql = (
   SELECT IF(COUNT(*) = 0,
     'ALTER TABLE coffee_post ADD COLUMN cover_url VARCHAR(500) NULL COMMENT ''视频或图文封面地址'' AFTER video_url',
-    'SELECT 1')
+    'DO 0')
   FROM INFORMATION_SCHEMA.COLUMNS
   WHERE TABLE_SCHEMA = @schema_name AND TABLE_NAME = 'coffee_post' AND COLUMN_NAME = 'cover_url'
 );
@@ -90,7 +90,7 @@ DEALLOCATE PREPARE add_post_cover_url_stmt;
 SET @add_post_video_duration_sql = (
   SELECT IF(COUNT(*) = 0,
     'ALTER TABLE coffee_post ADD COLUMN video_duration INT NULL COMMENT ''视频时长，单位秒'' AFTER cover_url',
-    'SELECT 1')
+    'DO 0')
   FROM INFORMATION_SCHEMA.COLUMNS
   WHERE TABLE_SCHEMA = @schema_name AND TABLE_NAME = 'coffee_post' AND COLUMN_NAME = 'video_duration'
 );
@@ -101,7 +101,7 @@ DEALLOCATE PREPARE add_post_video_duration_stmt;
 SET @add_comment_parent_sql = (
   SELECT IF(COUNT(*) = 0,
     'ALTER TABLE coffee_comment ADD COLUMN parent_id BIGINT NULL COMMENT ''父评论ID，顶层评论为空'' AFTER post_id',
-    'SELECT 1')
+    'DO 0')
   FROM INFORMATION_SCHEMA.COLUMNS
   WHERE TABLE_SCHEMA = @schema_name AND TABLE_NAME = 'coffee_comment' AND COLUMN_NAME = 'parent_id'
 );
@@ -112,7 +112,7 @@ DEALLOCATE PREPARE add_comment_parent_stmt;
 SET @add_comment_root_sql = (
   SELECT IF(COUNT(*) = 0,
     'ALTER TABLE coffee_comment ADD COLUMN root_id BIGINT NULL COMMENT ''根评论ID，用于楼中楼聚合'' AFTER parent_id',
-    'SELECT 1')
+    'DO 0')
   FROM INFORMATION_SCHEMA.COLUMNS
   WHERE TABLE_SCHEMA = @schema_name AND TABLE_NAME = 'coffee_comment' AND COLUMN_NAME = 'root_id'
 );
@@ -123,7 +123,7 @@ DEALLOCATE PREPARE add_comment_root_stmt;
 SET @add_comment_reply_to_sql = (
   SELECT IF(COUNT(*) = 0,
     'ALTER TABLE coffee_comment ADD COLUMN reply_to_user_id BIGINT NULL COMMENT ''回复目标用户ID，用于@提醒和前端展示'' AFTER root_id',
-    'SELECT 1')
+    'DO 0')
   FROM INFORMATION_SCHEMA.COLUMNS
   WHERE TABLE_SCHEMA = @schema_name AND TABLE_NAME = 'coffee_comment' AND COLUMN_NAME = 'reply_to_user_id'
 );
@@ -134,7 +134,7 @@ DEALLOCATE PREPARE add_comment_reply_to_stmt;
 SET @add_draft_note_type_sql = (
   SELECT IF(COUNT(*) = 0,
     'ALTER TABLE post_draft ADD COLUMN note_type VARCHAR(12) NULL COMMENT ''草稿笔记类型：IMAGE图文，VIDEO视频'' AFTER images',
-    'SELECT 1')
+    'DO 0')
   FROM INFORMATION_SCHEMA.COLUMNS
   WHERE TABLE_SCHEMA = @schema_name AND TABLE_NAME = 'post_draft' AND COLUMN_NAME = 'note_type'
 );
@@ -145,7 +145,7 @@ DEALLOCATE PREPARE add_draft_note_type_stmt;
 SET @add_draft_video_url_sql = (
   SELECT IF(COUNT(*) = 0,
     'ALTER TABLE post_draft ADD COLUMN video_url VARCHAR(500) NULL COMMENT ''草稿视频地址'' AFTER note_type',
-    'SELECT 1')
+    'DO 0')
   FROM INFORMATION_SCHEMA.COLUMNS
   WHERE TABLE_SCHEMA = @schema_name AND TABLE_NAME = 'post_draft' AND COLUMN_NAME = 'video_url'
 );
@@ -156,7 +156,7 @@ DEALLOCATE PREPARE add_draft_video_url_stmt;
 SET @add_draft_cover_url_sql = (
   SELECT IF(COUNT(*) = 0,
     'ALTER TABLE post_draft ADD COLUMN cover_url VARCHAR(500) NULL COMMENT ''草稿封面地址'' AFTER video_url',
-    'SELECT 1')
+    'DO 0')
   FROM INFORMATION_SCHEMA.COLUMNS
   WHERE TABLE_SCHEMA = @schema_name AND TABLE_NAME = 'post_draft' AND COLUMN_NAME = 'cover_url'
 );
@@ -167,7 +167,7 @@ DEALLOCATE PREPARE add_draft_cover_url_stmt;
 SET @add_draft_video_duration_sql = (
   SELECT IF(COUNT(*) = 0,
     'ALTER TABLE post_draft ADD COLUMN video_duration INT NULL COMMENT ''草稿视频时长，单位秒'' AFTER cover_url',
-    'SELECT 1')
+    'DO 0')
   FROM INFORMATION_SCHEMA.COLUMNS
   WHERE TABLE_SCHEMA = @schema_name AND TABLE_NAME = 'post_draft' AND COLUMN_NAME = 'video_duration'
 );
@@ -178,7 +178,7 @@ DEALLOCATE PREPARE add_draft_video_duration_stmt;
 SET @add_draft_product_ids_sql = (
   SELECT IF(COUNT(*) = 0,
     'ALTER TABLE post_draft ADD COLUMN product_ids TEXT NULL COMMENT ''草稿关联商品ID列表，JSON数组'' AFTER topics',
-    'SELECT 1')
+    'DO 0')
   FROM INFORMATION_SCHEMA.COLUMNS
   WHERE TABLE_SCHEMA = @schema_name AND TABLE_NAME = 'post_draft' AND COLUMN_NAME = 'product_ids'
 );
@@ -189,7 +189,7 @@ DEALLOCATE PREPARE add_draft_product_ids_stmt;
 SET @add_comment_parent_idx_sql = (
   SELECT IF(COUNT(*) = 0,
     'CREATE INDEX idx_coffee_comment_parent ON coffee_comment (post_id, parent_id, create_time)',
-    'SELECT 1')
+    'DO 0')
   FROM INFORMATION_SCHEMA.STATISTICS
   WHERE TABLE_SCHEMA = @schema_name AND TABLE_NAME = 'coffee_comment' AND INDEX_NAME = 'idx_coffee_comment_parent'
 );
@@ -200,7 +200,7 @@ DEALLOCATE PREPARE add_comment_parent_idx_stmt;
 SET @add_comment_root_idx_sql = (
   SELECT IF(COUNT(*) = 0,
     'CREATE INDEX idx_coffee_comment_root ON coffee_comment (root_id, create_time)',
-    'SELECT 1')
+    'DO 0')
   FROM INFORMATION_SCHEMA.STATISTICS
   WHERE TABLE_SCHEMA = @schema_name AND TABLE_NAME = 'coffee_comment' AND INDEX_NAME = 'idx_coffee_comment_root'
 );
