@@ -1,0 +1,162 @@
+/* ============================================================
+   WorldCoffee 移动端独立主题（m-theme）
+   品牌色取自官方商标：圆环绿 / 咖啡豆棕 / 奶油白
+   暗色模式跟随 shared useTheme（html.dark）
+   与 PC 端深色三栏工作台视觉彻底区隔
+============================================================ */
+:root {
+  --m-brand: #6D8B74;        /* 商标圆环绿 */
+  --m-brand-deep: #5A7661;
+  --m-brand-soft: rgba(109, 139, 116, .14);
+  --m-accent: #A9714B;       /* 咖啡豆棕 */
+  --m-accent-soft: rgba(169, 113, 75, .12);
+  --m-bg: #F5F3EC;           /* 奶油白页面底 */
+  --m-card: #FFFFFF;
+  --m-ink: #2C2620;
+  --m-ink-2: #6B6259;
+  --m-ink-3: #9A9188;
+  --m-line: rgba(44, 38, 32, .08);
+  --m-shadow: 0 2px 8px rgba(44, 38, 32, .06);
+  --m-radius: 16px;
+}
+
+.dark {
+  --m-brand: #8FAF97;
+  --m-brand-deep: #7A9A82;
+  --m-brand-soft: rgba(143, 175, 151, .16);
+  --m-accent: #C99066;
+  --m-accent-soft: rgba(201, 144, 102, .16);
+  --m-bg: #171310;
+  --m-card: #221C17;
+  --m-ink: #F0EAE2;
+  --m-ink-2: #B7ADA2;
+  --m-ink-3: #857C72;
+  --m-line: rgba(240, 234, 226, .1);
+  --m-shadow: 0 2px 8px rgba(0, 0, 0, .3);
+}
+
+/* ─── 页面骨架：居中窄列，宽屏也保持手机 App 观感 ─── */
+.m-shell { min-height: 100vh; background: var(--m-bg); color: var(--m-ink); }
+.m-col { max-width: 640px; margin: 0 auto; }
+
+/* ─── 通用原子 ─── */
+.m-card { background: var(--m-card); border-radius: var(--m-radius); box-shadow: var(--m-shadow); }
+.m-pill { border-radius: 999px; }
+.m-ink-2 { color: var(--m-ink-2); }
+.m-ink-3 { color: var(--m-ink-3); }
+.m-brand { color: var(--m-brand); }
+.m-accent { color: var(--m-accent); }
+.m-scroll-x { overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; }
+.m-scroll-x::-webkit-scrollbar { display: none; }
+
+/* ─── 输入框 / 主按钮 ─── */
+.m-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid var(--m-line);
+  background: var(--m-card);
+  color: var(--m-ink);
+  font-size: 14px;
+  outline: none;
+  transition: border-color .2s ease;
+}
+.m-input:focus { border-color: var(--m-brand); }
+.m-input::placeholder { color: var(--m-ink-3); }
+
+.m-btn-primary {
+  border-radius: 999px;
+  background: var(--m-brand);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  transition: opacity .2s ease, transform .15s ease;
+}
+.m-btn-primary:active { transform: scale(.98); }
+.m-btn-primary:disabled { opacity: .6; }
+
+/* ─── 底部 TabBar ─── */
+.m-tabbar-inner {
+  background: var(--m-card);
+  box-shadow: 0 -2px 12px rgba(44, 38, 32, .06);
+  border-top: 1px solid var(--m-line);
+}
+.m-tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 0 4px;
+  color: var(--m-ink-3);
+  font-size: 10.5px;
+  transition: color .2s ease;
+}
+.m-tab-item.is-active { color: var(--m-brand); font-weight: 600; }
+.m-tab-center {
+  width: 46px;
+  height: 46px;
+  margin-top: -22px;
+  border-radius: 999px;
+  background: var(--m-brand);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 16px rgba(109, 139, 116, .38);
+  border: 3px solid var(--m-card);
+  transition: transform .15s ease;
+}
+.m-tab-center:active { transform: scale(.94); }
+.m-badge {
+  position: absolute;
+  top: 2px;
+  right: 50%;
+  transform: translateX(14px);
+  min-width: 15px;
+  height: 15px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--m-brand);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── 顶栏 / 搜索胶囊 ─── */
+.m-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: color-mix(in srgb, var(--m-bg) 88%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.m-search-pill {
+  flex: 1;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--m-card);
+  border: 1px solid var(--m-line);
+  color: var(--m-ink-3);
+  font-size: 12.5px;
+}
+
+/* ─── 半屏 Sheet ─── */
+.m-sheet-panel {
+  background: var(--m-card);
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -8px 32px rgba(44, 38, 32, .12);
+}
+.m-sheet-enter-active, .m-sheet-leave-active { transition: opacity .22s ease; }
+.m-sheet-enter-active .m-sheet-panel, .m-sheet-leave-active .m-sheet-panel { transition: transform .26s cubic-bezier(.22, 1, .36, 1); }
+.m-sheet-enter-from, .m-sheet-leave-to { opacity: 0; }
+.m-sheet-enter-from .m-sheet-panel, .m-sheet-leave-to .m-sheet-panel { transform: translateY(100%); }
