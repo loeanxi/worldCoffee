@@ -47,3 +47,7 @@ microservices/.codex-run-logs/
 *.pid
 vite.config.js.timestamp-*
 .reasonix/
+.trae/
+
+# ===== Design / brand exploration artifacts (AI-generated, not app code) =====
+loean-worldcoffee-logo/
