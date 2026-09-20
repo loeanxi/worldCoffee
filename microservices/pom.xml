@@ -40,6 +40,8 @@
         <jjwt.version>0.11.5</jjwt.version>
         <springdoc.version>2.5.0</springdoc.version>
         <minio.version>8.5.17</minio.version>
+        <spotbugs.version>4.8.6.0</spotbugs.version>
+        <errorprone.version>2.28.0</errorprone.version>
     </properties>
 
     <dependencies>
@@ -122,7 +124,78 @@
                 <artifactId>minio</artifactId>
                 <version>${minio.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-annotations</artifactId>
+                <version>${spotbugs.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>com.github.spotbugs</groupId>
+                    <artifactId>spotbugs-maven-plugin</artifactId>
+                    <version>${spotbugs.version}</version>
+                    <configuration>
+                        <effort>Max</effort>
+                        <threshold>Medium</threshold>
+                        <failOnError>false</failOnError>
+                        <includeTests>false</includeTests>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <annotationProcessorPaths>
+                        <!-- Lombok 必须在处理器路径上显式声明：设置 annotationProcessorPaths 后会关闭 classpath 自动发现 -->
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                        <path>
+                            <groupId>com.google.errorprone</groupId>
+                            <artifactId>error_prone_core</artifactId>
+                            <version>${errorprone.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                    <compilerArgs>
+                        <!-- -Xep* 参数只有 -Xplugin:ErrorProne 加载后才被 javac 识别；JDK16+ 所需的 --add-exports 在 .mvn/jvm.config -->
+                        <arg>-XDcompilePolicy=simple</arg>
+                        <arg>-Xplugin:ErrorProne</arg>
+                        <arg>-XepDisableAllChecks</arg>
+                        <arg>-Xep:ReferenceEquality:WARN</arg>
+                        <arg>-Xep:StringEquality:WARN</arg>
+                        <arg>-Xep:UnusedVariable:WARN</arg>
+                        <arg>-Xep:DeadException:WARN</arg>
+                        <arg>-Xep:Finally:WARN</arg>
+                        <arg>-Xep:EmptyCatch:WARN</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>
