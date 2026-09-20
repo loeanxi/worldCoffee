@@ -6,7 +6,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./styles/style.css": "./src/styles/style.css",
-    "./tailwind-preset": "./tailwind-preset.ts"
+    "./tailwind-preset": "./tailwind-preset.ts",
+    "./vite.config.base": "./vite.config.base.ts"
   },
   "dependencies": {
     "axios": "^1.7.0"
