@@ -1175,6 +1175,12 @@ onUnmounted(() => {
 .gallery-track { touch-action: none; -ms-touch-action: none; }
 .gallery-track img { touch-action: none; }
 
+/* 长列表性能优化：跳过屏幕外卡片的渲染，减少回流和重绘 */
+.feed-post-card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 300px;
+}
+
 .wc-composer-overlay {
   isolation: isolate;
 }
