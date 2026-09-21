@@ -4,6 +4,9 @@ server:
 spring:
   application:
     name: wc-gateway
+  codec:
+    # 放开 reactive codec 内存上限（默认 256KB），避免大 multipart 经网关时被 DataBuffer 限制卡死
+    max-in-memory-size: -1
   data:
     redis:
       host: localhost
@@ -18,6 +21,9 @@ spring:
       config:
         enabled: false
     gateway:
+      httpclient:
+        # 大请求响应超时放宽到 15 分钟（默认无限但连接池回收会提前断）
+        response-timeout: 900s
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin Access-Control-Expose-Headers RETAIN_FIRST
       globalcors:
