@@ -50,7 +50,10 @@
           class="m-card overflow-hidden mb-2.5 break-inside-avoid cursor-pointer tap-scale"
           @click="router.push(`/shop/product/${p.id}`)"
         >
-          <img v-if="p.coverImage" :src="p.coverImage" class="w-full h-auto block" style="background: var(--m-brand-soft);" loading="lazy" alt="" />
+          <img v-if="p.coverImage" :src="p.coverImage" class="w-full aspect-square object-cover block" loading="lazy" alt="" />
+          <div v-else class="w-full aspect-square flex items-center justify-center" style="background: var(--m-brand-soft);">
+            <Icon icon="material-symbols:coffee-outline" class="w-9 h-9" :style="{ color: 'var(--m-brand)' }" />
+          </div>
           <div class="p-2.5">
             <h3 class="text-[13px] font-semibold leading-snug line-clamp-2" style="color: var(--m-ink);">{{ p.name }}</h3>
             <div class="mt-1.5 flex items-baseline justify-between">

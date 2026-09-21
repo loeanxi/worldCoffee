@@ -4,14 +4,17 @@
 ============================================================ -->
 <template>
   <article class="m-card overflow-hidden mb-2.5 break-inside-avoid cursor-pointer tap-scale" @click="$emit('open', post)">
+    <!-- 封面：统一 3:4 画框 + 中心裁切，屏内卡片节奏齐整 -->
     <img
       v-if="cover"
       :src="cover"
-      class="w-full h-auto block"
-      style="background: var(--m-brand-soft);"
+      class="w-full aspect-[3/4] object-cover block"
       loading="lazy"
       alt=""
     />
+    <div v-else class="w-full aspect-[3/4] flex items-center justify-center" style="background: var(--m-brand-soft);">
+      <Icon icon="material-symbols:coffee-outline" class="w-9 h-9" :style="{ color: 'var(--m-brand)' }" />
+    </div>
     <div class="p-2.5">
       <h3 class="text-[13px] font-semibold leading-snug line-clamp-2" :style="{ color: 'var(--m-ink)' }">
         {{ post.title || '无标题笔记' }}
