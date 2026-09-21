@@ -63,7 +63,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public Result<?> handleMaxUploadSize(MaxUploadSizeExceededException e) {
-        return Result.fail("文件大小超出限制（视频≤100MB，图片≤5MB）");
+        return Result.fail("文件大小超出限制（视频≤500MB，图片≤5MB）");
     }
 
     @ExceptionHandler(RuntimeException.class)

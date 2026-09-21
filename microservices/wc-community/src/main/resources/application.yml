@@ -1,13 +1,16 @@
 server:
   port: 8083
+  tomcat:
+    # 超出限制的大文件请求完整吞掉请求体，保证能回给前端规范的 JSON 错误而不是直接断连
+    max-swallow-size: -1
 
 spring:
   application:
     name: wc-community
   servlet:
     multipart:
-      max-file-size: 100MB
-      max-request-size: 110MB
+      max-file-size: 500MB
+      max-request-size: 520MB
   cloud:
     nacos:
       discovery:

@@ -138,7 +138,7 @@
           <!-- 视频上传 -->
           <div v-else class="wc-create-section">
             <div class="flex items-end justify-between gap-3 mb-3">
-              <label class="wc-create-label mb-0">视频 <span>≤100MB，支持 mp4 / webm / mov</span></label>
+              <label class="wc-create-label mb-0">视频 <span>≤500MB，支持 mp4 / webm / mov</span></label>
             </div>
             <div v-if="videoPreviewUrl" class="wc-video-preview">
               <video
@@ -562,7 +562,7 @@ function triggerCoverUpload() {
 }
 
 function readVideoMeta(url) {
-  return new Promise((resolve, reject) => {
+  return new Promise<{ duration: number; width: number; height: number }>((resolve, reject) => {
     const v = document.createElement('video')
     v.preload = 'metadata'
     v.onloadedmetadata = () => resolve({ duration: v.duration, width: v.videoWidth, height: v.videoHeight })
@@ -573,7 +573,7 @@ function readVideoMeta(url) {
 
 /** canvas 截取首帧（限宽 720 控制封面体积）。必须用 blob URL，避免跨域污染 canvas */
 function captureFirstFrame(url, w, h) {
-  return new Promise((resolve, reject) => {
+  return new Promise<Blob>((resolve, reject) => {
     const v = document.createElement('video')
     v.muted = true
     v.playsInline = true
@@ -607,8 +607,8 @@ async function handleVideoSelect(e) {
     e.target.value = ''
     return
   }
-  if (file.size > 100 * 1024 * 1024) {
-    toast.show('视频不能超过 100MB', 'error')
+  if (file.size > 500 * 1024 * 1024) {
+    toast.show('视频不能超过 500MB', 'error')
     e.target.value = ''
     return
   }

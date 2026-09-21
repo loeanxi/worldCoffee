@@ -44,7 +44,7 @@ public class CommunityService {
     private static final String EVENT_DWELL = "DWELL";
     private static final String EVENT_DISLIKE = "DISLIKE";
 
-    private static final long MAX_VIDEO_SIZE = 100L * 1024 * 1024; // 100MB
+    private static final long MAX_VIDEO_SIZE = 500L * 1024 * 1024; // 500MB
     private static final Set<String> VIDEO_TYPES = Set.of(
             "video/mp4", "video/webm", "video/quicktime", "video/x-m4v");
 
@@ -1513,7 +1513,7 @@ public class CommunityService {
             throw new ServiceException("仅支持 mp4 / webm / mov 视频");
         }
         if (file.getSize() > MAX_VIDEO_SIZE) {
-            throw new ServiceException("视频不能超过 100MB");
+            throw new ServiceException("视频不能超过 500MB");
         }
 
         String originalName = file.getOriginalFilename();

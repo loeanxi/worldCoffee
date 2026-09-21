@@ -336,9 +336,9 @@ export const coffeeApi = {
     }
     return result
   }),
-  /** 视频上传（≤100MB），onProgress 回调真实上传进度百分比 */
+  /** 视频上传（≤500MB），onProgress 回调真实上传进度百分比 */
   uploadVideo: (formData, onProgress) => http.post('/coffee/upload/video', formData, {
-    timeout: 300000,
+    timeout: 900000,
     onUploadProgress: e => {
       if (onProgress && e.total) onProgress(Math.round((e.loaded / e.total) * 100))
     }
