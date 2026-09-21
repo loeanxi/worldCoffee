@@ -50,7 +50,7 @@
           class="m-card overflow-hidden mb-2.5 break-inside-avoid cursor-pointer tap-scale"
           @click="router.push(`/shop/product/${p.id}`)"
         >
-          <img v-if="p.coverImage" :src="p.coverImage" class="w-full aspect-square object-cover block" loading="lazy" alt="" />
+          <img v-if="coverOf(p)" :src="coverOf(p)" class="w-full aspect-square object-cover block" loading="lazy" :alt="p.name" />
           <div v-else class="w-full aspect-square flex items-center justify-center" style="background: var(--m-brand-soft);">
             <Icon icon="material-symbols:coffee-outline" class="w-9 h-9" :style="{ color: 'var(--m-brand)' }" />
           </div>
@@ -126,6 +126,11 @@ function extractList(res) {
   if (Array.isArray(res.data.records)) return res.data.records
   if (Array.isArray(res.data.list)) return res.data.list
   return []
+}
+
+// 后端 ProductVO 只有 images（已归一化为数组），无 coverImage 字段
+function coverOf(p) {
+  return (Array.isArray(p.images) && p.images[0]) || p.coverImage || ''
 }
 
 async function fetchProducts(reset = false) {
