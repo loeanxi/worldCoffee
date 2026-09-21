@@ -170,7 +170,7 @@
                         </path>
                     </annotationProcessorPaths>
                     <compilerArgs>
-                        <!-- -Xep* 参数只有 -Xplugin:ErrorProne 加载后才被 javac 识别；JDK16+ 所需的 --add-exports 在 .mvn/jvm.config -->
+                        <!-- -Xep* 参数只有 -Xplugin:ErrorProne 加载后才被 javac 识别；JDK16+ 所需的 add-exports 参数在 .mvn/jvm.config -->
                         <arg>-XDcompilePolicy=simple</arg>
                         <arg>-Xplugin:ErrorProne</arg>
                         <arg>-XepDisableAllChecks</arg>
