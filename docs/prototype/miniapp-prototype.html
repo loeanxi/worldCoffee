@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WorldCoffee 微信小程序端 · 交互原型 v1.0</title>
+<style>
+  /* ========== 页面外壳 ========== */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --brand: #6D8B74; --brand-deep: #5A7661; --brand-soft: rgba(109,139,116,.14);
+    --accent: #A9714B; --accent-soft: rgba(169,113,75,.12);
+    --bg: #F5F3EC; --card: #FFFFFF; --ink: #2C2620; --ink2: #6B6259; --ink3: #9A9188;
+    --line: #EAE4D9; --danger: #D46A3D;
+  }
+  body { font-family: "PingFang SC","Microsoft YaHei",system-ui,sans-serif; background: #EDEAE0; color: var(--ink); }
+  .wrap { display: grid; grid-template-columns: 300px 420px 1fr; gap: 24px; padding: 24px; max-width: 1560px; margin: 0 auto; align-items: start; }
+  .panel { background: #fff; border-radius: 18px; padding: 20px; box-shadow: 0 2px 12px rgba(44,38,32,.06); }
+  .panel h2 { font-size: 15px; margin-bottom: 4px; }
+  .panel .sub { font-size: 12px; color: var(--ink3); margin-bottom: 14px; }
+  .map-group { font-size: 11px; color: var(--ink3); margin: 12px 0 6px; letter-spacing: .5px; }
+  .map-item { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 10px; font-size: 13px; color: var(--ink2); cursor: pointer; }
+  .map-item:hover { background: var(--bg); }
+  .map-item.on { background: var(--brand-soft); color: var(--brand-deep); font-weight: 600; }
+  .map-item .no { width: 20px; height: 20px; border-radius: 6px; background: var(--bg); color: var(--ink3); font-size: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .map-item.on .no { background: var(--brand); color: #fff; }
+  .tag { font-size: 10px; padding: 1px 6px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); margin-left: auto; }
+  .tag.p1 { background: #EEE; color: #999; }
+  .swatches { display: flex; gap: 8px; margin: 10px 0 4px; }
+  .sw { flex: 1; text-align: center; font-size: 10px; color: var(--ink3); }
+  .sw i { display: block; height: 34px; border-radius: 8px; margin-bottom: 4px; }
+  .decide { font-size: 12px; color: var(--ink2); line-height: 1.7; padding-left: 14px; position: relative; margin-bottom: 6px; }
+  .decide::before { content: ""; position: absolute; left: 2px; top: 8px; width: 5px; height: 5px; border-radius: 50%; background: var(--brand); }
+  .note-box { background: var(--bg); border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; }
+  .note-box h3 { font-size: 13px; margin-bottom: 6px; color: var(--brand-deep); }
+  .note-box p, .note-box li { font-size: 12px; color: var(--ink2); line-height: 1.75; }
+  .note-box ul { padding-left: 16px; }
+  .api { font-family: Consolas, monospace; font-size: 11px; background: #2C2620; color: #B8E0C4; border-radius: 6px; padding: 2px 6px; }
+  header.top { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  header.top h1 { font-size: 20px; }
+  header.top .meta { font-size: 12px; color: var(--ink3); }
+  header.top .hint { margin-left: auto; font-size: 12px; color: var(--brand-deep); background: var(--brand-soft); padding: 6px 12px; border-radius: 999px; }
+
+  /* ========== 手机外壳 ========== */
+  .phone-col { position: sticky; top: 24px; }
+  .phone { width: 390px; height: 800px; margin: 0 auto; background: #111; border-radius: 48px; padding: 10px; box-shadow: 0 24px 60px rgba(44,38,32,.35); }
+  .screen-clip { position: relative; width: 100%; height: 100%; border-radius: 38px; overflow: hidden; background: var(--bg); }
+  .island { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: 108px; height: 30px; background: #111; border-radius: 20px; z-index: 60; }
+
+  /* ========== 屏内通用 ========== */
+  .scr { position: absolute; inset: 0; display: none; flex-direction: column; background: var(--bg); }
+  .scr.on { display: flex; }
+  .wxbar { height: 88px; flex-shrink: 0; padding-top: 44px; position: relative; z-index: 5; }
+  .wxbar .ttl { position: absolute; left: 0; right: 0; top: 44px; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600; }
+  .capsule { position: absolute; right: 12px; top: 52px; width: 86px; height: 30px; border-radius: 16px; background: rgba(255,255,255,.6); border: .5px solid rgba(0,0,0,.08); display: flex; align-items: center; justify-content: space-around; z-index: 6; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  .capsule span { font-size: 15px; color: #333; letter-spacing: 1px; }
+  .capsule .div { width: .5px; height: 16px; background: rgba(0,0,0,.12); }
+  .back { position: absolute; left: 14px; top: 52px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--ink); z-index: 6; cursor: pointer; }
+  .body { flex: 1; overflow-y: auto; scrollbar-width: none; }
+  .body::-webkit-scrollbar { display: none; }
+  .tabbar { height: 62px; flex-shrink: 0; background: rgba(255,255,255,.94); border-top: .5px solid var(--line); display: flex; align-items: center; justify-content: space-around; padding-bottom: 6px; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); z-index: 5; }
+  .tb { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 10px; color: var(--ink3); cursor: pointer; width: 64px; }
+  .tb.on { color: var(--brand-deep); font-weight: 600; }
+  .tb .ic { font-size: 20px; line-height: 1; }
+  .card { background: var(--card); border-radius: 16px; }
+  .pill { border-radius: 999px; }
+  .chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 2px; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { flex-shrink: 0; font-size: 12px; padding: 6px 14px; border-radius: 999px; background: var(--card); color: var(--ink2); cursor: pointer; }
+  .chip.on { background: var(--brand); color: #fff; font-weight: 600; }
+  .wf { columns: 2; column-gap: 10px; }
+  .wf .card { break-inside: avoid; margin-bottom: 10px; overflow: hidden; }
+  .ph { display: flex; align-items: center; justify-content: center; font-size: 34px; }
+  .btn { display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 999px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; }
+  .btn-brand { background: var(--brand); color: #fff; }
+  .btn-accent { background: var(--accent); color: #fff; }
+  .btn-ghost { background: var(--brand-soft); color: var(--brand-deep); }
+  .row { display: flex; align-items: center; }
+  .grow { flex: 1; min-width: 0; }
+  .cut { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sheet-mask { position: absolute; inset: 0; background: rgba(0,0,0,.45); z-index: 40; display: none; }
+  .sheet-mask.on { display: block; }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; background: #fff; border-radius: 20px 20px 0 0; z-index: 41; padding: 18px 18px 26px; transform: translateY(105%); transition: transform .28s cubic-bezier(.22,1,.36,1); }
+  .sheet-mask.on .sheet { transform: translateY(0); }
+  .sheet .grab { width: 36px; height: 4px; border-radius: 2px; background: #E4E0D6; margin: 0 auto 14px; }
+  .toast { position: absolute; left: 50%; top: 45%; transform: translate(-50%,-50%); background: rgba(44,38,32,.88); color: #fff; font-size: 13px; padding: 10px 18px; border-radius: 10px; z-index: 70; opacity: 0; pointer-events: none; transition: opacity .25s; }
+  .toast.on { opacity: 1; }
+  .like-on { color: var(--accent) !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>WorldCoffee 微信小程序端 · 交互原型</h1>
+    <span class="meta">v1.0 · 2026-09-21 · 11 屏 + 3 弹层 · 对齐 App 端 m-theme 品牌令牌</span>
+    <span class="hint">手机内所有元素均可点击，试试底部 Tab / 卡片 / 规格 / 支付</span>
+  </header>
+
+  <!-- ============ 左：页面地图 + 令牌 + 决策 ============ -->
+  <aside class="panel">
+    <h2>页面地图</h2>
+    <p class="sub">点击跳转对应屏；P1 = 首版不做</p>
+    <div class="map-group">TAB 1 · 发现</div>
+    <div class="map-item on" data-go="feed"><span class="no">01</span>发现 Feed<span class="tag">Tab</span></div>
+    <div class="map-item" data-go="detail"><span class="no">02</span>帖子详情</div>
+    <div class="map-item" data-go="publish"><span class="no">03</span>发布笔记</div>
+    <div class="map-item" data-go="notify"><span class="no">04</span>通知列表</div>
+    <div class="map-group">TAB 2 · 商城</div>
+    <div class="map-item" data-go="shop"><span class="no">05</span>商城首页<span class="tag">Tab</span></div>
+    <div class="map-item" data-go="product"><span class="no">06</span>商品详情 + 规格</div>
+    <div class="map-item" data-go="cart"><span class="no">07</span>购物车</div>
+    <div class="map-item" data-go="confirm"><span class="no">08</span>确认订单 + 微信支付</div>
+    <div class="map-item" data-go="orders"><span class="no">09</span>订单列表</div>
+    <div class="map-group">TAB 3 · 我的</div>
+    <div class="map-item" data-go="me"><span class="no">10</span>我的<span class="tag">Tab</span></div>
+    <div class="map-item" data-go="login"><span class="no">11</span>微信授权登录</div>
+    <div class="map-group">设计令牌（沿用 App）</div>
+    <div class="swatches">
+      <div class="sw"><i style="background:#6D8B74"></i>品牌绿</div>
+      <div class="sw"><i style="background:#A9714B"></i>咖啡豆棕</div>
+      <div class="sw"><i style="background:#F5F3EC;border:1px solid #EAE4D9"></i>奶油白</div>
+      <div class="sw"><i style="background:#2C2620"></i>墨色</div>
+    </div>
+    <div class="map-group">PM 决策摘要</div>
+    <div class="decide">Tab 由 5 减为 3，发布键上移至吸顶栏；IM 聊天不做，消息降级为通知</div>
+    <div class="decide">登录以微信一键登录为主，账号密码兜底（复用 <span class="api">/api/user/login</span>）</div>
+    <div class="decide">支付走 wx.requestPayment；裂变靠转发卡片 + 小程序码海报</div>
+    <div class="decide">AI 助手保留入口标 P1；视觉 100% 复用 App 令牌，顺带替换 miniapp 旧棕色系</div>
+  </aside>
+
+  <!-- ============ 中：手机 ============ -->
+  <div class="phone-col">
+    <div class="phone"><div class="screen-clip">
+      <div class="island"></div>
+
+      <!-- ===== 01 发现 Feed ===== -->
+      <div class="scr on" id="scr-feed">
+        <div class="wxbar" style="height:auto;padding-bottom:8px;background:var(--bg)">
+          <div class="row" style="gap:10px;padding:0 104px 0 12px;height:44px;align-items:center">
+            <img src="assets/wc-mark.png" alt="WorldCoffee" style="width:30px;height:30px;border-radius:50%;object-fit:contain;background:var(--card);padding:3px;flex-shrink:0" />
+            <div class="grow pill row" style="height:32px;background:var(--card);padding:0 12px;gap:6px;color:var(--ink3);font-size:12px">🔍 搜索咖啡、地点、话题…</div>
+            <div onclick="go('publish')" style="width:32px;height:32px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer">＋</div>
+            <div onclick="go('notify')" style="position:relative;width:32px;height:32px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer">🔔<i style="position:absolute;top:2px;right:2px;width:8px;height:8px;border-radius:50%;background:var(--danger)"></i></div>
+          </div>
+          <div class="chips" style="padding:8px 12px 2px">
+            <span class="chip on">推荐</span><span class="chip">最新</span><span class="chip">关注</span>
+            <span style="width:1px;height:14px;background:var(--line);align-self:center"></span>
+            <span class="chip">咖啡馆</span><span class="chip">手冲</span><span class="chip">拉花</span><span class="chip">冷萃</span>
+          </div>
+          <div class="capsule"><span>···</span><i class="div"></i><span>⊙</span></div>
+        </div>
+        <div class="body" style="padding:10px">
+          <div class="wf">
+            <div class="card" onclick="go('detail')" style="cursor:pointer">
+              <div class="ph" style="height:150px;background:linear-gradient(135deg,#D9C6B0,#A9714B)">☕</div>
+              <div style="padding:8px 10px 10px">
+                <p style="font-size:13px;font-weight:600;line-height:1.4">秋日第一杯桂花拿铁，香到邻居敲门</p>
+                <div class="row" style="margin-top:8px;gap:5px">
+                  <i style="width:16px;height:16px;border-radius:50%;background:var(--brand-soft)"></i>
+                  <span class="grow cut" style="font-size:11px;color:var(--ink3)">阿鹿的咖啡日记</span>
+                  <span class="like" onclick="event.stopPropagation();like(this)" style="font-size:11px;color:var(--ink3);cursor:pointer">♡ 328</span>
+                </div>
+              </div>
+            </div>
+            <div class="card" onclick="go('detail')" style="cursor:pointer">
+              <div class="ph" style="height:110px;background:linear-gradient(135deg,#E8DFD2,#6D8B74)">🥐</div>
+              <div style="padding:8px 10px 10px">
+                <p style="font-size:13px;font-weight:600;line-height:1.4">手冲入门：水温差 2℃ 风味差多少？</p>
+                <div class="row" style="margin-top:8px;gap:5px">
+                  <i style="width:16px;height:16px;border-radius:50%;background:var(--accent-soft)"></i>
+                  <span class="grow cut" style="font-size:11px;color:var(--ink3)">冲煮实验室</span>
+                  <span class="like" onclick="event.stopPropagation();like(this)" style="font-size:11px;color:var(--ink3);cursor:pointer">♡ 156</span>
+                </div>
+              </div>
+            </div>
+            <div class="card" onclick="go('detail')" style="cursor:pointer">
+              <div class="ph" style="height:180px;background:linear-gradient(135deg,#F0E6D8,#C99066)"></div>
+              <div style="padding:8px 10px 10px">
+                <p style="font-size:13px;font-weight:600;line-height:1.4">拉花练习第 30 天，终于出天鹅了</p>
+                <div class="row" style="margin-top:8px;gap:5px">
+                  <i style="width:16px;height:16px;border-radius:50%;background:var(--brand-soft)"></i>
+                  <span class="grow cut" style="font-size:11px;color:var(--ink3)">Momo 拉花笔记</span>
+                  <span class="like" onclick="event.stopPropagation();like(this)" style="font-size:11px;color:var(--ink3);cursor:pointer">♡ 892</span>
+                </div>
+              </div>
+            </div>
+            <div class="card" onclick="go('detail')" style="cursor:pointer">
+              <div class="ph" style="height:130px;background:linear-gradient(135deg,#DCE5DD,#5A7661)">🧊</div>
+              <div style="padding:8px 10px 10px">
+                <p style="font-size:13px;font-weight:600;line-height:1.4">冷萃 12h vs 18h 盲测记录</p>
+                <div class="row" style="margin-top:8px;gap:5px">
+                  <i style="width:16px;height:16px;border-radius:50%;background:var(--accent-soft)"></i>
+                  <span class="grow cut" style="font-size:11px;color:var(--ink3)">冰滴爱好者</span>
+                  <span class="like" onclick="event.stopPropagation();like(this)" style="font-size:11px;color:var(--ink3);cursor:pointer">♡ 74</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p style="text-align:center;font-size:11px;color:var(--ink3);padding:8px 0 16px">— 没有更多了 —</p>
+        </div>
+        <div class="pill" onclick="toast('AI 助手为 P1，首版不做')" style="position:absolute;right:14px;bottom:78px;background:#fff;box-shadow:0 6px 18px rgba(44,38,32,.14);padding:8px 14px;font-size:12px;font-weight:600;color:var(--ink2);cursor:pointer;z-index:8">🤖 AI 助手</div>
+        <div class="tabbar">
+          <div class="tb on" onclick="go('feed')"><span class="ic">🧭</span>发现</div>
+          <div class="tb" onclick="go('shop')"><span class="ic">🛍</span>商城</div>
+          <div class="tb" onclick="go('me')"><span class="ic">👤</span>我的</div>
+        </div>
+      </div>
+
+      <!-- ===== 02 帖子详情 ===== -->
+      <div class="scr" id="scr-detail">
+        <div class="wxbar">
+          <div class="ttl">笔记详情</div>
+          <div class="back" onclick="go('feed')">‹</div>
+          <div class="capsule"><span>···</span><i class="div"></i><span>⊙</span></div>
+        </div>
+        <div class="body">
+          <div class="ph" style="height:300px;background:linear-gradient(160deg,#D9C6B0,#A9714B)">☕</div>
+          <div style="padding:14px">
+            <h2 style="font-size:17px;font-weight:700;line-height:1.4">秋日第一杯桂花拿铁，香到邻居敲门</h2>
+            <div class="row" style="gap:8px;margin:12px 0">
+              <i style="width:34px;height:34px;border-radius:50%;background:var(--brand-soft)"></i>
+              <div class="grow">
+                <p style="font-size:13px;font-weight:600">阿鹿的咖啡日记</p>
+                <p style="font-size:11px;color:var(--ink3)">2 小时前 · 杭州</p>
+              </div>
+              <button class="btn btn-ghost" style="padding:6px 16px;font-size:12px" onclick="toast('已关注（演示）')">＋ 关注</button>
+            </div>
+            <p style="font-size:14px;line-height:1.8;color:var(--ink2)">桂花糖浆是自己熬的，配中深烘的拼配豆，奶泡打到 55℃。第一口是桂花的甜香，尾韵有坚果感。配方和比例都写在图 3 了，自取～</p>
+            <div class="row" style="gap:6px;margin-top:12px;flex-wrap:wrap">
+              <span class="chip" style="background:var(--brand-soft);color:var(--brand-deep)"># 咖啡馆</span>
+              <span class="chip" style="background:var(--accent-soft);color:var(--accent)"># 拿铁</span>
+            </div>
+            <div class="card" style="margin-top:14px;padding:12px">
+              <p style="font-size:12px;font-weight:600;color:var(--ink2)">💬 评论 23</p>
+              <div style="margin-top:10px;font-size:12px;color:var(--ink2);line-height:1.7">
+                <p><b style="color:var(--ink)">豆子选手：</b>糖浆比例能再细一点吗？</p>
+                <p style="margin-top:6px"><b style="color:var(--brand-deep)">阿鹿的咖啡日记：</b>桂花:糖:水 = 1:1:0.8，小火 20 分钟～</p>
+              </div>
+            </div>
+            <div style="height:16px"></div>
+          </div>
+        </div>
+        <div class="row" style="height:56px;background:#fff;border-top:.5px solid var(--line);padding:0 14px;gap:10px;flex-shrink:0">
+          <div class="grow pill" style="height:34px;background:var(--bg);color:var(--ink3);font-size:12px;display:flex;align-items:center;padding:0 14px">说点什么…</div>
+          <span class="like" onclick="like(this)" style="font-size:13px;color:var(--ink2);cursor:pointer">♡ 328</span>
+          <span onclick="toast('已收藏（演示）')" style="font-size:13px;color:var(--ink2);cursor:pointer">☆</span>
+          <span onclick="openSheet('share')" style="font-size:13px;color:var(--ink2);cursor:pointer">↗ 分享</span>
+        </div>
+        <div class="sheet-mask" id="sheet-share">
+          <div class="sheet">
+            <div class="grab"></div>
+            <p style="text-align:center;font-size:13px;font-weight:600;margin-bottom:16px">分享到</p>
+            <div class="row" style="justify-content:space-around;padding-bottom:8px">
+              <div onclick="toast('唤起微信转发卡片');closeSheet('share')" style="text-align:center;cursor:pointer"><div style="width:48px;height:48px;border-radius:14px;background:#07C160;color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto">💬</div><p style="font-size:11px;color:var(--ink2);margin-top:6px">转发好友</p></div>
+              <div onclick="toast('生成小程序码海报');closeSheet('share')" style="text-align:center;cursor:pointer"><div style="width:48px;height:48px;border-radius:14px;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto">▦</div><p style="font-size:11px;color:var(--ink2);margin-top:6px">小程序码</p></div>
+              <div onclick="toast('已生成图片');closeSheet('share')" style="text-align:center;cursor:pointer"><div style="width:48px;height:48px;border-radius:14px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto">🖼</div><p style="font-size:11px;color:var(--ink2);margin-top:6px">保存海报</p></div>
+            </div>
+            <button class="btn" style="width:100%;height:44px;background:var(--bg);color:var(--ink2);margin-top:8px" onclick="closeSheet('share')">取消</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 03 发布笔记 ===== -->
+      <div class="scr" id="scr-publish">
+        <div class="wxbar">
+          <div class="ttl">发布笔记</div>
+          <div class="back" onclick="go('feed')">‹</div>
+          <div class="capsule"><span>···</span><i class="div"></i><span>⊙</span></div>
+        </div>
+        <div class="body" style="padding:14px">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+            <div class="ph" style="aspect-ratio:1;border-radius:12px;background:linear-gradient(135deg,#D9C6B0,#A9714B)">☕</div>
+            <div class="ph" style="aspect-ratio:1;border-radius:12px;background:linear-gradient(135deg,#E8DFD2,#6D8B74)">🥐</div>
+            <div onclick="toast('调用 wx.chooseMedia（演示）')" style="aspect-ratio:1;border-radius:12px;border:1px dashed var(--ink3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--ink3);font-size:11px;cursor:pointer"><span style="font-size:20px">＋</span>添加</div>
+          </div>
+          <p style="margin:14px 0 6px;font-size:15px;font-weight:600">标题：秋日桂花拿铁测评</p>
+          <p style="font-size:13px;color:var(--ink2);line-height:1.8">正文：今天试了新店的中深烘拼配，配自己熬的桂花糖浆……<span style="color:var(--ink3)">（继续输入）</span></p>
+          <div class="row" style="gap:6px;margin-top:12px;flex-wrap:wrap">
+            <span class="chip" style="background:var(--brand-soft);color:var(--brand-deep)"># 咖啡馆</span>
+            <span class="chip" style="border:1px dashed var(--ink3);background:transparent">＋ 话题</span>
+            <span class="chip" style="border:1px dashed var(--ink3);background:transparent">📍 位置</span>
+          </div>
+          <div class="card row" style="margin-top:14px;padding:12px 14px;gap:8px">
+            <span style="font-size:13px;color:var(--ink2)">关联商品</span>
+            <span class="grow cut" style="font-size:12px;color:var(--ink3)">桂花乌龙冷萃液 · ¥68</span>
+            <span style="font-size:12px;color:var(--brand-deep);cursor:pointer" onclick="go('shop')">更换</span>
+          </div>
+          <div style="height:14px"></div>
+        </div>
+        <div class="row" style="height:56px;background:#fff;border-top:.5px solid var(--line);padding:0 14px;gap:10px;flex-shrink:0">
+          <span style="font-size:12px;color:var(--ink3)">存草稿</span>
+          <button class="btn btn-brand grow" style="height:38px" onclick="toast('发布成功，进入审核（演示）');go('feed')">发布</button>
+        </div>
+      </div>
+
+      <!-- ===== 04 通知列表 ===== -->
+      <div class="scr" id="scr-notify">
+        <div class="wxbar">
+          <div class="ttl">通知</div>
+          <div class="back" onclick="go('feed')">‹</div>
+          <div class="capsule"><span>···</span><i class="div"></i><span>⊙</span></div>
+        </div>
+        <div class="body" style="padding:12px">
+          <div class="card" style="padding:12px;margin-bottom:10px">
+            <div class="row" style="gap:10px">
+              <i style="width:36px;height:36px;border-radius:50%;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;font-size:16px">❤</i>
+              <div class="grow">
+                <p style="font-size:13px"><b>冲煮实验室</b> 赞了你的笔记</p>
+                <p style="font-size:11px;color:var(--ink3);margin-top:3px">10 分钟前 · 《冷萃 12h vs 18h》</p>
+              </div>
+            </div>
+          </div>
+          <div class="card" style="padding:12px;margin-bottom:10px">
+            <div class="row" style="gap:10px">
+              <i style="width:36px;height:36px;border-radius:50%;background:var(--brand-soft);display:flex;align-items:center;justify-content:center;font-size:16px">💬</i>
+              <div class="grow">
+                <p style="font-size:13px"><b>豆子选手</b> 评论了你：糖浆比例能再细一点吗？</p>
+                <p style="font-size:11px;color:var(--ink3);margin-top:3px">1 小时前</p>
+              </div>
+            </div>
+          </div>
+          <div class="card" style="padding:12px;margin-bottom:10px">
+            <div class="row" style="gap:10px">
+              <i style="width:36px;height:36px;border-radius:50%;background:#EEE;display:flex;align-items:center;justify-content:center;font-size:16px">📦</i>
+              <div class="grow">
+                <p style="font-size:13px">订单 <b>WC20260921001</b> 已发货</p>
+                <p style="font-size:11px;color:var(--ink3);margin-top:3px;cursor:pointer" onclick="go('orders')">查看订单 ›</p>
+              </div>
+            </div>
+          </div>
+          <div class="card" style="padding:14px;text-align:center">
+            <p style="font-size:12px;color:var(--ink3);line-height:1.7">私聊在小程序内不做<br />与好友的对话请 <span style="color:var(--brand-deep);font-weight:600">前往 App 继续</span></p>
+          </div>
+          <div style="height:14px"></div>
+        </div>
+      </div>
+
+      <!-- ===== 05 商城 ===== -->
+      <div class="scr" id="scr-shop">
+        <div class="wxbar" style="height:auto;padding-bottom:8px;background:var(--bg)">
+          <div class="row" style="gap:10px;padding:0 104px 0 12px;height:44px;align-items:center">
+            <div class="grow pill row" style="height:32px;background:var(--card);padding:0 12px;gap:6px;color:var(--ink3);font-size:12px">🔍 搜豆子、器具、礼盒</div>
+            <div onclick="go('cart')" style="position:relative;width:32px;height:32px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer">🛒<i style="position:absolute;top:0;right:0;min-width:14px;height:14px;border-radius:7px;background:var(--danger);color:#fff;font-size:9px;font-style:normal;display:flex;align-items:center;justify-content:center;padding:0 3px">2</i></div>
+          </div>
+          <div class="capsule"><span>···</span><i class="div"></i><span>⊙</span></div>
+        </div>
+        <div class="body" style="padding:10px 10px 14px">
+          <div class="card row" onclick="toast('领券中心 P0，跳转演示')" style="padding:12px 14px;margin-bottom:10px;background:linear-gradient(100deg,var(--brand-soft),var(--accent-soft));cursor:pointer">
+            <div class="grow">
+              <p style="font-size:14px;font-weight:700">新人券包 ¥30</p>
+              <p style="font-size:11px;color:var(--ink2);margin-top:2px">满 99 减 15 · 满 199 减 30</p>
+            </div>
+            <button class="btn btn-accent" style="padding:6px 14px;font-size:12px">立即领取</button>
+          </div>
+          <div class="chips" style="margin-bottom:10px">
+            <span class="chip on">全部</span><span class="chip">咖啡豆</span><span class="chip">冷萃液</span><span class="chip">器具</span><span class="chip">礼盒</span>
+          </div>
+          <div class="wf">
+            <div class="card" onclick="go('product')" style="cursor:pointer">
+              <div class="ph" style="height:120px;background:linear-gradient(135deg,#E4D5C2,#8A5A38)">🫘</div>
+              <div style="padding:8px 10px 10px">
+                <p style="font-size:13px;font-weight:600;line-height:1.4">耶加雪菲 G1 水洗 200g</p>
+                <div class="row" style="margin-top:6px;justify-content:space-between">
+                  <span style="font-size:15px;font-weight:700;color:var(--accent)">¥88</span>
+                  <span style="font-size:11px;color:var(--ink3)">已售 1.2k</span>
+                </div>
+              </div>
+            </div>
+            <div class="card" onclick="go('product')" style="cursor:pointer">
+              <div class="ph" style="height:150px;background:linear-gradient(135deg,#DCE5DD,#5A7661)">🧋</div>
+              <div style="padding:8px 10px 10px">
+                <p style="font-size:13px;font-weight:600;line-height:1.4">桂花乌龙冷萃液 8 条装</p>
+                <div class="row" style="margin-top:6px;justify-content:space-between">
+                  <span style="font-size:15px;font-weight:700;color:var(--accent)">¥68</span>
+                  <span style="font-size:11px;color:var(--ink3)">已售 860</span>
+                </div>
+              </div>
+            </div>
+            <div class="card" onclick="go('product')" style="cursor:pointer">
+              <div class="ph" style="height:130px;background:linear-gradient(135deg,#EFE7DA,#B08968)">🫖</div>
+              <div style="padding:8px 10px 10px">
+                <p style="font-size:13px;font-weight:600;line-height:1.4">细口手冲壶 600ml</p>
+                <div class="row" style="margin-top:6px;justify-content:space-between">
+                  <span style="font-size:15px;font-weight:700;color:var(--accent)">¥159</span>
+                  <span style="font-size:11px;color:var(--ink3)">已售 320</span>
+                </div>
+              </div>
+            </div>
+            <div class="card" onclick="go('product')" style="cursor:pointer">
+              <div class="ph" style="height:110px;background:linear-gradient(135deg,#F0E6D8,#C99066)">🎁</div>
+              <div style="padding:8px 10px 10px">
+                <p style="font-size:13px;font-weight:600;line-height:1.4">秋日限定礼盒</p>
+                <div class="row" style="margin-top:6px;justify-content:space-between">
+                  <span style="font-size:15px;font-weight:700;color:var(--accent)">¥228</span>
+                  <span style="font-size:11px;color:var(--ink3)">已售 96</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tabbar">
+          <div class="tb" onclick="go('feed')"><span class="ic">🧭</span>发现</div>
+          <div class="tb on" onclick="go('shop')"><span class="ic">🛍</span>商城</div>
+          <div class="tb" onclick="go('me')"><span class="ic">👤</span>我的</div>
+        </div>
+      </div>
+
+      <!-- ===== 06 商品详情 ===== -->
+      <div class="scr" id="scr-product">
+        <div class="wxbar">
+          <div class="back" onclick="go('shop')">‹</div>
+          <div class="capsule"><span>···</span><i class="div"></i><span>⊙</span></div>
+        </div>
+        <div class="body">
+          <div class="ph" style="height:300px;background:linear-gradient(160deg,#E4D5C2,#8A5A38)">🫘</div>
+          <div style="padding:14px">
+            <div class="row" style="align-items:baseline;gap:8px">
+              <span style="font-size:22px;font-weight:800;color:var(--accent)">¥88</span>
+              <span style="font-size:12px;color:var(--ink3);text-decoration:line-through">¥108</span>
+              <span class="grow"></span>
+              <span style="font-size:11px;color:var(--ink3)">已售 1.2k</span>
+            </div>
+            <h2 style="font-size:16px;font-weight:700;margin-top:8px;line-height:1.5">耶加雪菲 G1 水洗 200g · 花果香 明亮酸质</h2>
+            <div class="card row" onclick="openSheet('spec')" style="margin-top:12px;padding:12px 14px;cursor:pointer">
+              <span class="grow" style="font-size:13px;color:var(--ink2)">已选：中度烘焙 / 200g</span>
+              <span style="font-size:12px;color:var(--ink3)">规格 ›</span>
+            </div>
+            <div class="card" style="margin-top:10px;padding:12px 14px">
+              <p style="font-size:13px;font-weight:600;margin-bottom:6px">商品详情</p>
+              <p style="font-size:12px;color:var(--ink2);line-height:1.8">产区埃塞俄比亚耶加雪菲，水洗处理，浅中烘焙。风味：茉莉花、柠檬、红茶尾韵。建议冲煮：90℃ 水温，1:15 粉水比。</p>
+            </div>
+            <div style="height:14px"></div>
+          </div>
+        </div>
+        <div class="row" style="height:56px;background:#fff;border-top:.5px solid var(--line);padding:0 14px;gap:10px;flex-shrink:0">
+          <span onclick="go('cart')" style="font-size:12px;color:var(--ink2);cursor:pointer;text-align:center">🛒<br/>购物车</span>
+          <button class="btn btn-ghost grow" style="height:38px" onclick="openSheet('spec')">加入购物车</button>
+          <button class="btn btn-accent grow" style="height:38px" onclick="openSheet('spec')">立即购买</button>
+        </div>
+        <div class="sheet-mask" id="sheet-spec">
+          <div class="sheet">
+            <div class="grab"></div>
+            <div class="row" style="gap:12px">
+              <div class="ph" style="width:76px;height:76px;border-radius:12px;background:linear-gradient(135deg,#E4D5C2,#8A5A38);font-size:28px">🫘</div>
+              <div>
+                <p style="font-size:18px;font-weight:800;color:var(--accent)">¥88</p>
+                <p style="font-size:11px;color:var(--ink3);margin-top:4px">库存 326 件</p>
+              </div>
+            </div>
+            <p style="font-size:13px;font-weight:600;margin:16px 0 8px">烘焙度</p>
+            <div class="row" style="gap:8px"><span class="chip">浅烘</span><span class="chip on">中度烘焙</span><span class="chip">深烘</span></div>
+            <p style="font-size:13px;font-weight:600;margin:14px 0 8px">规格</p>
+            <div class="row" style="gap:8px"><span class="chip on">200g</span><span class="chip">500g ¥198</span><span class="chip">1kg ¥368</span></div>
+            <p style="font-size:13px;font-weight:600;margin:14px 0 8px">数量</p>
+            <div class="row" style="gap:14px;font-size:16px;color:var(--ink2)"><span style="cursor:pointer">−</span><b style="font-size:14px">1</b><span style="cursor:pointer">＋</span></div>
+            <div class="row" style="gap:10px;margin-top:18px">
+              <button class="btn btn-ghost grow" style="height:42px" onclick="closeSheet('spec');toast('已加入购物车');">加入购物车</button>
+              <button class="btn btn-accent grow" style="height:42px" onclick="closeSheet('spec');go('confirm')">立即购买</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 07 购物车 ===== -->
+      <div class="scr" id="scr-cart">
+        <div class="wxbar">
+          <div class="ttl">购物车</div>
+          <div class="back" onclick="go('shop')">‹</div>
+          <div class="capsule"><span>···</span><i class="div"></i><span>⊙</span></div>
+        </div>
+        <div class="body" style="padding:12px">
+          <div class="card" style="padding:12px;margin-bottom:10px">
+            <div class="row" style="gap:10px">
+              <span style="color:var(--brand)">☑</span>
+              <div class="ph" style="width:64px;height:64px;border-radius:10px;background:linear-gradient(135deg,#E4D5C2,#8A5A38);font-size:24px">🫘</div>
+              <div class="grow">
+                <p style="font-size:13px;font-weight:600">耶加雪菲 G1 水洗 200g</p>
+                <p style="font-size:11px;color:var(--ink3);margin-top:2px">中度烘焙 / 200g</p>
+                <div class="row" style="margin-top:6px;justify-content:space-between">
+                  <span style="font-size:14px;font-weight:700;color:var(--accent)">¥88</span>
+                  <span style="font-size:12px;color:var(--ink3)">× 1</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card" style="padding:12px;margin-bottom:10px">
+            <div class="row" style="gap:10px">
+              <span style="color:var(--brand)">☑</span>
+              <div class="ph" style="width:64px;height:64px;border-radius:10px;background:linear-gradient(135deg,#DCE5DD,#5A7661);font-size:24px">🧋</div>
+              <div class="grow">
+                <p style="font-size:13px;font-weight:600">桂花乌龙冷萃液 8 条装</p>
+                <p style="font-size:11px;color:var(--ink3);margin-top:2px">标准装</p>
+                <div class="row" style="margin-top:6px;justify-content:space-between">
+                  <span style="font-size:14px;font-weight:700;color:var(--accent)">¥68</span>
+                  <span style="font-size:12px;color:var(--ink3)">× 1</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card row" style="padding:12px 14px">
+            <span class="grow" style="font-size:12px;color:var(--ink3)">🎟 新人券：满 99 减 15 可用</span>
+            <span style="font-size:12px;color:var(--accent)">−¥15 ›</span>
+          </div>
+          <div style="height:14px"></div>
+        </div>
+        <div class="row" style="height:56px;background:#fff;border-top:.5px solid var(--line);padding:0 14px;gap:10px;flex-shrink:0">
+          <span style="font-size:12px;color:var(--ink2)">全选</span>
+          <span class="grow" style="text-align:right;font-size:13px">合计 <b style="color:var(--accent);font-size:16px">¥141</b></span>
+          <button class="btn btn-brand" style="padding:9px 22px" onclick="go('confirm')">结算(2)</button>
+        </div>
+      </div>
+
+      <!-- ===== 08 确认订单 ===== -->
+      <div class="scr" id="scr-confirm">
+        <div class="wxbar">
+          <div class="ttl">确认订单</div>
+          <div class="back" onclick="go('cart')">‹</div>
+          <div class="capsule"><span>···</span><i class="div"></i><span>⊙</span></div>
+        </div>
+        <div class="body" style="padding:12px">
+          <div class="card" style="padding:14px;margin-bottom:10px">
+            <div class="row" style="gap:8px">
+              <span style="font-size:16px">📍</span>
+              <div class="grow">
+                <p style="font-size:14px;font-weight:600">李现 · 138****8888</p>
+                <p style="font-size:12px;color:var(--ink2);margin-top:3px">浙江省杭州市西湖区文三路 100 号</p>
+              </div>
+              <span style="font-size:12px;color:var(--ink3)">›</span>
+            </div>
+          </div>
+          <div class="card" style="padding:12px;margin-bottom:10px">
+            <div class="row" style="gap:10px;padding-bottom:10px;border-bottom:.5px solid var(--line)">
+              <div class="ph" style="width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,#E4D5C2,#8A5A38);font-size:22px">🫘</div>
+              <div class="grow"><p style="font-size:13px;font-weight:600">耶加雪菲 G1 水洗 200g</p><p style="font-size:11px;color:var(--ink3);margin-top:2px">中度烘焙 / 200g</p></div>
+              <div style="text-align:right"><p style="font-size:13px;font-weight:600">¥88</p><p style="font-size:11px;color:var(--ink3)">×1</p></div>
+            </div>
+            <div class="row" style="gap:10px;padding-top:10px">
+              <div class="ph" style="width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,#DCE5DD,#5A7661);font-size:22px">🧋</div>
+              <div class="grow"><p style="font-size:13px;font-weight:600">桂花乌龙冷萃液 8 条装</p><p style="font-size:11px;color:var(--ink3);margin-top:2px">标准装</p></div>
+              <div style="text-align:right"><p style="font-size:13px;font-weight:600">¥68</p><p style="font-size:11px;color:var(--ink3)">×1</p></div>
+            </div>
+          </div>
+          <div class="card" style="padding:4px 14px;margin-bottom:10px;font-size:13px;color:var(--ink2)">
+            <div class="row" style="height:40px;justify-content:space-between"><span>商品金额</span><span>¥156</span></div>
+            <div class="row" style="height:40px;justify-content:space-between;border-top:.5px solid var(--line)"><span>运费</span><span>¥0</span></div>
+            <div class="row" style="height:40px;justify-content:space-between;border-top:.5px solid var(--line)"><span>优惠券</span><span style="color:var(--accent)">−¥15</span></div>
+          </div>
+          <div style="height:14px"></div>
+        </div>
+        <div class="row" style="height:56px;background:#fff;border-top:.5px solid var(--line);padding:0 14px;gap:10px;flex-shrink:0">
+          <span class="grow" style="font-size:13px">实付 <b style="color:var(--accent);font-size:17px">¥141</b></span>
+          <button class="btn btn-brand" style="padding:9px 24px" onclick="openSheet('pay')">提交订单</button>
+        </div>
+        <div class="sheet-mask" id="sheet-pay">
+          <div class="sheet" style="text-align:center">
+            <div class="grab"></div>
+            <p style="font-size:13px;color:var(--ink2)">微信支付</p>
+            <p style="font-size:30px;font-weight:800;margin:10px 0 4px">¥141.00</p>
+            <p style="font-size:12px;color:var(--ink3)">WorldCoffee 商城</p>
+            <div style="width:56px;height:56px;border-radius:50%;background:#07C160;color:#fff;font-size:26px;display:flex;align-items:center;justify-content:center;margin:22px auto">✓</div>
+            <p style="font-size:12px;color:var(--ink3);margin-bottom:18px">模拟指纹 / 密码验证通过</p>
+            <button class="btn btn-brand" style="width:100%;height:44px" onclick="closeSheet('pay');toast('支付成功');go('orders')">完成</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 09 订单列表 ===== -->
+      <div class="scr" id="scr-orders">
+        <div class="wxbar">
+          <div class="ttl">我的订单</div>
+          <div class="back" onclick="go('me')">‹</div>
+          <div class="capsule"><span>···</span><i class="div"></i><span>⊙</span></div>
+        </div>
+        <div class="chips" style="padding:6px 12px;background:var(--bg)">
+          <span class="chip on">全部</span><span class="chip">待付款</span><span class="chip">待发货</span><span class="chip">待收货</span><span class="chip">售后</span>
+        </div>
+        <div class="body" style="padding:12px">
+          <div class="card" style="padding:12px;margin-bottom:10px">
+            <div class="row" style="justify-content:space-between;margin-bottom:10px">
+              <span style="font-size:12px;color:var(--ink3)">WC20260921001</span>
+              <span style="font-size:12px;color:var(--brand-deep);font-weight:600">待发货</span>
+            </div>
+            <div class="row" style="gap:10px">
+              <div class="ph" style="width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,#E4D5C2,#8A5A38);font-size:22px">🫘</div>
+              <div class="ph" style="width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,#DCE5DD,#5A7661);font-size:22px">🧋</div>
+              <div class="grow"></div>
+              <div style="text-align:right"><p style="font-size:13px">共 2 件 实付 <b style="color:var(--accent)">¥141</b></p></div>
+            </div>
+            <div class="row" style="gap:8px;justify-content:flex-end;margin-top:10px">
+              <button class="btn" style="padding:6px 14px;font-size:12px;background:var(--bg);color:var(--ink2)" onclick="toast('申请退款（演示）')">申请退款</button>
+              <button class="btn" style="padding:6px 14px;font-size:12px;background:var(--brand-soft);color:var(--brand-deep)" onclick="toast('提醒发货（演示）')">提醒发货</button>
+            </div>
+          </div>
+          <div class="card" style="padding:12px;margin-bottom:10px">
+            <div class="row" style="justify-content:space-between;margin-bottom:10px">
+              <span style="font-size:12px;color:var(--ink3)">WC20260915022</span>
+              <span style="font-size:12px;color:var(--ink3)">已完成</span>
+            </div>
+            <div class="row" style="gap:10px">
+              <div class="ph" style="width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,#F0E6D8,#C99066);font-size:22px">🎁</div>
+              <div class="grow"></div>
+              <div style="text-align:right"><p style="font-size:13px">共 1 件 实付 <b style="color:var(--accent)">¥228</b></p></div>
+            </div>
+            <div class="row" style="gap:8px;justify-content:flex-end;margin-top:10px">
+              <button class="btn" style="padding:6px 14px;font-size:12px;background:var(--bg);color:var(--ink2)" onclick="go('publish')">去评价</button>
+              <button class="btn" style="padding:6px 14px;font-size:12px;background:var(--brand-soft);color:var(--brand-deep)" onclick="go('product')">再次购买</button>
+            </div>
+          </div>
+          <div style="height:14px"></div>
+        </div>
+      </div>
+
+      <!-- ===== 10 我的 ===== -->
+      <div class="scr" id="scr-me">
+        <div class="wxbar" style="height:auto;padding-bottom:4px;background:var(--bg)">
+          <div class="row" style="padding:0 104px 0 14px;height:44px;justify-content:space-between;align-items:center">
+            <span style="font-size:17px;font-weight:700">我的</span>
+            <span onclick="toast('设置页 P1')" style="width:30px;height:30px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer">⚙</span>
+          </div>
+          <div class="capsule"><span>···</span><i class="div"></i><span>⊙</span></div>
+        </div>
+        <div class="body" style="padding:8px 10px 14px">
+          <div class="card" style="padding:16px;background:linear-gradient(135deg,var(--brand-soft),var(--card) 65%);margin-bottom:10px">
+            <div class="row" style="gap:12px">
+              <div style="width:56px;height:56px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700">L</div>
+              <div class="grow">
+                <p style="font-size:16px;font-weight:700">lx</p>
+                <p style="font-size:11px;color:var(--ink2);margin-top:3px">咖啡是成年人白天的酒</p>
+              </div>
+              <span style="font-size:12px;color:var(--brand-deep);cursor:pointer">主页 ›</span>
+            </div>
+            <div class="row" style="margin-top:14px;justify-content:space-around;text-align:center">
+              <div><p style="font-size:15px;font-weight:700">12</p><p style="font-size:11px;color:var(--ink3)">关注</p></div>
+              <div><p style="font-size:15px;font-weight:700">86</p><p style="font-size:11px;color:var(--ink3)">粉丝</p></div>
+              <div><p style="font-size:15px;font-weight:700">1.4k</p><p style="font-size:11px;color:var(--ink3)">获赞</p></div>
+              <div><p style="font-size:15px;font-weight:700">9</p><p style="font-size:11px;color:var(--ink3)">笔记</p></div>
+            </div>
+          </div>
+          <div class="card" style="padding:12px 14px;margin-bottom:10px">
+            <div class="row" style="justify-content:space-between">
+              <span style="font-size:14px;font-weight:700">我的订单</span>
+              <span style="font-size:12px;color:var(--ink3);cursor:pointer" onclick="go('orders')">全部 ›</span>
+            </div>
+            <div class="row" style="margin-top:12px;justify-content:space-around;text-align:center;font-size:11px;color:var(--ink2)">
+              <div style="cursor:pointer" onclick="go('orders')"><div style="font-size:20px">💳</div>待付款</div>
+              <div style="cursor:pointer" onclick="go('orders')"><div style="font-size:20px">📦</div>待发货</div>
+              <div style="cursor:pointer" onclick="go('orders')"><div style="font-size:20px">🚚</div>待收货</div>
+              <div style="cursor:pointer" onclick="go('orders')"><div style="font-size:20px">🎧</div>售后</div>
+            </div>
+          </div>
+          <div class="card" style="display:grid;grid-template-columns:repeat(4,1fr);padding:14px 0;margin-bottom:10px;text-align:center;font-size:11px;color:var(--ink2)">
+            <div style="cursor:pointer" onclick="toast('领券中心（演示）')"><div style="width:38px;height:38px;border-radius:12px;background:var(--brand-soft);color:var(--brand-deep);font-size:17px;display:flex;align-items:center;justify-content:center;margin:0 auto 5px">🎟</div>优惠券</div>
+            <div style="cursor:pointer" onclick="toast('AI 助手为 P1，首版不做')"><div style="width:38px;height:38px;border-radius:12px;background:var(--brand-soft);color:var(--brand-deep);font-size:17px;display:flex;align-items:center;justify-content:center;margin:0 auto 5px">🤖</div>AI 助手</div>
+            <div style="cursor:pointer" onclick="toast('客服：接入微信客服消息')"><div style="width:38px;height:38px;border-radius:12px;background:var(--brand-soft);color:var(--brand-deep);font-size:17px;display:flex;align-items:center;justify-content:center;margin:0 auto 5px">💬</div>客服</div>
+            <div style="cursor:pointer" onclick="openSheet('login')"><div style="width:38px;height:38px;border-radius:12px;background:var(--accent-soft);color:var(--accent);font-size:17px;display:flex;align-items:center;justify-content:center;margin:0 auto 5px">🔀</div>切换账号</div>
+          </div>
+          <div class="card" style="padding:12px 14px">
+            <div class="row" style="gap:8px">
+              <span class="chip on" style="font-size:11px;padding:5px 12px">我的笔记</span>
+              <span class="chip" style="font-size:11px;padding:5px 12px">我的收藏</span>
+            </div>
+            <div class="row" style="gap:10px;padding:10px 0;cursor:pointer" onclick="go('detail')">
+              <div class="ph" style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#D9C6B0,#A9714B);font-size:18px">☕</div>
+              <div class="grow"><p class="cut" style="font-size:13px">秋日第一杯桂花拿铁，香到邻居敲门</p><p style="font-size:11px;color:var(--ink3);margin-top:3px">2026-09-20</p></div>
+              <span style="color:var(--ink3)">›</span>
+            </div>
+          </div>
+          <button class="card" style="width:100%;height:44px;margin-top:10px;border:none;font-size:14px;font-weight:600;color:var(--danger);cursor:pointer" onclick="openSheet('login')">退出登录</button>
+        </div>
+        <div class="tabbar">
+          <div class="tb" onclick="go('feed')"><span class="ic">🧭</span>发现</div>
+          <div class="tb" onclick="go('shop')"><span class="ic">🛍</span>商城</div>
+          <div class="tb on" onclick="go('me')"><span class="ic">👤</span>我的</div>
+        </div>
+        <div class="sheet-mask" id="sheet-login">
+          <div class="sheet" style="text-align:center">
+            <div class="grab"></div>
+            <img src="assets/wc-logo.png" alt="WorldCoffee" style="height:50px;margin:0 auto 10px;display:block;object-fit:contain" />
+            <p style="font-size:16px;font-weight:700">登录 WorldCoffee</p>
+            <p style="font-size:12px;color:var(--ink3);margin:6px 0 18px;line-height:1.6">申请获取你的微信头像、昵称<br />用于社区互动与订单展示</p>
+            <button class="btn" style="width:100%;height:44px;background:#07C160;color:#fff" onclick="closeSheet('login');toast('wx.login 静默授权成功')">微信一键登录</button>
+            <button class="btn" style="width:100%;height:44px;background:var(--bg);color:var(--ink2);margin-top:10px" onclick="closeSheet('login');toast('账号密码登录（复用 /api/user/login）')">账号密码登录</button>
+            <p style="font-size:10px;color:var(--ink3);margin-top:14px">登录即代表同意《用户协议》与《隐私政策》</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="toast" id="toast"></div>
+    </div></div>
+  </div>
+
+  <!-- ============ 右：当前屏说明 ============ -->
+  <aside class="panel" id="notes">
+    <h2 id="note-title">01 · 发现 Feed</h2>
+    <p class="sub" id="note-sub">Tab 1 首页 · 免登录可浏览</p>
+    <div id="note-body"></div>
+  </aside>
+</div>
+
+<script>
+const NOTES = {
+  feed: ['吸顶栏 = 商标 + 搜索胶囊 + 发布键(＋) + 通知铃；发布键上移是相对 App 的最大改动，因小程序 tabBar 不做中央凸出。',
+    '分类 chips 与 App 完全一致：推荐/最新/关注 + 话题（咖啡馆/手冲/拉花/冷萃）。',
+    '双列瀑布流复用 MFeedCard 视觉：图 + 两行标题 + 作者 + 点赞；点赞未登录时跳登录弹层。',
+    'AI 悬浮胶囊保留位置但标 P1，点击给提示不跳转。',
+    '接口：<span class="api">GET /api/coffee/posts/recommend</span>（网关白名单，免鉴权）'],
+  detail: ['沉浸式头图 + 作者行（关注按钮）+ 正文 + 话题标签 + 评论预览，对齐 App PostDetail 的两栏阅读在窄屏降级为单列。',
+    '吸底互动栏：评论输入占位 / 点赞 / 收藏 / 分享。',
+    '分享弹层是小程序独有：转发好友（微信卡片）、小程序码、保存海报 —— 裂变三件套。',
+    '接口：<span class="api">GET /api/coffee/posts/{id}</span>、<span class="api">POST /api/coffee/posts/{id}/like</span>'],
+  publish: ['九宫格选图（wx.chooseMedia，限 9 张）+ 标题 + 正文 + 话题/位置 + 关联商品。',
+    '关联商品是社区电商闭环关键：笔记可直接挂商城 SKU，点击跳商城。',
+    '发布走审核后置策略：先入库 status=审核中，Feed 不展示。',
+    '接口：<span class="api">POST /api/coffee/posts</span>（multipart）'],
+  notify: ['消息 Tab 降级为通知列表：赞/评论/订单三类，不做 IM。',
+    '底部明确引导「私聊请前往 App」，避免用户预期落空。',
+    '订单类通知点击直跳订单列表，形成闭环。',
+    '接口：<span class="api">GET /api/notifications</span>；推送用微信订阅消息模板'],
+  shop: ['吸顶搜索 + 购物车角标；新人券包横幅沿用 App 的 brand-soft→accent-soft 渐变。',
+    '分类 chips + 双列商品卡，价格用咖啡豆棕强调，与 App Shop.vue 一致。',
+    '接口：<span class="api">GET /api/shop/products</span>、<span class="api">GET /api/shop/coupons</span>'],
+  product: ['头图 + 价格行（现价棕/划线原价/已售）+ 规格入口卡 + 详情卡。',
+    '规格为半屏 Sheet（烘焙度/规格/数量），与 App 的半屏 Sheet 交互一致。',
+    'Sheet 内双按钮：加购（toast 反馈）/ 立即购买（直跳确认订单）。',
+    '接口：<span class="api">GET /api/shop/products/{id}</span>、<span class="api">POST /api/shop/cart</span>'],
+  cart: ['勾选态 + 缩略图 + 规格行 + 单价×数量；券可用提示行直接展示减免额。',
+    '吸底结算栏：全选 / 合计 / 结算(n)，n 为勾选数。',
+    '接口：<span class="api">GET /api/shop/cart</span>、<span class="api">PUT /api/shop/cart/{id}</span>'],
+  confirm: ['地址卡 + 商品清单 + 金额明细（商品/运费/券）三段式。',
+    '提交后拉起微信支付半屏（模拟指纹通过），完成跳订单列表并 toast。',
+    '真实链路：后端预下单 → wx.requestPayment → 回调改单状态。',
+    '接口：<span class="api">POST /api/shop/orders</span>、<span class="api">POST /api/shop/orders/{id}/pay</span>'],
+  orders: ['状态 chips（全部/待付款/待发货/待收货/售后）+ 订单卡。',
+    '卡内操作按状态变化：待发货→提醒发货/申请退款；已完成→去评价/再次购买。',
+    '「去评价」跳发布页并预挂商品，打通 UGC 回流。',
+    '接口：<span class="api">GET /api/shop/orders</span>'],
+  me: ['头部大卡（头像/昵称/签名/统计四宫格）完全对齐 App Me.vue。',
+    '订单四态行 + 功能宫格（优惠券/AI 助手/客服/切换账号）。',
+    '客服用微信原生客服消息按钮，零开发成本。',
+    '退出登录与切换账号共用登录 Sheet。',
+    '接口：<span class="api">GET /api/user/me</span>、<span class="api">GET /api/user/me/stats</span>'],
+  login: ['微信一键登录为主：wx.login 拿 code → 后端换 openid → 绑定/建档 → 发 JWT。',
+    '账号密码兜底复用现有 <span class="api">POST /api/user/login</span>，与 Web/App 同一套 JWT。',
+    '头像昵称用 button open-type="chooseAvatar" + nickname 输入，符合微信最新规范。',
+    '需后端新增：openid 绑定表 + code2Session 配置（AppID/AppSecret 只放服务端）。']
+};
+const TITLES = {
+  feed: ['01 · 发现 Feed', 'Tab 1 首页 · 免登录可浏览'],
+  detail: ['02 · 帖子详情', '二级页 · 裂变主战场'],
+  publish: ['03 · 发布笔记', '二级页 · 需登录'],
+  notify: ['04 · 通知列表', '二级页 · 消息降级形态'],
+  shop: ['05 · 商城首页', 'Tab 2'],
+  product: ['06 · 商品详情', '二级页 · 含规格 Sheet'],
+  cart: ['07 · 购物车', '二级页'],
+  confirm: ['08 · 确认订单', '二级页 · 含微信支付 Sheet'],
+  orders: ['09 · 订单列表', '二级页'],
+  me: ['10 · 我的', 'Tab 3'],
+  login: ['11 · 微信授权登录', '半屏 Sheet · 全局可拉起']
+};
+function go(id) {
+  document.querySelectorAll('.scr').forEach(s => s.classList.remove('on'));
+  document.getElementById('scr-' + id).classList.add('on');
+  document.querySelectorAll('.map-item').forEach(m => m.classList.toggle('on', m.dataset.go === id));
+  document.getElementById('note-title').textContent = TITLES[id][0];
+  document.getElementById('note-sub').textContent = TITLES[id][1];
+  document.getElementById('note-body').innerHTML =
+    '<div class="note-box"><h3>设计 / 交互说明</h3><ul>' +
+    NOTES[id].map(t => '<li>' + t + '</li>').join('') + '</ul></div>';
+  document.querySelectorAll('.sheet-mask').forEach(m => m.classList.remove('on'));
+}
+function openSheet(n) { document.getElementById('sheet-' + n).classList.add('on'); }
+function closeSheet(n) { document.getElementById('sheet-' + n).classList.remove('on'); }
+document.querySelectorAll('.sheet-mask').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.classList.remove('on'); }));
+function like(el) {
+  const on = el.classList.toggle('like-on');
+  const n = parseInt(el.textContent.replace(/\D/g, ''), 10) || 0;
+  el.textContent = (on ? '♥ ' : '♡ ') + Math.max(0, n + (on ? 1 : -1));
+}
+let toastTimer;
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('on'), 1600);
+}
+document.querySelectorAll('.map-item').forEach(m => m.addEventListener('click', () => go(m.dataset.go)));
+document.querySelectorAll('.chips').forEach(box => box.addEventListener('click', e => {
+  if (!e.target.classList.contains('chip')) return;
+  box.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+  e.target.classList.add('on');
+}));
+go('feed');
+</script>
+</body>
+</html>
