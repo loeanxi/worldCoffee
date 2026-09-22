@@ -4,6 +4,7 @@ import cn.lx.worldcoffee.common.result.Result;
 import cn.lx.worldcoffee.user.domain.from.*;
 import cn.lx.worldcoffee.user.domain.vo.*;
 import cn.lx.worldcoffee.user.service.UserService;
+import cn.lx.worldcoffee.user.service.WxLoginService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +19,7 @@ import java.util.Map;
 public class UserController {
 
     private final UserService userService;
+    private final WxLoginService wxLoginService;
 
     @PostMapping("/register")
     public Result<LoginVO> register(@Valid @RequestBody RegisterForm form) {
@@ -27,6 +29,12 @@ public class UserController {
     @PostMapping("/login")
     public Result<LoginVO> login(@Valid @RequestBody LoginFrom form) {
         return Result.success(userService.login(form));
+    }
+
+    /** 微信小程序一键登录：code 换 openid，绑定或建档后发 JWT（与账号密码同体系） */
+    @PostMapping({"/wx-login", "/wx/login"})
+    public Result<LoginVO> wxLogin(@Valid @RequestBody WxLoginFrom form) {
+        return Result.success(wxLoginService.login(form.getCode()));
     }
 
     @GetMapping("/me")

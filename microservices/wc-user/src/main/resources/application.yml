@@ -54,3 +54,12 @@ management:
 sms:
   code-expire: 300  # 验证码过期时间（秒）
   code-interval: 60  # 发送间隔（秒）
+
+# 微信小程序登录配置
+# mock-enabled=true：开发期不调微信服务器，固定 openid 打通一键登录闭环；
+# 生产必须置 false 并通过环境变量注入 WX_APP_SECRET（密钥严禁入库、严禁下发前端）
+wechat:
+  miniapp:
+    appid: ${WX_APPID:wxf2c4ddf9ce7513c7}
+    app-secret: ${WX_APP_SECRET:}
+    mock-enabled: ${WX_MOCK_LOGIN:true}

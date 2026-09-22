@@ -98,8 +98,11 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
         if (HttpMethod.POST.equals(method)) {
             return path.equals("/api/user/login")
                     || path.equals("/api/user/register")
+                    || path.equals("/api/user/wx-login")
+                    || path.equals("/api/user/wx/login")
                     || path.equals("/api/users/login")
                     || path.equals("/api/users/register")
+                    || path.equals("/api/users/wx-login")
                     || path.equals("/api/admin/login");
         }
         if (!HttpMethod.GET.equals(method)) {
