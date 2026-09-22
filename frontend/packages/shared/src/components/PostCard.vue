@@ -7,8 +7,13 @@
     @click="emit('click')"
     @keydown.enter.prevent="emit('click')"
   >
-    <div v-if="imageUrl && !imageFailed" class="wc-feed-image-wrap relative overflow-hidden">
+    <!-- 图片区：有图渲染图片，无图渲染品牌占位；徽标与悬停浮层共用一份 -->
+    <div
+      class="wc-feed-image-wrap relative overflow-hidden"
+      :class="{ 'brand-placeholder': !(imageUrl && !imageFailed) }"
+    >
       <img
+        v-if="imageUrl && !imageFailed"
         :src="imageUrl"
         :alt="title"
         width="320"
@@ -18,24 +23,10 @@
         class="wc-feed-cover w-full h-full object-cover block"
         @error="imageFailed = true"
       />
-      <span
-        v-if="likeCount >= 10"
-        class="wc-hot-badge absolute top-2 left-2 flex items-center gap-1"
-      >
-        <Icon icon="material-symbols:local-fire-department" class="w-3 h-3" />
-        热帖
-      </span>
-      <span
-        v-if="isVideo"
-        class="wc-video-badge absolute bottom-2 right-2 flex items-center gap-1"
-      >
-        <Icon icon="material-symbols:play-arrow" class="w-3 h-3" />
-        {{ videoDurationText }}
-      </span>
-    </div>
+      <div v-else class="w-full h-full flex items-center justify-center">
+        <WorldCoffeeLogoMini :size="48" :with-circle="false" />
+      </div>
 
-    <div v-else class="brand-placeholder wc-feed-image-wrap flex items-center justify-center">
-      <WorldCoffeeLogoMini :size="48" :with-circle="false" />
       <span
         v-if="likeCount >= 10"
         class="wc-hot-badge absolute top-2 left-2 flex items-center gap-1"
@@ -50,6 +41,36 @@
         <Icon icon="material-symbols:play-arrow" class="w-3 h-3" />
         {{ videoDurationText }}
       </span>
+
+      <!-- 悬停浮层快捷操作（仅 hover 设备可见）：赞 / 藏 / 分享 -->
+      <div class="wc-feed-hover-actions" @click.stop>
+        <button
+          class="wc-hover-act tap-scale"
+          :class="{ 'is-on': liked }"
+          :title="liked ? '取消点赞' : '点赞'"
+          :aria-label="liked ? '取消点赞' : '点赞'"
+          @click.stop="emit('like')"
+        >
+          <Icon :icon="liked ? 'material-symbols:favorite' : 'material-symbols:favorite-outline'" class="w-4 h-4" />
+        </button>
+        <button
+          class="wc-hover-act tap-scale"
+          :class="{ 'is-on': favored }"
+          :title="favored ? '取消收藏' : '收藏'"
+          :aria-label="favored ? '取消收藏' : '收藏'"
+          @click.stop="emit('favorite')"
+        >
+          <Icon :icon="favored ? 'material-symbols:bookmark' : 'material-symbols:bookmark-outline'" class="w-4 h-4" />
+        </button>
+        <button
+          class="wc-hover-act tap-scale"
+          title="分享"
+          aria-label="分享"
+          @click.stop="emit('share')"
+        >
+          <Icon icon="material-symbols:share-outline" class="w-4 h-4" />
+        </button>
+      </div>
     </div>
 
     <div class="wc-feed-body">
@@ -100,7 +121,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['click'])
+const emit = defineEmits(['click', 'like', 'favorite', 'share'])
 const imageFailed = ref(false)
 
 const postId = computed(() => props.post?.id || props.post?.postId || '')
@@ -154,6 +175,10 @@ const authorName = computed(() => (
 ))
 
 const likeCount = computed(() => Number(props.post?.like_count ?? props.post?.likeCount ?? props.post?.likes ?? 0) || 0)
+
+const liked = computed(() => !!(props.post?.likedByMe ?? props.post?.liked ?? false))
+
+const favored = computed(() => !!(props.post?.favoritedByMe ?? props.post?.favorited ?? false))
 
 /** 视频笔记：有 noteType=VIDEO 或带 videoUrl 即视为视频 */
 const isVideo = computed(() => props.post?.noteType === 'VIDEO' || !!props.post?.videoUrl)

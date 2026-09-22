@@ -169,7 +169,7 @@
             <span
               v-for="topic in getTopics(post)"
               :key="topic"
-              class="inline-flex items-center gap-1 bg-[#FF2442]/5 text-[#FF2442] text-xs px-3 py-1.5 rounded-full"
+              class="inline-flex items-center gap-1 bg-rose/5 text-rose text-xs px-3 py-1.5 rounded-full"
             >
               #{{ topic }}
             </span>

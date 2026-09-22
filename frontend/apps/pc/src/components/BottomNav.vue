@@ -19,7 +19,7 @@
           <Icon :icon="isActive(item.path) ? item.activeIcon : item.icon" class="w-[23px] h-[23px]" />
           <span
             v-if="item.badge && item.badge > 0"
-            class="absolute top-1 right-1 min-w-[15px] h-[15px] px-1 text-[9px] font-bold text-white rounded-full bg-[#EF4444] flex items-center justify-center shadow-[0_1px_3px_rgba(62,39,35,0.2)]"
+            class="absolute top-1 right-1 min-w-[15px] h-[15px] px-1 text-[9px] font-bold text-white rounded-full bg-rose flex items-center justify-center shadow-[0_1px_3px_rgba(62,39,35,0.2)]"
           >
             {{ item.badge > 99 ? '99+' : item.badge }}
           </span>
@@ -69,7 +69,7 @@
         <span class="truncate">{{ item.label }}</span>
         <span
           v-if="item.badge && item.badge > 0"
-          class="ml-auto min-w-[20px] h-5 px-1.5 text-[10.5px] font-bold text-white rounded-full bg-[#EF4444] flex items-center justify-center shadow-sm"
+          class="ml-auto min-w-[20px] h-5 px-1.5 text-[10.5px] font-bold text-white rounded-full bg-rose flex items-center justify-center shadow-sm"
         >
           {{ item.badge > 99 ? '99+' : item.badge }}
         </span>
@@ -105,7 +105,10 @@ const props = defineProps({
 })
 
 const route = useRoute()
-const { isLoggedIn, user, avatar: authAvatar } = useAuth()
+const { isLoggedIn, avatar: userAvatar, nickname: userName } = useAuth()
+
+/** 用户名首字母（无头像时的兜底展示） */
+const userNameInitial = computed(() => (userName.value || '?').charAt(0).toUpperCase())
 
 const activePath = computed(() => route.path)
 const noDesktopAsideRoutes = ['Home', 'CreatePost', 'Messages', 'Notifications', 'Me', 'Shop']

@@ -89,7 +89,7 @@
             <p class="text-[11px] text-ink-muted mt-1">{{ formatTime(n.createTime) }}</p>
           </div>
           <div class="flex items-center gap-2 flex-shrink-0 mt-1.5">
-            <div v-if="!n.isRead" class="w-2.5 h-2.5 rounded-full bg-[#D48A5D]" />
+            <div v-if="!n.isRead" class="w-2.5 h-2.5 rounded-full bg-amber" />
             <button
               class="w-7 h-7 rounded-lg flex items-center justify-center text-ink-muted/60 hover:text-red-400 hover:bg-red-50 transition-colors"
               :disabled="!!deleteLoading[n.id]"

@@ -117,15 +117,21 @@
             <router-link to="/register" class="ml-1 text-ink font-semibold hover:underline">立即注册</router-link>
           </p>
 
-          <!-- 第三方 -->
+          <!-- 第三方（暂未接入后端，先给到明确反馈，避免"死按钮"） -->
+          <Transition name="social-hint">
+            <p v-if="socialHint" class="text-center text-[12px] text-ink-muted mb-2">
+              {{ socialHint }}
+            </p>
+          </Transition>
           <div class="mt-5 flex items-center justify-center gap-4">
-            <button class="wc-login-social tap-scale" title="微信登录">
+            <button type="button" class="wc-login-social tap-scale" title="微信登录（即将上线）" @click="onSocialClick('微信登录')">
+              <!-- 微信绿为第三方品牌色，保留 arbitrary value 以保持品牌识别度 -->
               <Icon icon="simple-icons:wechat" class="w-5 h-5 text-[#07C160]" />
             </button>
-            <button class="wc-login-social tap-scale" title="邮箱登录">
+            <button type="button" class="wc-login-social tap-scale" title="邮箱登录（即将上线）" @click="onSocialClick('邮箱登录')">
               <Icon icon="material-symbols:mail-outline" class="w-5 h-5 text-ink-soft" />
             </button>
-            <button class="wc-login-social tap-scale" title="Apple 登录">
+            <button type="button" class="wc-login-social tap-scale" title="Apple 登录（即将上线）" @click="onSocialClick('Apple 登录')">
               <Icon icon="simple-icons:apple" class="w-5 h-5 text-ink" />
             </button>
           </div>
@@ -143,7 +149,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { reactive, ref, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import { useAuth } from '@wc/shared'
@@ -161,12 +167,26 @@ const form = reactive({
 const loginError = ref('')
 const showPassword = ref(false)
 
-// 品牌社交证明数据
+/**
+ * 品牌社交证明数据（占位）
+ * TODO: 接入后端 /api/stats/community 后替换为真实统计，
+ *       在此之前保留静态兜底值，避免"死数据"变成事实陈述。
+ */
 const brandStats = [
   { value: '10,000+', label: '咖啡笔记' },
   { value: '500+', label: '城市咖啡馆' },
   { value: 'AI', label: '咖啡助手' }
 ]
+
+/** 第三方登录：后端 OAuth 未接入前，给出明确反馈，避免"死按钮" */
+const socialHint = ref('')
+let socialHintTimer: ReturnType<typeof setTimeout> | null = null
+function onSocialClick(name: string) {
+  socialHint.value = `${name}即将上线，敬请期待`
+  if (socialHintTimer) clearTimeout(socialHintTimer)
+  socialHintTimer = setTimeout(() => { socialHint.value = '' }, 2200)
+}
+onBeforeUnmount(() => { if (socialHintTimer) clearTimeout(socialHintTimer) })
 
 async function handleLogin() {
   loginError.value = ''
@@ -269,4 +289,10 @@ async function handleLogin() {
   background: var(--bg-elevated);
   box-shadow: var(--shadow-xs);
 }
+
+/* 第三方登录占位提示过渡 */
+.social-hint-enter-active { transition: opacity .22s ease, transform .22s ease; }
+.social-hint-leave-active { transition: opacity .18s ease, transform .18s ease; }
+.social-hint-enter-from,
+.social-hint-leave-to { opacity: 0; transform: translateY(-4px); }
 </style>

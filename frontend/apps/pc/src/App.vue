@@ -1,18 +1,14 @@
 <template>
   <div
     id="app-shell"
-    class="min-h-screen bg-surface relative overflow-hidden transition-[padding] duration-300"
+    class="min-h-screen bg-surface relative overflow-clip transition-[padding] duration-300"
     :class="[
       { 'lg:pl-[224px]': showDesktopSidebar },
       isDesktop ? 'wc-mode-web' : 'wc-mode-mobile'
     ]"
   >
-    <!-- 背景装饰：在桌面端显示，为页面增加品牌调性 -->
-    <div class="hidden absolute inset-0 pointer-events-none -z-10">
-      <div class="absolute -top-24 left-[10%] w-96 h-96 bg-amber/20 rounded-full blur-3xl animate-float" style="animation-delay: 0s" />
-      <div class="absolute top-[40%] right-[5%] w-[28rem] h-[28rem] bg-ink/10 rounded-full blur-3xl animate-float" style="animation-delay: -2s" />
-      <div class="absolute bottom-[-10%] left-[30%] w-80 h-80 bg-green/20 rounded-full blur-3xl animate-float" style="animation-delay: -4s" />
-    </div>
+    <!-- 背景装饰：改由各页面 shell（wc-home-shell / wc-web-page）自行 radial-gradient 承载，
+         此处不再叠 blur-3xl 光晕 + animate-float，避免 GPU 常驻与视觉噪音 -->
 
     <router-view v-slot="{ Component, route }">
       <component :is="Component" :key="route.fullPath" />
@@ -28,7 +24,7 @@
           class="fixed top-5 left-1/2 -translate-x-1/2 z-[9999] px-4 py-2.5 rounded-2xl shadow-[0_8px_32px_rgba(62,39,35,0.18)] backdrop-blur-xl flex items-center gap-2 max-w-[92vw] animate-toast-in"
           :class="toastType === 'success'
             ? 'bg-ink/92 text-white'
-            : 'bg-[#EF4444]/95 text-white'"
+            : 'bg-rose/95 text-white'"
           role="status"
           aria-live="polite"
         >

@@ -44,7 +44,7 @@
           <!-- 桌面端：通知 -->
           <router-link v-if="isLoggedIn" to="/notifications" class="wc-home-icon-btn inline-flex relative tap-scale">
             <Icon icon="material-symbols:notifications-outline" class="w-4 h-4 text-ink-soft" />
-            <span v-if="notifCount > 0" class="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-[#D46A3D] text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white">
+            <span v-if="notifCount > 0" class="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-rose text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white">
               {{ notifCount > 99 ? '99+' : notifCount }}
             </span>
           </router-link>
@@ -66,44 +66,16 @@
             <div v-else class="w-full h-full bg-surface-soft flex items-center justify-center text-ink-soft text-[11px] font-bold">{{ usernameInitial }}</div>
           </router-link>
 
-          <!-- 移动端：搜索 + 更多菜单 -->
+          <!-- 移动端：搜索 -->
           <button class="wc-home-mobile-btn hidden tap-scale" @click="openSearch" aria-label="搜索">
             <Icon icon="material-symbols:search" class="w-5 h-5 text-ink" />
-          </button>
-          <button class="wc-home-mobile-btn hidden tap-scale" @click.stop="menuOpen = !menuOpen" aria-label="打开菜单">
-            <Icon icon="material-symbols:menu" class="w-5 h-5 text-ink" />
           </button>
         </div>
       </div>
 
     </header>
 
-    <!-- 桌面端菜单弹窗（保持不变） -->
-    <Transition name="fade">
-      <div v-if="menuOpen" class="fixed inset-0 z-50 hidden" @click="menuOpen = false">
-        <div class="absolute inset-0 bg-black/25 backdrop-blur-[2px]" />
-        <div
-          class="absolute right-3 top-14 w-48 overflow-hidden rounded-2xl bg-surface-elevated border border-line shadow-[0_18px_44px_rgba(33,28,24,.18)] animate-fade-up"
-          @click.stop
-        >
-          <router-link to="/ai-chat" class="home-menu-item" @click="menuOpen = false">
-  { key: null, label: '消息', icon: 'material-symbols:chat-bubble-outline', action: () => router.push(isLoggedIn.value ? '/messages' : '/login') },
-            <Icon icon="material-symbols:smart-toy-outline" class="w-5 h-5" />
-            magic 助手
-          </router-link>
-          <router-link to="/settings" class="home-menu-item" @click="menuOpen = false">
-            <Icon icon="material-symbols:settings-outline" class="w-5 h-5" />
-            设置
-          </router-link>
-          <router-link to="/settings/about" class="home-menu-item" @click="menuOpen = false">
-            <Icon icon="material-symbols:info-outline" class="w-5 h-5" />
-            关于 WorldCoffee
-          </router-link>
-        </div>
-      </div>
-    </Transition>
-
-    <!-- ================== 主体内容（咖啡社区信息流：三栏布局 — 左导航 / 中间瀑布流 / 右留白） ================== -->
+    <!-- ================== 主体内容（咖啡社区信息流：三栏布局 — 左导航 / 中间瀑布流 / 右发现栏） ================== -->
     <div class="wc-home-main max-w-[1480px] mx-auto px-4 xl:px-6 pt-[120px] lg:pt-[88px] pb-28 lg:pb-10">
 
       <!-- ========== 移动端：帖子列表 ========== -->
@@ -240,6 +212,30 @@
             </router-link>
           </div>
 
+          <!-- 优化：咖啡足迹 + 每日签到（填充整屏侧栏垂直空间） -->
+          <div v-if="isLoggedIn" class="wc-side-stats">
+            <div class="t">
+              <Icon icon="material-symbols:local-cafe" class="w-3.5 h-3.5" />
+              我的咖啡足迹
+            </div>
+            <div class="row" v-if="!footprintEmpty">
+              <div class="cell"><div class="num">{{ footprint.notes }}</div><div class="lab">笔记</div></div>
+              <div class="cell"><div class="num">{{ footprint.likes }}</div><div class="lab">点赞</div></div>
+              <div class="cell"><div class="num">{{ footprint.favs }}</div><div class="lab">收藏</div></div>
+            </div>
+            <div v-else class="text-[10.5px] text-ink-muted text-center py-1">发布 / 点赞 / 收藏，点亮你的第一杯足迹</div>
+          </div>
+          <div v-if="isLoggedIn" class="wc-checkin-card">
+            <span class="cup">☕</span>
+            <span class="txt">
+              <b>每日签到</b>
+              <span>{{ checkinText }}</span>
+            </span>
+            <button type="button" class="wc-checkin-btn" :class="{ 'is-done': checkedIn }" @click="doCheckin">
+              {{ checkedIn ? '已签' : '签到' }}
+            </button>
+          </div>
+
           <!-- 底部：更多 / 关于我们 -->
           <div class="wc-side-footer mt-auto pt-6 flex flex-col text-[10.5px] text-ink-muted">
             <button class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md transition-colors text-left">
@@ -300,6 +296,9 @@
               :key="post.id"
               :post="post"
               @click="openPost(post)"
+              @like="quickLike(post)"
+              @favorite="quickFav(post)"
+              @share="sharePost(post)"
             />
           </section>
 
@@ -341,6 +340,16 @@
               加载中...
             </span>
             <span v-else>继续下滑加载更多</span>
+          </div>
+
+          <!-- 优化：完读底帽，给信息流一个收尾 -->
+          <div v-if="posts.length && !hasMore && !loading" class="wc-feed-end">
+            <span class="cup">☕</span>
+            <span>你已追上所有咖啡朋友的脚步</span>
+            <button type="button" class="wc-feed-end-btn" @click="scrollToTop">
+              回到顶部
+              <Icon icon="material-symbols:arrow-upward" class="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
 
@@ -410,10 +419,30 @@
               </div>
             </div>
           </section>
+
+          <!-- 优化：每日冷知识渐变卡 -->
+          <section class="wc-tip-card">
+            <div class="t">COFFEE FACT · 每日冷知识</div>
+            <div class="q" :key="tipIndex">{{ coffeeTips[tipIndex] }}</div>
+            <button type="button" class="more" @click="nextTip">换一条 →</button>
+          </section>
+
+          <!-- 优化：品牌微链接收尾 -->
+          <div class="wc-rail-links">
+            <router-link to="/settings/about">关于我们</router-link>
+            <a href="#" @click.prevent>条款</a>
+            <a href="#" @click.prevent>隐私</a>
+            <span>© 2026 WorldCoffee</span>
+          </div>
         </aside>
 
       </div>
     </div>
+
+    <!-- 优化：回到顶部悬浮按钮 -->
+    <button type="button" class="wc-fab-top" :class="{ show: showFab }" aria-label="回到顶部" @click="scrollToTop">
+      <Icon icon="material-symbols:arrow-upward" class="w-5 h-5" />
+    </button>
 
     <!-- 移动端搜索弹窗 -->
     <Transition name="modal">
@@ -531,7 +560,7 @@
                   <div v-for="(img, i) in selectedPost.images" :key="i" class="shrink-0 h-full w-full flex items-center justify-center">
                     <img
                       :src="normalizeUrl(img)"
-                      :alt="selectedPost.title + ' ' + (i + 1)"
+                      :alt="String(selectedPost.title || '') + ' ' + (i + 1)"
                       class="w-full h-full object-cover"
                       draggable="false"
                       @error="handleImgError($event, selectedPost)"
@@ -694,7 +723,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted, onUnmounted, inject, watch } from 'vue'
+import { ref, reactive, computed, nextTick, onMounted, onUnmounted, inject, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import { coffeeApi, normalizeUrl, extractApiError } from '@wc/shared'
@@ -713,7 +742,6 @@ const searchQuery = ref('')
 const isSearching = ref(false)
 const searchModalOpen = ref(false)
 const composerOpen = ref(false)
-const menuOpen = ref(false)
 const searchInput = ref(null)
 
 const hotTags = ['手冲咖啡', '拿铁', '云南咖啡', '冷萃', '意式浓缩', '咖啡馆探店', '挂耳', '冰美式', '生椰', '蓝山', '耶加雪菲', '曼特宁']
@@ -800,6 +828,138 @@ const upcomingEvents = [
   { title: '城市咖啡节 · 上海站', date: '10.01 - 10.03' },
   { title: '手冲工作坊 · 第 12 期', date: '10.12 周六' }
 ]
+
+// --- PC 优化 v2：回到顶部 / 冷知识 / 签到 / 足迹 ---
+const showFab = ref(false)
+function _onScroll() {
+  showFab.value = window.scrollY > 420
+}
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+const coffeeTips = [
+  '咖啡豆其实是种子——我们喝的「咖啡豆」是咖啡果实里的核，烘焙后才变成熟悉的棕色。',
+  '拿铁（Latte）在意大利语里就是「牛奶」的意思，所以在意大利点 latte 只会得到一杯牛奶。',
+  'espresso 的「crema」油脂层，是高压下二氧化碳与油脂乳化形成的，新鲜豆才丰富。',
+  '全球每天约消耗 22.5 亿杯咖啡，其中北欧人均消费量常年第一。'
+]
+const tipIndex = ref(0)
+function nextTip() {
+  tipIndex.value = (tipIndex.value + 1) % coffeeTips.length
+}
+
+const FOOTPRINT_KEY = 'worldcoffee:footprint'
+const CHECKIN_KEY = 'worldcoffee:checkin'
+const footprint = reactive({ notes: 0, likes: 0, favs: 0 })
+const footprintEmpty = computed(() => !footprint.notes && !footprint.likes && !footprint.favs)
+function bumpFootprint(kind: 'notes' | 'likes' | 'favs') {
+  footprint[kind] += 1
+  try {
+    window.localStorage.setItem(FOOTPRINT_KEY, JSON.stringify({ ...footprint }))
+  } catch {}
+}
+function initFootprint() {
+  try {
+    const raw = JSON.parse(window.localStorage.getItem(FOOTPRINT_KEY) || 'null')
+    if (raw) {
+      footprint.notes = Number(raw.notes) || 0
+      footprint.likes = Number(raw.likes) || 0
+      footprint.favs = Number(raw.favs) || 0
+    }
+  } catch {}
+}
+
+const checkedIn = ref(false)
+const checkinStreak = ref(0)
+const checkinText = computed(() => {
+  if (checkedIn.value) return `已连续 ${checkinStreak.value} 天`
+  return checkinStreak.value > 0 ? `已连续 ${checkinStreak.value} 天` : '签到领豆币'
+})
+function initCheckin() {
+  try {
+    const raw = JSON.parse(window.localStorage.getItem(CHECKIN_KEY) || 'null')
+    const today = new Date().toISOString().slice(0, 10)
+    checkinStreak.value = Number(raw?.streak) || 0
+    checkedIn.value = raw?.date === today
+  } catch {}
+}
+function doCheckin() {
+  const today = new Date().toISOString().slice(0, 10)
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+  let streak = 1
+  try {
+    const raw = JSON.parse(window.localStorage.getItem(CHECKIN_KEY) || 'null')
+    if (raw?.date === yesterday) streak = (Number(raw.streak) || 0) + 1
+  } catch {}
+  try {
+    window.localStorage.setItem(CHECKIN_KEY, JSON.stringify({ date: today, streak }))
+  } catch {}
+  checkedIn.value = true
+  checkinStreak.value = streak
+  toast.show(`签到成功！已连续 ${streak} 天`, 'success')
+}
+
+// 瀑布流卡片悬停快捷操作：赞 / 藏 / 分享
+async function quickLike(post) {
+  if (!post?.id) return
+  if (!isLoggedIn.value) {
+    router.push('/login')
+    return
+  }
+  try {
+    const res = await coffeeApi.toggleLike(post.id)
+    if (res && res.code === 200) {
+      const d = res?.data
+      const nowLiked = typeof d === 'object'
+        ? !!(d?.likedByMe ?? d?.liked ?? d?.result ?? d?.isLiked)
+        : !post.likedByMe
+      const prev = !!post.likedByMe
+      post.likedByMe = nowLiked
+      if (nowLiked !== prev) {
+        const base = Number(post.likeCount ?? post.like_count ?? 0)
+        post.likeCount = Math.max(0, base + (nowLiked ? 1 : -1))
+        post.like_count = post.likeCount
+        if (nowLiked) bumpFootprint('likes')
+      }
+    }
+  } catch (e) {
+    toast.show(extractApiError(e) || '操作失败', 'error')
+  }
+}
+
+async function quickFav(post) {
+  if (!post?.id) return
+  if (!isLoggedIn.value) {
+    router.push('/login')
+    return
+  }
+  try {
+    const res = await coffeeApi.toggleFavorite(post.id)
+    if (res && res.code === 200) {
+      const d = res?.data
+      const nowFav = typeof d === 'object'
+        ? !!(d?.favoritedByMe ?? d?.favorited ?? d?.result)
+        : !post.favoritedByMe
+      post.favoritedByMe = nowFav
+      toast.show(nowFav ? '已收藏' : '已取消收藏', 'success')
+      if (nowFav) bumpFootprint('favs')
+    }
+  } catch (e) {
+    toast.show(extractApiError(e) || '操作失败', 'error')
+  }
+}
+
+function sharePost(post) {
+  const url = `${window.location.origin}/posts/${post?.id || ''}`
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(url)
+      .then(() => toast.show('链接已复制，分享给咖啡朋友吧', 'success'))
+      .catch(() => toast.show('复制失败，请手动复制地址栏链接', 'warn'))
+  } else {
+    toast.show('复制失败，请手动复制地址栏链接', 'warn')
+  }
+}
 
 // --- 工具函数 ---
 function extractList(res) {
@@ -1072,7 +1232,6 @@ function openComposer() {
     return
   }
   composerOpen.value = true
-  menuOpen.value = false
 }
 
 function closeComposer() {
@@ -1081,6 +1240,7 @@ function closeComposer() {
 
 function handleComposerSuccess() {
   composerOpen.value = false
+  bumpFootprint('notes')
   fetchPosts(true)
 }
 
@@ -1189,6 +1349,7 @@ async function toggleDetailLike() {
         : !detailLiked.value
       detailLiked.value = nowLiked
       detailLikeCount.value = Math.max(0, detailLikeCount.value + (nowLiked ? 1 : -1))
+      if (nowLiked) bumpFootprint('likes')
     }
   } catch (e) {
     toast.show(extractApiError(e) || '操作失败', 'error')
@@ -1206,6 +1367,7 @@ async function toggleDetailFav() {
         ? !!(d?.favoritedByMe ?? d?.favorited ?? d?.result)
         : !detailFav.value
       toast.show(detailFav.value ? '已收藏' : '已取消收藏', 'success')
+      if (detailFav.value) bumpFootprint('favs')
     }
   } catch (e) {
     toast.show(extractApiError(e) || '操作失败', 'error')
@@ -1242,11 +1404,13 @@ function _onKeydown(e) {
     closePost()
     return
   }
-  if (e.key === 'Escape' && menuOpen.value) menuOpen.value = false
 }
 onMounted(async () => {
   fetchPosts(true)
   window.addEventListener('keydown', _onKeydown)
+  window.addEventListener('scroll', _onScroll, { passive: true })
+  initFootprint()
+  initCheckin()
 })
 onUnmounted(() => {
   if (selectedPost.value) closePost()
@@ -1259,6 +1423,7 @@ onUnmounted(() => {
     loadMoreObserver = null
   }
   window.removeEventListener('keydown', _onKeydown)
+  window.removeEventListener('scroll', _onScroll)
 })
 </script>
 
