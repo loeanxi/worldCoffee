@@ -38,16 +38,20 @@ request.interceptors.response.use(
       return res.data
     }
     const message = res.message || res.msg || '请求失败'
-    ElMessage.error(message)
+    // 支持 config.silent：调用方自行处理错误（如 Dashboard 未就绪接口静默降级到 mock）
+    if (!(response.config as any)?.silent) {
+      ElMessage.error(message)
+    }
     return Promise.reject(new Error(message))
   },
   error => {
     const status = error.response?.status
+    const silent = (error.config as any)?.silent
     if (status === 401 || status === 403) {
-      ElMessage.error('登录已过期，请重新登录')
+      if (!silent) ElMessage.error('登录已过期，请重新登录')
       sessionStorage.removeItem('admin_token')
       router.push('/login')
-    } else {
+    } else if (!silent) {
       const serverMsg = error.response?.data?.message || error.response?.data?.msg
       const fallback = typeof status === 'number'
         ? (HTTP_STATUS_MESSAGES[status] || `请求失败（${status}）`)
