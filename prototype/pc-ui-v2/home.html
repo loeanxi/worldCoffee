@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WorldCoffee · 首页优化原型 v2</title>
+<link rel="stylesheet" href="./css/proto.css" />
+<style>
+  /* ============ 页面级样式：首页三栏 ============ */
+  .home-main {
+    max-width: 1440px; margin: 0 auto;
+    padding: calc(var(--header-h) + 20px) 24px 40px;
+    display: grid;
+    grid-template-columns: 232px minmax(0, 1fr) 296px;
+    gap: 20px;
+    align-items: start;
+  }
+
+  /* ---- 左栏：整屏高粘性导航（优化点 1） ---- */
+  .side-nav {
+    position: sticky; top: calc(var(--header-h) + 16px);
+    height: calc(100vh - var(--header-h) - 32px);
+    display: flex; flex-direction: column;
+    padding: 18px 14px 14px;
+  }
+  .side-brand { display: flex; align-items: center; gap: 8px; padding: 0 10px 12px; }
+  .side-brand .mark { width: 28px; height: 28px; }
+  .side-brand b { font-size: 14.5px; font-weight: 800; }
+  .side-divider { height: 1px; background: var(--line-soft); margin: 2px 6px 10px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; padding: 9px 12px; border-radius: 12px;
+    font-size: 13px; font-weight: 500; color: var(--ink-soft);
+    transition: background .2s, color .2s;
+    text-align: left;
+  }
+  .nav-item .ico { width: 18px; text-align: center; font-size: 15px; color: var(--ink-muted); transition: color .2s; }
+  .nav-item:hover { background: var(--foam); color: var(--ink); }
+  .nav-item:hover .ico { color: var(--brown); }
+  .nav-item.is-active { background: #F3E7DB; color: var(--bean); font-weight: 700; }
+  .nav-item.is-active .ico { color: var(--hot); }
+  .nav-item .badge {
+    margin-left: auto; min-width: 18px; height: 18px; padding: 0 5px;
+    background: var(--hot); color: #fff; border-radius: 999px;
+    font-size: 10px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .side-user {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: 12px; transition: background .2s;
+  }
+  .side-user:hover { background: var(--foam); }
+  .side-user .avatar { width: 32px; height: 32px; box-shadow: none; border: 1px solid var(--line-soft); }
+  .side-user b { font-size: 12.5px; display: block; line-height: 1.3; }
+  .side-user span { font-size: 10.5px; color: var(--ink-muted); }
+
+  /* 优化点 1b：足迹数据 + 签到卡，填满左栏垂直空间 */
+  .side-stats { margin-top: 14px; padding: 12px; border-radius: var(--r); background: var(--foam); }
+  .side-stats .t { font-size: 11px; font-weight: 700; color: var(--ink-soft); margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
+  .side-stats .row { display: flex; text-align: center; }
+  .side-stats .cell { flex: 1; }
+  .side-stats .cell + .cell { border-left: 1px solid var(--line-soft); }
+  .side-stats .num { font-size: 16px; font-weight: 800; color: var(--bean); font-family: "DM Serif Display", Georgia, serif; }
+  .side-stats .lab { font-size: 10px; color: var(--ink-muted); }
+  .side-checkin {
+    margin-top: 10px; padding: 12px 14px; border-radius: var(--r);
+    background: linear-gradient(135deg, #F7E8D3, #EFD3AE);
+    display: flex; align-items: center; gap: 10px;
+    box-shadow: var(--shadow-xs);
+  }
+  .side-checkin .cup { font-size: 20px; }
+  .side-checkin .txt { flex: 1; min-width: 0; }
+  .side-checkin .txt b { font-size: 12px; display: block; color: var(--bean); }
+  .side-checkin .txt span { font-size: 10px; color: var(--mocha); }
+  .side-checkin button {
+    padding: 5px 12px; border-radius: 999px; background: var(--bean);
+    color: #FFF3E0; font-size: 10.5px; font-weight: 700;
+    transition: transform .2s var(--ease-spring);
+  }
+  .side-checkin button:hover { transform: scale(1.06); }
+  .side-checkin button.done { background: var(--sand); color: var(--mocha); pointer-events: none; }
+  .side-footer { margin-top: auto; padding: 10px 10px 0; display: flex; flex-direction: column; gap: 2px; }
+  .side-footer button {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 11px; color: var(--ink-muted); padding: 5px 8px; border-radius: 8px;
+    transition: color .2s, background .2s;
+  }
+  .side-footer button:hover { color: var(--brown); background: var(--foam); }
+
+  /* ---- 中栏 ---- */
+  .feed-col { min-width: 0; }
+  /* 优化点 2：频道 Tab 吸顶 + 毛玻璃 */
+  .channel-bar {
+    position: sticky; top: var(--header-h); z-index: 50;
+    margin: -8px -12px 16px; padding: 10px 12px;
+    background: rgba(245, 240, 235, .86);
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    display: flex; align-items: center; gap: 4px;
+    border-radius: 0 0 var(--r) var(--r);
+  }
+  .channel-btn {
+    position: relative; padding: 6px 12px;
+    font-size: 13.5px; font-weight: 500; color: var(--ink-muted);
+    white-space: nowrap; border-radius: 8px;
+    transition: color .2s, background .2s;
+  }
+  .channel-btn:hover { color: var(--ink); background: rgba(255,255,255,.6); }
+  .channel-btn.is-active { color: var(--ink); font-weight: 800; }
+  .channel-btn.is-active::after {
+    content: ""; position: absolute; left: 50%; transform: translateX(-50%);
+    bottom: -2px; width: 20px; height: 3px; border-radius: 3px;
+    background: var(--hot);
+  }
+
+  /* 瀑布流 3 列 */
+  .masonry { columns: 3; column-gap: 16px; }
+  .post-card {
+    break-inside: avoid; margin-bottom: 16px;
+    border-radius: var(--r); overflow: hidden;
+    background: var(--card); box-shadow: var(--shadow-soft);
+    border: 1px solid var(--line-soft);
+    cursor: pointer;
+    transition: transform .3s var(--ease-smooth), box-shadow .3s;
+  }
+  .post-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-ins); }
+  .post-img { position: relative; overflow: hidden; }
+  .post-img img { width: 100%; transition: transform .6s var(--ease-smooth); }
+  .post-card:hover .post-img img { transform: scale(1.05); }
+  /* 优化点 3：悬停浮层快捷操作 */
+  .post-hover-actions {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    padding: 26px 10px 10px;
+    background: linear-gradient(to top, rgba(20,12,8,.55), transparent);
+    display: flex; justify-content: flex-end; gap: 8px;
+    opacity: 0; transform: translateY(8px);
+    transition: opacity .25s var(--ease-smooth), transform .25s var(--ease-smooth);
+  }
+  .post-card:hover .post-hover-actions { opacity: 1; transform: translateY(0); }
+  .hover-act {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: rgba(255,255,255,.92); color: var(--bean);
+    font-size: 14px; display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--shadow-xs);
+    transition: transform .2s var(--ease-spring), color .2s;
+  }
+  .hover-act:hover { transform: scale(1.12); }
+  .hover-act.liked { color: var(--rose); }
+  .post-body { padding: 10px 12px 12px; }
+  .post-title { font-size: 12.5px; font-weight: 600; line-height: 1.45; margin-bottom: 8px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .post-meta { display: flex; align-items: center; justify-content: space-between; }
+  .post-author { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .post-author .ava {
+    width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--sand), var(--mocha));
+    color: #fff; font-size: 9px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .post-author span { font-size: 11px; color: var(--ink-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .post-like { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--ink-muted); transition: color .2s; }
+  .post-like:hover { color: var(--rose); }
+  .post-like.liked { color: var(--rose); font-weight: 600; }
+
+  .load-more-wrap { display: flex; justify-content: center; padding: 20px 0 0; }
+  .load-more {
+    height: 36px; padding: 0 26px; border-radius: 999px;
+    background: var(--card); box-shadow: var(--shadow-soft);
+    font-size: 12.5px; font-weight: 600; color: var(--ink-soft);
+    transition: transform .2s var(--ease-spring), box-shadow .2s, color .2s;
+  }
+  .load-more:hover { transform: translateY(-1px); box-shadow: var(--shadow-ins); color: var(--bean); }
+
+  /* ---- 右栏：粘性 + 栏内滚动（优化点 4） ---- */
+  .right-rail {
+    position: sticky; top: calc(var(--header-h) + 16px);
+    max-height: calc(100vh - var(--header-h) - 32px);
+    overflow-y: auto; overscroll-behavior: contain;
+    display: flex; flex-direction: column; gap: 14px;
+    padding-right: 4px;
+  }
+  .rail-card { padding: 16px; }
+  .rail-title {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12.5px; font-weight: 800; color: var(--ink);
+    margin-bottom: 10px;
+  }
+  .rail-title .ico { font-size: 14px; }
+  .topic-row {
+    display: flex; align-items: center; gap: 9px;
+    width: 100%; padding: 6px 8px; border-radius: 10px;
+    transition: background .2s; text-align: left;
+  }
+  .topic-row:hover { background: var(--foam); }
+  .topic-rank {
+    width: 18px; height: 18px; border-radius: 6px; flex-shrink: 0;
+    background: var(--foam); color: var(--ink-muted);
+    font-size: 10px; font-weight: 800; font-style: italic;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .topic-rank.is-top { background: linear-gradient(135deg, var(--amber), var(--hot)); color: #fff; }
+  .topic-row span.name { font-size: 12.5px; font-weight: 500; color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .topic-row .heat { margin-left: auto; font-size: 10px; color: var(--ink-muted); flex-shrink: 0; }
+  .creator-row { display: flex; align-items: center; gap: 9px; padding: 5px 0; }
+  .creator-row .ava {
+    width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--honey), var(--amber));
+    color: #fff; font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .creator-row .nm { flex: 1; min-width: 0; font-size: 12px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .follow-btn {
+    padding: 4px 13px; border-radius: 999px;
+    background: #EDF3EE; color: var(--green-deep);
+    font-size: 11px; font-weight: 700;
+    transition: all .2s var(--ease-smooth);
+  }
+  .follow-btn:hover { background: var(--green); color: #fff; }
+  .follow-btn.done { background: var(--foam); color: var(--ink-muted); font-weight: 500; }
+  .event-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 10px; border-radius: 12px; background: var(--foam);
+    transition: transform .2s var(--ease-smooth), box-shadow .2s;
+    cursor: pointer;
+  }
+  .event-row + .event-row { margin-top: 8px; }
+  .event-row:hover { transform: translateX(3px); box-shadow: var(--shadow-xs); }
+  .event-dot {
+    width: 30px; height: 30px; border-radius: 10px; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--brown), var(--bean));
+    color: #FFD9A0; font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .event-row b { font-size: 12px; display: block; line-height: 1.4; }
+  .event-row span { font-size: 10.5px; color: var(--ink-muted); }
+  /* 优化点 4b：每日冷知识渐变卡 */
+  .tip-card {
+    padding: 16px; border-radius: var(--r-lg);
+    background: linear-gradient(140deg, #3E2723 0%, #6D4C41 60%, #8D6E63 100%);
+    color: #F5E9DC; position: relative; overflow: hidden;
+  }
+  .tip-card::before {
+    content: "☕"; position: absolute; right: -8px; bottom: -14px;
+    font-size: 74px; opacity: .12; transform: rotate(-12deg);
+  }
+  .tip-card .t { font-size: 11px; letter-spacing: 2px; color: var(--honey); font-weight: 700; margin-bottom: 8px; }
+  .tip-card .q { font-size: 13px; line-height: 1.7; font-weight: 500; min-height: 66px; }
+  .tip-card .more {
+    margin-top: 10px; font-size: 11px; color: var(--honey); font-weight: 600;
+    display: inline-flex; align-items: center; gap: 4px;
+    transition: gap .2s;
+  }
+  .tip-card .more:hover { gap: 8px; }
+  .rail-brand { padding: 14px 16px; display: flex; align-items: center; gap: 10px; }
+  .rail-brand .mark { width: 32px; height: 32px; }
+  .rail-brand b { font-size: 12px; display: block; line-height: 1.3; }
+  .rail-brand span { font-size: 10px; color: var(--ink-muted); }
+  .rail-links { padding: 0 6px 8px; font-size: 10px; color: var(--ink-muted); display: flex; flex-wrap: wrap; gap: 4px 10px; }
+  .rail-links a:hover { color: var(--brown); }
+</style>
+</head>
+<body>
+
+<!-- ================= 顶栏 ================= -->
+<header class="proto-header">
+  <div class="inner">
+    <a class="brand" href="./index.html">
+      <span class="brand-mark"></span>
+      <span class="brand-text"><b class="serif">WorldCoffee</b><span>coffee notes & city cafés</span></span>
+    </a>
+    <div class="proto-search">
+      <span class="icon">⌕</span>
+      <input type="text" placeholder="搜索咖啡、地点、话题..." />
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" title="深色模式">☾</button>
+      <button class="icon-btn" title="通知">🔔<span class="dot">12</span></button>
+      <button class="btn-primary" onclick="toast('打开发布器（原型演示）')">＋ 发布</button>
+      <span class="avatar">lx</span>
+    </div>
+  </div>
+</header>
+
+<!-- ================= 三栏主体 ================= -->
+<div class="home-main">
+
+  <!-- 左栏：整屏高粘性导航 -->
+  <nav class="side-nav card">
+    <div class="side-brand"><span class="brand-mark mark"></span><b class="serif">WorldCoffee</b></div>
+    <div class="side-divider"></div>
+    <button class="nav-item is-active"><span class="ico">🧭</span>发现</button>
+    <button class="nav-item"><span class="ico">⚡</span>最新</button>
+    <button class="nav-item"><span class="ico">👥</span>关注</button>
+    <button class="nav-item"><span class="ico">🛍</span>商城</button>
+    <button class="nav-item"><span class="ico">💬</span>消息<span class="badge">3</span></button>
+    <button class="nav-item"><span class="ico">🔔</span>通知<span class="badge">12</span></button>
+    <button class="nav-item"><span class="ico">✍</span>发布笔记</button>
+    <button class="nav-item"><span class="ico">🔖</span>我的收藏</button>
+    <button class="nav-item"><span class="ico">🤖</span>AI 助手</button>
+    <div class="side-divider"></div>
+    <a class="side-user" href="#">
+      <span class="avatar">lx</span>
+      <span style="min-width:0"><b>lx</b><span>我的咖啡主页</span></span>
+    </a>
+
+    <!-- 新增：本周足迹 -->
+    <div class="side-stats">
+      <div class="t">☕ 本周咖啡足迹</div>
+      <div class="row">
+        <div class="cell"><div class="num">3</div><div class="lab">笔记</div></div>
+        <div class="cell"><div class="num">28</div><div class="lab">获赞</div></div>
+        <div class="cell"><div class="num">12</div><div class="lab">收藏</div></div>
+      </div>
+    </div>
+    <!-- 新增：每日签到 -->
+    <div class="side-checkin">
+      <span class="cup">🥐</span>
+      <span class="txt"><b>每日签到</b><span>已连续 6 天 · 豆币 +5</span></span>
+      <button id="checkinBtn" onclick="doCheckin(this)">签到</button>
+    </div>
+
+    <div class="side-footer">
+      <button><span>⋯</span>更多</button>
+      <button><span>ⓘ</span>关于我们</button>
+    </div>
+  </nav>
+
+  <!-- 中栏：吸顶 Tab + 瀑布流 -->
+  <div class="feed-col">
+    <div class="channel-bar" id="channelBar"></div>
+    <section class="masonry" id="masonry"></section>
+    <div class="load-more-wrap" id="loadMoreWrap">
+      <button class="load-more" onclick="loadMore()">加载更多好内容</button>
+    </div>
+    <div class="feed-end" id="feedEnd" style="display:none">
+      <span class="cup">☕</span>
+      <span>你已追上所有咖啡朋友的脚步</span>
+      <a href="javascript:scrollTo({top:0,behavior:'smooth'})" style="color:var(--brown);font-weight:600">回到顶部 ↑</a>
+    </div>
+  </div>
+
+  <!-- 右栏：粘性 + 栏内滚动 -->
+  <aside class="right-rail slim-scroll">
+    <section class="rail-card card">
+      <div class="rail-title"><span class="ico" style="color:var(--hot)">🔥</span>热门话题</div>
+      <div id="topicList"></div>
+    </section>
+
+    <section class="rail-card card">
+      <div class="rail-title"><span class="ico" style="color:var(--green)">🌱</span>推荐创作者</div>
+      <div id="creatorList"></div>
+    </section>
+
+    <section class="rail-card card">
+      <div class="rail-title"><span class="ico" style="color:var(--green)">📅</span>近期活动</div>
+      <div class="event-row"><span class="event-dot">🎪</span><span><b>城市咖啡节 · 上海站</b><span>10.01 - 10.03</span></span></div>
+      <div class="event-row"><span class="event-dot">💧</span><span><b>手冲工作坊 · 第 12 期</b><span>10.12 周六</span></span></div>
+    </section>
+
+    <!-- 新增：每日冷知识 -->
+    <section class="tip-card">
+      <div class="t">COFFEE FACT · 每日冷知识</div>
+      <div class="q" id="tipText">咖啡豆其实是种子——我们喝的「咖啡豆」是咖啡果实里的核，烘焙后才变成熟悉的棕色。</div>
+      <button class="more" onclick="nextTip()">换一条 →</button>
+    </section>
+
+    <section class="rail-brand card">
+      <span class="brand-mark mark"></span>
+      <span><b>loean worldcoffee</b><span>记录每一杯好咖啡</span></span>
+    </section>
+    <div class="rail-links">
+      <a href="#">条款</a><a href="#">隐私</a><a href="#">帮助中心</a><span>© 2026 WorldCoffee</span>
+    </div>
+  </aside>
+</div>
+
+<button class="fab-top" id="fabTop" onclick="scrollTo({top:0,behavior:'smooth'})" title="回到顶部">↑</button>
+<div class="proto-toast" id="toast"></div>
+
+<script>
+/* ================= 数据 ================= */
+const IMG = p => '../../backend/uploads/' + p;
+const POSTS = [
+  { id: 1,  t: '今天的拉花作品',              a: 'coffee_taster',  l: 52,  img: 'img_4.png',  ch: '拉花', hot: true },
+  { id: 2,  t: 'SOE和拼配的区别',             a: 'single_origin',  l: 25,  img: 'img_5.png',  ch: '豆子' },
+  { id: 3,  t: '意式浓缩的正确打开方式',       a: 'barista_wang',   l: 15,  img: 'img_6.png',  ch: '手冲' },
+  { id: 4,  t: '咖啡馆探店合集',              a: 'cafe_hunter',    l: 42,  img: 'img_7.png',  ch: '咖啡馆', hot: true },
+  { id: 5,  t: '抹茶拿铁的正确做法',           a: 'matcha_latte',   l: 23,  img: 'img_8.png',  ch: '拉花' },
+  { id: 6,  t: '今天的手冲耶加雪菲太惊艳了',    a: 'coffeelover',    l: 23,  img: 'img_9.png',  ch: '手冲' },
+  { id: 7,  t: '卡布奇诺的奶泡秘诀',           a: 'cappuccino_boy', l: 14,  img: 'img_10.png', ch: '拉花' },
+  { id: 8,  t: '我家里的咖啡角改造完成',        a: 'home_barista',   l: 88,  img: 'img_11.png', ch: '咖啡馆', hot: true },
+  { id: 9,  t: '三款蜜处理豆子横评',           a: 'bean_geek',      l: 31,  img: 'img_12.png', ch: '豆子' },
+  { id: 10, t: '周末市集的咖啡车',             a: 'street_coffee',  l: 67,  img: 'img_13.png', ch: '咖啡馆', hot: true },
+  { id: 11, t: '手冲壶选购入门指南',           a: 'gear_head',      l: 19,  img: 'img_14.png', ch: '器具' },
+  { id: 12, t: '提拉米苏与浓缩的完美搭配',      a: 'dessert_fan',    l: 36,  img: 'img_15.png', ch: '甜品' },
+];
+const EXTRA = [
+  { id: 13, t: '冰滴咖啡的 8 小时等待',         a: 'cold_brew_king', l: 44,  img: 'img_16.png', ch: '手冲' },
+  { id: 14, t: '燕麦奶 vs 全脂奶盲测',          a: 'milk_lab',       l: 29,  img: 'img_17.png', ch: '甜品' },
+  { id: 15, t: '磨豆机刻度对照表分享',          a: 'grind_master',   l: 58,  img: 'img_18.png', ch: '器具', hot: true },
+  { id: 16, t: '秋日第一杯桂花拿铁',           a: 'osmanthus',      l: 73,  img: 'img_19.png', ch: '拉花', hot: true },
+  { id: 17, t: '老巷子里的十年老店',           a: 'old_town',       l: 91,  img: 'img_20.png', ch: '咖啡馆', hot: true },
+  { id: 18, t: '日晒豆的发酵感从何而来',        a: 'natural_fan',    l: 21,  img: 'img_21.png', ch: '豆子' },
+];
+const TABS = ['推荐', '最新', '关注', '咖啡馆', '手冲', '拉花', '甜品', '器具', '豆子'];
+const TOPICS = [['咖啡馆', '2.4w'], ['手冲', '1.8w'], ['拉花', '1.2w'], ['甜品', '9863'], ['冷萃', '7421'], ['手冲咖啡', '6108']];
+const CREATORS = ['coffee_taster', 'cafe_hunter', 'cold_brew_king', 'espresso_queen'];
+const TIPS = [
+  '咖啡豆其实是种子——我们喝的「咖啡豆」是咖啡果实里的核，烘焙后才变成熟悉的棕色。',
+  '拿铁（Latte）在意大利语里就是「牛奶」的意思，所以在意大利点 latte 只会得到一杯牛奶。',
+  'espresso 的「crema」油脂层，是高压下二氧化碳与油脂乳化形成的，新鲜豆才丰富。',
+  '全球每天约消耗 22.5 亿杯咖啡，其中北欧人均消费量常年第一。'
+];
+
+let activeTab = '推荐';
+let pool = POSTS.slice();          // 当前已渲染数据
+let extraIdx = 0;
+const liked = new Set();
+
+/* ================= 渲染 ================= */
+function postCard(p, i) {
+  const isLiked = liked.has(p.id);
+  return `
+  <article class="post-card fade-up" style="animation-delay:${Math.min(i * 45, 400)}ms">
+    <div class="post-img">
+      <img src="${IMG(p.img)}" alt="${p.t}" loading="lazy" />
+      ${p.hot ? '<span class="hot-badge">🔥 热帖</span>' : ''}
+      <div class="post-hover-actions">
+        <button class="hover-act ${isLiked ? 'liked' : ''}" title="点赞" onclick="event.stopPropagation();toggleLike(${p.id},this)">♥</button>
+        <button class="hover-act" title="收藏" onclick="event.stopPropagation();toast('已收藏到我的专辑')">☆</button>
+        <button class="hover-act" title="分享" onclick="event.stopPropagation();toast('链接已复制')">↗</button>
+      </div>
+    </div>
+    <div class="post-body">
+      <h3 class="post-title">${p.t}</h3>
+      <div class="post-meta">
+        <span class="post-author"><span class="ava">${p.a[0].toUpperCase()}</span><span>${p.a}</span></span>
+        <button class="post-like ${isLiked ? 'liked' : ''}" data-like="${p.id}" onclick="event.stopPropagation();toggleLike(${p.id},this)">
+          ${isLiked ? '♥' : '♡'} <span>${p.l + (isLiked ? 1 : 0)}</span>
+        </button>
+      </div>
+    </div>
+  </article>`;
+}
+
+function currentList() {
+  if (activeTab === '推荐') return pool;
+  if (activeTab === '最新') return pool.slice().reverse();
+  if (activeTab === '关注') return pool.filter(p => ['coffee_taster', 'cafe_hunter', 'barista_wang'].includes(p.a));
+  return pool.filter(p => p.ch === activeTab);
+}
+
+function renderFeed() {
+  const list = currentList();
+  const box = document.getElementById('masonry');
+  box.innerHTML = list.length
+    ? list.map(postCard).join('')
+    : '<div style="padding:60px 0;text-align:center;color:var(--ink-muted);font-size:13px">这个频道还空空如也，去发布第一篇笔记吧 ☕</div>';
+  document.getElementById('loadMoreWrap').style.display = extraIdx < EXTRA.length ? 'flex' : 'none';
+  document.getElementById('feedEnd').style.display = extraIdx >= EXTRA.length ? 'flex' : 'none';
+}
+
+function renderTabs() {
+  document.getElementById('channelBar').innerHTML = TABS.map(t =>
+    `<button class="channel-btn ${t === activeTab ? 'is-active' : ''}" onclick="switchTab('${t}')">${t}</button>`
+  ).join('');
+}
+
+function renderRail() {
+  document.getElementById('topicList').innerHTML = TOPICS.map(([n, h], i) => `
+    <button class="topic-row" onclick="toast('进入话题 #${n}')">
+      <span class="topic-rank ${i < 3 ? 'is-top' : ''}">${i + 1}</span>
+      <span class="name">#${n}</span><span class="heat">${h}</span>
+    </button>`).join('');
+  document.getElementById('creatorList').innerHTML = CREATORS.map(c => `
+    <div class="creator-row">
+      <span class="ava">${c[0].toUpperCase()}</span>
+      <span class="nm">${c}</span>
+      <button class="follow-btn" onclick="toggleFollow(this)">关注</button>
+    </div>`).join('');
+}
+
+/* ================= 交互 ================= */
+function switchTab(t) { activeTab = t; renderTabs(); renderFeed(); }
+
+function toggleLike(id, el) {
+  const on = !liked.has(id);
+  on ? liked.add(id) : liked.delete(id);
+  const p = pool.concat(EXTRA).find(x => x.id === id);
+  document.querySelectorAll(`[data-like="${id}"]`).forEach(b => {
+    b.classList.toggle('liked', on);
+    b.innerHTML = `${on ? '♥' : '♡'} <span>${p.l + (on ? 1 : 0)}</span>`;
+    b.classList.add('heart-beat'); setTimeout(() => b.classList.remove('heart-beat'), 650);
+  });
+  document.querySelectorAll('.hover-act').forEach(() => {});
+  if (el && el.classList.contains('hover-act')) el.classList.toggle('liked', on);
+}
+
+function toggleFollow(btn) {
+  const on = btn.classList.toggle('done');
+  btn.textContent = on ? '已关注' : '关注';
+  toast(on ? '关注成功，TA 的笔记会出现在「关注」' : '已取消关注');
+}
+
+function loadMore() {
+  const batch = EXTRA.slice(extraIdx, extraIdx + 3);
+  extraIdx += batch.length;
+  pool = pool.concat(batch);
+  batch.forEach((p, i) => {
+    document.getElementById('masonry').insertAdjacentHTML('beforeend', postCard(p, i));
+  });
+  renderFeed();
+  toast('已为你加载 3 篇新笔记');
+}
+
+let tipIdx = 0;
+function nextTip() {
+  tipIdx = (tipIdx + 1) % TIPS.length;
+  const el = document.getElementById('tipText');
+  el.classList.remove('pop-in'); void el.offsetWidth;
+  el.textContent = TIPS[tipIdx]; el.classList.add('pop-in');
+}
+
+function doCheckin(btn) {
+  btn.textContent = '已签'; btn.classList.add('done');
+  toast('签到成功，豆币 +5 🎉');
+}
+
+/* Toast & FAB */
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+addEventListener('scroll', () => {
+  document.getElementById('fabTop').classList.toggle('show', scrollY > 420);
+}, { passive: true });
+
+renderTabs(); renderFeed(); renderRail();
+</script>
+</body>
+</html>

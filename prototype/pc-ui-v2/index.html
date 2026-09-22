@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WorldCoffee · PC 端优化原型 v2 · 设计总览</title>
+<link rel="stylesheet" href="./css/proto.css" />
+<style>
+  .wrap { max-width: 1080px; margin: 0 auto; padding: calc(var(--header-h) + 40px) 24px 64px; }
+  .hero { text-align: center; margin-bottom: 44px; }
+  .hero .kicker {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--card); box-shadow: var(--shadow-soft);
+    padding: 6px 16px; border-radius: 999px;
+    font-size: 11px; font-weight: 700; letter-spacing: 2px; color: var(--brown);
+    margin-bottom: 18px;
+  }
+  .hero h1 { font-size: 40px; font-weight: 800; letter-spacing: .5px; line-height: 1.2; }
+  .hero h1 em { font-style: normal; color: var(--hot); }
+  .hero p { margin-top: 12px; color: var(--ink-soft); font-size: 14px; max-width: 640px; margin-left: auto; margin-right: auto; }
+
+  .entries { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 48px; }
+  .entry {
+    padding: 26px 28px; border-radius: var(--r-lg);
+    background: var(--card); box-shadow: var(--shadow-soft);
+    border: 1px solid var(--line-soft);
+    display: flex; flex-direction: column; gap: 10px;
+    transition: transform .3s var(--ease-smooth), box-shadow .3s;
+    position: relative; overflow: hidden;
+  }
+  .entry:hover { transform: translateY(-5px); box-shadow: var(--shadow-ins); }
+  .entry::after {
+    content: attr(data-em); position: absolute; right: 14px; bottom: -16px;
+    font-size: 88px; opacity: .10; transform: rotate(-10deg);
+  }
+  .entry .tag { font-size: 10.5px; font-weight: 800; letter-spacing: 2px; color: var(--hot); }
+  .entry h2 { font-size: 21px; font-weight: 800; }
+  .entry p { font-size: 12.5px; color: var(--ink-soft); line-height: 1.7; }
+  .entry .go {
+    margin-top: 8px; align-self: flex-start;
+    padding: 8px 22px; border-radius: 999px;
+    background: var(--bean); color: #FFF3E0;
+    font-size: 12.5px; font-weight: 700;
+    transition: transform .2s var(--ease-spring), background .2s;
+  }
+  .entry .go:hover { transform: scale(1.05); background: var(--espresso); }
+
+  .sec-title { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 800; margin: 0 0 18px; }
+  .sec-title::before { content: ""; width: 4px; height: 18px; border-radius: 4px; background: var(--hot); }
+  .sec-title small { font-size: 11px; color: var(--ink-muted); font-weight: 500; margin-left: 4px; }
+
+  table { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--card); border-radius: var(--r-lg); box-shadow: var(--shadow-soft); overflow: hidden; margin-bottom: 44px; }
+  th, td { padding: 13px 18px; font-size: 12.5px; text-align: left; vertical-align: top; }
+  th { background: var(--foam); font-size: 11px; letter-spacing: 1px; color: var(--ink-muted); font-weight: 700; }
+  td + td, th + th { border-left: 1px solid var(--line-soft); }
+  tr + tr td { border-top: 1px solid var(--line-soft); }
+  td .prob { color: var(--rose); font-weight: 600; }
+  td .fix { color: var(--green-deep); font-weight: 600; }
+  td .where { display: inline-block; margin-top: 4px; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: #F3E7DB; color: var(--brown); }
+
+  .try-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .try {
+    padding: 16px 18px; border-radius: var(--r); background: var(--card);
+    box-shadow: var(--shadow-xs); border: 1px solid var(--line-soft);
+    font-size: 12px; color: var(--ink-soft); line-height: 1.7;
+  }
+  .try b { display: block; font-size: 12.5px; color: var(--ink); margin-bottom: 4px; }
+  .try .n { color: var(--hot); font-weight: 800; margin-right: 6px; font-family: "DM Serif Display", Georgia, serif; }
+  footer { margin-top: 56px; text-align: center; font-size: 11px; color: var(--ink-muted); }
+</style>
+</head>
+<body>
+
+<header class="proto-header">
+  <div class="inner">
+    <a class="brand" href="./index.html">
+      <span class="brand-mark"></span>
+      <span class="brand-text"><b class="serif">WorldCoffee</b><span>pc redesign prototype v2</span></span>
+    </a>
+    <div class="proto-search"><span class="icon">⌕</span><input placeholder="原型站内搜索（演示）" /></div>
+    <div class="header-actions">
+      <a class="btn-primary" href="./home.html">进入首页原型 →</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="hero fade-up">
+    <span class="kicker">☕ PRODUCT & UI PROPOSAL · 2026-09</span>
+    <h1>PC 端体验优化原型 <em>v2</em></h1>
+    <p>针对现网两个核心痛点——「首页下滑后左右侧栏大片留白」「商城细节粗糙」——给出可直接点击体验的静态原型。
+       全部沿用现有咖啡色板与圆角规范，不改品牌基因，只补体验细节。</p>
+  </div>
+
+  <div class="entries">
+    <a class="entry fade-up" data-em="🏠" href="./home.html">
+      <span class="tag">PAGE 01 · HOME</span>
+      <h2>发现首页 · 优化版</h2>
+      <p>左右侧栏整屏粘性不再留白；频道 Tab 吸顶毛玻璃；瀑布流卡片悬停微交互；右栏新增「每日冷知识」；左栏新增「本周足迹 + 每日签到」；完读底帽与回到顶部。</p>
+      <span class="go">体验首页原型</span>
+    </a>
+    <a class="entry fade-up" style="animation-delay:80ms" data-em="🛍" href="./shop.html">
+      <span class="tag">PAGE 02 · SHOP</span>
+      <h2>咖啡商城 · 优化版</h2>
+      <p>品类图标快捷入口；秒杀横条带真实倒计时与抢购进度；筛选面板吸顶且显示命中数；排序 / 网格列表视图真实可用；商品卡 1:1 图 + 评分 + 悬停收藏；加购有徽章与 Toast 反馈。</p>
+      <span class="go">体验商城原型</span>
+    </a>
+  </div>
+
+  <h3 class="sec-title">问题 → 方案对照表 <small>现状截图评审结论</small></h3>
+  <table>
+    <tr><th style="width:26%">现状问题</th><th style="width:44%">优化方案</th><th>体验位置</th></tr>
+    <tr>
+      <td><span class="prob">首页下滑后左栏只剩尾部、右栏早早结束，两侧大片空白</span></td>
+      <td><span class="fix">左右栏改为「整屏高粘性」：左栏 flex 撑满视口、footer 沉底，并补「本周足迹 / 每日签到」填充垂直空间；右栏粘性 + 栏内细滚动条，模块永远陪跑信息流</span></td>
+      <td><span class="where">首页</span> 向下滚动观察两侧</td>
+    </tr>
+    <tr>
+      <td><span class="prob">频道 Tab 随页面滚走，想换频道必须回顶部</span></td>
+      <td><span class="fix">Tab 栏吸顶 + 毛玻璃背景，滚动中随时切换频道（原型中 Tab 真实过滤瀑布流）</span></td>
+      <td><span class="where">首页</span> 滚动后点 Tab</td>
+    </tr>
+    <tr>
+      <td><span class="prob">瀑布流卡片静态无反馈，点赞/收藏要点进详情</span></td>
+      <td><span class="fix">卡片悬停上浮 + 图片微缩放 + 底部渐变浮层快捷操作（赞 / 藏 / 分享），点赞心跳动画与计数即时更新</span></td>
+      <td><span class="where">首页</span> 悬停任意卡片</td>
+    </tr>
+    <tr>
+      <td><span class="prob">右栏内容单薄，品牌卡之后无任何收尾</span></td>
+      <td><span class="fix">新增「每日冷知识」渐变卡（可换一条）+ 品牌卡下补条款/隐私/版权微链接，右栏信息密度与温度同时提升</span></td>
+      <td><span class="where">首页</span> 右栏中部</td>
+    </tr>
+    <tr>
+      <td><span class="prob">商城顶部分类为纯文字 Tab，层级弱、无引导</span></td>
+      <td><span class="fix">品类图标胶囊入口条（全部/咖啡豆/器具/杯具/周边），选中态深棕渐变，真实过滤商品</span></td>
+      <td><span class="where">商城</span> 顶部品类条</td>
+    </tr>
+    <tr>
+      <td><span class="prob">秒杀为整幅轮播图，占高过大、紧迫感不足</span></td>
+      <td><span class="fix">压缩为一条深色秒杀横条：实时倒计时 + 已抢进度 + 库存提示 + 抢购按钮，首屏让位给商品</span></td>
+      <td><span class="where">商城</span> 秒杀横条</td>
+    </tr>
+    <tr>
+      <td><span class="prob">筛选面板滚走即失效，用户不知道筛出了多少</span></td>
+      <td><span class="fix">筛选面板吸顶 + 栏内滚动；底部实时显示「已选 N 项 · 命中 M 件」；一键重置</span></td>
+      <td><span class="where">商城</span> 左栏</td>
+    </tr>
+    <tr>
+      <td><span class="prob">商品卡图片比例不一、无评分、加购无反馈</span></td>
+      <td><span class="fix">统一 1:1 图 + 悬停缩放与收藏按钮；补星级评分 / 已售 / 划线价；加购触发购物车徽章弹跳 + Toast</span></td>
+      <td><span class="where">商城</span> 任意商品卡</td>
+    </tr>
+    <tr>
+      <td><span class="prob">缺少列表视图与结果排序的可视反馈</span></td>
+      <td><span class="fix">工具栏吸顶：结果计数 + 5 种排序（真实生效）+ 网格/列表视图切换</span></td>
+      <td><span class="where">商城</span> 工具栏</td>
+    </tr>
+  </table>
+
+  <h3 class="sec-title">上手体验清单 <small>建议按顺序点一遍</small></h3>
+  <div class="try-grid">
+    <div class="try"><b><span class="n">1</span>首页滚动</b>向下滚动 2 屏：左栏整屏陪伴、右栏栏内滚动、Tab 吸顶毛玻璃、右下回到顶部按钮浮现。</div>
+    <div class="try"><b><span class="n">2</span>首页 Tab</b>滚动状态下直接点「拉花 / 豆子 / 咖啡馆」，瀑布流即时过滤并带上浮动画。</div>
+    <div class="try"><b><span class="n">3</span>卡片悬停</b>悬停帖子卡：上浮 + 图片缩放 + 浮层出现；点 ♥ 看心跳与计数 +1。</div>
+    <div class="try"><b><span class="n">4</span>右栏互动</b>点「换一条」切换冷知识；点创作者「关注」变「已关注」；左栏点「签到」。</div>
+    <div class="try"><b><span class="n">5</span>商城筛选</b>勾选烘焙度 + 产地 + 价格，观察左栏命中数与商品网格实时变化；点「重置」复原。</div>
+    <div class="try"><b><span class="n">6</span>商城排序视图</b>点「价格从低到高」再点右上 ☰ 切列表视图；悬停商品卡点 ♥ 与「加入购物车」看徽章弹跳。</div>
+  </div>
+
+  <footer>WorldCoffee PC Redesign Prototype v2 · 静态原型仅用于评审 · 图片复用 backend/uploads 现有素材</footer>
+</div>
+</body>
+</html>

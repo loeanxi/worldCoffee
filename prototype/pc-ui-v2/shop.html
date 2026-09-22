@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WorldCoffee · 商城优化原型 v2</title>
+<link rel="stylesheet" href="./css/proto.css" />
+<style>
+  /* ============ 商城页级样式 ============ */
+  .shop-hero {
+    max-width: 1440px; margin: 0 auto;
+    padding: calc(var(--header-h) + 18px) 24px 0;
+  }
+  /* 优化点 1：品类快捷入口条 */
+  .cat-strip { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .cat-chip {
+    display: flex; align-items: center; gap: 7px;
+    padding: 8px 18px; border-radius: 999px;
+    background: var(--card); box-shadow: var(--shadow-xs);
+    font-size: 13px; font-weight: 600; color: var(--ink-soft);
+    border: 1px solid var(--line-soft);
+    transition: all .25s var(--ease-smooth);
+  }
+  .cat-chip:hover { transform: translateY(-2px); box-shadow: var(--shadow-soft); color: var(--bean); }
+  .cat-chip.is-active {
+    background: linear-gradient(135deg, var(--brown), var(--bean));
+    color: #FFF3E0; border-color: transparent;
+    box-shadow: 0 4px 14px rgba(62,39,35,.28);
+  }
+  .cat-chip .em { font-size: 15px; }
+
+  /* 优化点 2：秒杀横条模块（倒计时 + 进度） */
+  .seckill-bar {
+    margin-top: 14px; padding: 14px 20px;
+    border-radius: var(--r-lg);
+    background: linear-gradient(100deg, #4A1F14 0%, #7A2E1A 55%, #B4451F 100%);
+    color: #FFE8D1;
+    display: flex; align-items: center; gap: 18px;
+    position: relative; overflow: hidden;
+    cursor: pointer;
+  }
+  .seckill-bar::after {
+    content: "⚡"; position: absolute; right: 26px; top: -18px;
+    font-size: 90px; opacity: .10; transform: rotate(14deg);
+  }
+  .seckill-bar .tag {
+    background: linear-gradient(90deg, #FF5A3C, #FF9A3D);
+    color: #fff; font-size: 12px; font-weight: 800;
+    padding: 4px 12px; border-radius: 999px; flex-shrink: 0;
+    box-shadow: 0 2px 10px rgba(255,90,60,.45);
+  }
+  .seckill-bar .name { font-size: 14px; font-weight: 700; flex-shrink: 0; }
+  .seckill-bar .price b { font-size: 19px; color: #FFC46B; font-family: "DM Serif Display", Georgia, serif; }
+  .seckill-bar .price s { font-size: 11px; opacity: .6; margin-left: 6px; }
+  .seckill-bar .prog { flex: 1; min-width: 120px; max-width: 260px; }
+  .seckill-bar .prog .track { height: 6px; border-radius: 6px; background: rgba(255,255,255,.22); overflow: hidden; }
+  .seckill-bar .prog .fill {
+    height: 100%; border-radius: 6px; width: 72%;
+    background: linear-gradient(90deg, #FFC46B, #FF7A45);
+  }
+  .seckill-bar .prog .lab { font-size: 10px; opacity: .8; margin-top: 3px; }
+  .seckill-bar .cd {
+    margin-left: auto; display: flex; align-items: center; gap: 5px;
+    font-size: 11px; flex-shrink: 0;
+  }
+  .seckill-bar .cd b {
+    background: rgba(0,0,0,.42); border-radius: 6px;
+    padding: 3px 6px; font-family: ui-monospace, monospace; font-size: 12px;
+  }
+  .seckill-bar .go {
+    flex-shrink: 0; padding: 7px 18px; border-radius: 999px;
+    background: #FFD9A0; color: #6B2A12; font-size: 12px; font-weight: 800;
+    transition: transform .2s var(--ease-spring);
+  }
+  .seckill-bar .go:hover { transform: scale(1.06); }
+
+  /* ============ 主体两栏 ============ */
+  .shop-main {
+    max-width: 1440px; margin: 0 auto;
+    padding: 18px 24px 48px;
+    display: grid; grid-template-columns: 224px minmax(0, 1fr);
+    gap: 20px; align-items: start;
+  }
+  /* 优化点 3：筛选面板吸顶 */
+  .filter-panel {
+    position: sticky; top: calc(var(--header-h) + 16px);
+    padding: 18px 16px;
+    max-height: calc(100vh - var(--header-h) - 32px);
+    overflow-y: auto; overscroll-behavior: contain;
+  }
+  .filter-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .filter-head b { font-size: 13px; display: flex; align-items: center; gap: 6px; }
+  .filter-head .reset { font-size: 11px; color: var(--green-deep); font-weight: 700; }
+  .filter-head .reset:hover { text-decoration: underline; }
+  .filter-sec { margin-bottom: 16px; }
+  .filter-sec .t { font-size: 11.5px; font-weight: 700; color: var(--ink-soft); margin-bottom: 8px; }
+  .filter-sec .chips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .filter-sec label {
+    display: flex; align-items: center; gap: 8px;
+    padding: 4px 2px; font-size: 12px; color: var(--ink-soft); cursor: pointer;
+  }
+  .filter-sec input[type="checkbox"] { accent-color: var(--green); width: 14px; height: 14px; }
+  .filter-summary {
+    margin-top: 4px; padding: 10px 12px; border-radius: 12px;
+    background: var(--foam); font-size: 11px; color: var(--ink-muted);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .filter-summary b { color: var(--bean); }
+
+  /* 优化点 4：工具栏吸顶（计数 + 排序 + 视图） */
+  .shop-toolbar {
+    position: sticky; top: var(--header-h); z-index: 50;
+    margin-bottom: 16px; padding: 10px 16px;
+    background: rgba(245, 240, 235, .86);
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    border-radius: var(--r);
+    display: flex; align-items: center; gap: 14px;
+  }
+  .result-count { font-size: 12px; color: var(--ink-muted); flex-shrink: 0; }
+  .result-count b { color: var(--bean); font-size: 13px; }
+  .sort-tabs { display: flex; align-items: center; gap: 2px; }
+  .sort-tab {
+    padding: 5px 12px; border-radius: 999px;
+    font-size: 12.5px; font-weight: 500; color: var(--ink-muted);
+    transition: all .2s;
+  }
+  .sort-tab:hover { color: var(--ink); }
+  .sort-tab.is-active { background: var(--bean); color: #fff; font-weight: 700; box-shadow: var(--shadow-xs); }
+  .view-toggle { margin-left: auto; display: flex; gap: 4px; background: var(--card); padding: 3px; border-radius: 10px; box-shadow: var(--shadow-xs); }
+  .view-btn {
+    width: 30px; height: 26px; border-radius: 8px; font-size: 13px;
+    color: var(--ink-muted); display: flex; align-items: center; justify-content: center;
+    transition: all .2s;
+  }
+  .view-btn.is-active { background: var(--bean); color: #fff; }
+
+  /* ============ 商品卡 ============ */
+  .goods-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(232px, 1fr)); gap: 16px; }
+  .goods-card {
+    border-radius: var(--r-lg); overflow: hidden;
+    background: var(--card); box-shadow: var(--shadow-soft);
+    border: 1px solid var(--line-soft);
+    display: flex; flex-direction: column;
+    cursor: pointer;
+    transition: transform .3s var(--ease-smooth), box-shadow .3s;
+  }
+  .goods-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-ins); }
+  .goods-img { position: relative; aspect-ratio: 1 / 1; overflow: hidden; background: var(--foam); }
+  .goods-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s var(--ease-smooth); }
+  .goods-card:hover .goods-img img { transform: scale(1.06); }
+  .goods-badge {
+    position: absolute; top: 10px; left: 10px;
+    background: linear-gradient(90deg, #FF5A3C, #FF9A3D); color: #fff;
+    font-size: 10px; font-weight: 800; padding: 3px 9px; border-radius: 999px;
+    box-shadow: 0 2px 8px rgba(255,90,60,.4);
+  }
+  .goods-fav {
+    position: absolute; top: 10px; right: 10px;
+    width: 30px; height: 30px; border-radius: 50%;
+    background: rgba(255,255,255,.92); color: var(--mocha); font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transform: scale(.8);
+    transition: all .25s var(--ease-spring);
+  }
+  .goods-card:hover .goods-fav { opacity: 1; transform: scale(1); }
+  .goods-fav.on { color: var(--rose); opacity: 1; transform: scale(1); }
+  .goods-body { padding: 12px 14px 14px; display: flex; flex-direction: column; flex: 1; }
+  .goods-title {
+    font-size: 13px; font-weight: 700; line-height: 1.45; margin-bottom: 7px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    min-height: 38px;
+  }
+  .goods-tags { display: flex; gap: 6px; margin-bottom: 8px; }
+  .goods-tags span {
+    font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 6px;
+    background: #F3E7DB; color: var(--brown);
+  }
+  .goods-tags span.o { background: #EDF3EE; color: var(--green-deep); }
+  .goods-rate { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 11px; color: var(--ink-muted); }
+  .goods-rate .stars { color: var(--honey); letter-spacing: 1px; font-size: 11px; }
+  .goods-rate .sold { margin-left: auto; }
+  .goods-price-row { margin-top: auto; display: flex; align-items: baseline; gap: 7px; margin-bottom: 10px; }
+  .goods-price-row .now { color: var(--hot); font-weight: 800; font-size: 18px; font-family: "DM Serif Display", Georgia, serif; }
+  .goods-price-row .now i { font-style: normal; font-size: 11px; margin-right: 1px; }
+  .goods-price-row .old { color: var(--ink-muted); font-size: 11px; text-decoration: line-through; }
+  .add-cart {
+    height: 34px; border-radius: 999px;
+    background: #F3E7DB; color: var(--bean);
+    font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    transition: all .25s var(--ease-smooth);
+  }
+  .add-cart:hover { background: var(--bean); color: #FFF3E0; box-shadow: 0 4px 12px rgba(62,39,35,.28); }
+
+  /* 列表视图（优化点 5） */
+  .goods-grid.list-view { grid-template-columns: 1fr; gap: 12px; }
+  .goods-grid.list-view .goods-card { flex-direction: row; }
+  .goods-grid.list-view .goods-img { width: 168px; aspect-ratio: 1/1; flex-shrink: 0; }
+  .goods-grid.list-view .goods-title { min-height: 0; -webkit-line-clamp: 1; font-size: 14px; }
+  .goods-grid.list-view .goods-body { padding: 14px 18px; }
+
+  .shop-end { padding: 34px 0 10px; text-align: center; color: var(--ink-muted); font-size: 12px; }
+  .empty-state { padding: 70px 0; text-align: center; color: var(--ink-muted); }
+  .empty-state .em { font-size: 40px; opacity: .5; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+
+<!-- ================= 顶栏 ================= -->
+<header class="proto-header">
+  <div class="inner">
+    <button class="icon-btn" title="返回" onclick="location.href='./home.html'">←</button>
+    <a class="brand" href="./index.html">
+      <span class="brand-mark"></span>
+      <span class="brand-text"><b class="serif" style="color:var(--brown)">咖啡商城</b><span>精选好豆 · 原厂直发</span></span>
+    </a>
+    <div class="proto-search">
+      <span class="icon">⌕</span>
+      <input type="text" id="searchInput" placeholder="搜索咖啡、器具..." oninput="state.keyword=this.value.trim();render()" />
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" title="优惠券" onclick="toast('优惠券中心（原型演示）')">🎟</button>
+      <button class="icon-btn" title="购物车" onclick="toast('购物车（原型演示）')">🛒<span class="dot" id="cartBadge" style="display:none">0</span></button>
+      <span class="avatar">lx</span>
+    </div>
+  </div>
+</header>
+
+<!-- 品类条 + 秒杀条 -->
+<div class="shop-hero">
+  <div class="cat-strip" id="catStrip"></div>
+
+  <div class="seckill-bar" onclick="toast('进入秒杀会场（原型演示）')">
+    <span class="tag">⚡ 限时秒杀</span>
+    <span class="name">埃塞俄比亚 耶加雪菲 G1 · 200g</span>
+    <span class="price"><b>¥59.9</b><s>¥120.0</s></span>
+    <span class="prog">
+      <span class="track"><span class="fill"></span></span>
+      <span class="lab">已抢 72% · 仅剩 28 件</span>
+    </span>
+    <span class="cd">距结束 <b id="cdH">01</b>:<b id="cdM">23</b>:<b id="cdS">45</b></span>
+    <button class="go">立即抢购</button>
+  </div>
+</div>
+
+<!-- ================= 两栏主体 ================= -->
+<div class="shop-main">
+  <!-- 左：吸顶筛选 -->
+  <aside class="filter-panel card slim-scroll">
+    <div class="filter-head">
+      <b>⚙ 筛选</b>
+      <button class="reset" id="resetBtn" onclick="resetFilters()">重置</button>
+    </div>
+    <div class="filter-sec">
+      <div class="t">价格上限</div>
+      <div class="chips" id="priceChips"></div>
+    </div>
+    <div class="filter-sec">
+      <div class="t">烘焙度</div>
+      <div id="roastChecks"></div>
+    </div>
+    <div class="filter-sec">
+      <div class="t">产地</div>
+      <div class="chips" id="originChips"></div>
+    </div>
+    <div class="filter-summary">已选 <b id="filterCount">0</b> 项条件 · 命中 <b id="hitCount">0</b> 件商品</div>
+  </aside>
+
+  <!-- 右：工具栏 + 商品 -->
+  <div>
+    <div class="shop-toolbar">
+      <span class="result-count">共 <b id="totalCount">0</b> 件好物</span>
+      <div class="sort-tabs" id="sortTabs"></div>
+      <div class="view-toggle">
+        <button class="view-btn is-active" data-view="grid" title="网格视图" onclick="setView('grid')">▦</button>
+        <button class="view-btn" data-view="list" title="列表视图" onclick="setView('list')">☰</button>
+      </div>
+    </div>
+    <div class="goods-grid" id="goodsGrid"></div>
+    <div class="shop-end" id="shopEnd" style="display:none">— 已经到底啦，去喝杯咖啡休息一下吧 ☕ —</div>
+  </div>
+</div>
+
+<button class="fab-top" id="fabTop" onclick="scrollTo({top:0,behavior:'smooth'})" title="回到顶部">↑</button>
+<div class="proto-toast" id="toast"></div>
+
+<script>
+/* ================= 数据 ================= */
+const IMG = p => '../../backend/uploads/products/' + p;
+const GOODS = [
+  { id: 1,  n: '危地马拉安提瓜 SHB · 200g',   cat: '咖啡豆', price: 45.92, old: 68,   sold: 60,  origin: '危地马拉', roast: '中焙', rate: 4.8, img: 'img.png',  hot: true },
+  { id: 2,  n: '巴西喜拉多半日晒 · 250g',     cat: '咖啡豆', price: 52.65, old: 79,   sold: 66,  origin: '巴西',     roast: '中焙', rate: 4.6, img: 'img_1.png' },
+  { id: 3,  n: 'Breville 半自动咖啡机',       cat: '器具',   price: 479.89,old: 599,  sold: 47,  origin: null,       roast: null,  rate: 4.9, img: 'img_2.png', hot: true },
+  { id: 4,  n: '云南保山日晒小圆豆 · 200g',   cat: '咖啡豆', price: 39.9,  old: 55,   sold: 120, origin: '云南',     roast: '浅焙', rate: 4.5, img: 'img_3.png' },
+  { id: 5,  n: '肯尼亚 AA TOP 水洗 · 150g',   cat: '咖啡豆', price: 88.0,  old: 108,  sold: 35,  origin: '肯尼亚',   roast: '浅焙', rate: 4.7, img: 'img_4.png' },
+  { id: 6,  n: '哥斯达黎加蜜处理 · 200g',     cat: '咖啡豆', price: 76.5,  old: 92,   sold: 41,  origin: '哥斯达黎加', roast: '中焙', rate: 4.6, img: 'img_5.png' },
+  { id: 7,  n: '温控手冲壶套装 · 600ml',      cat: '器具',   price: 159.0, old: 219,  sold: 80,  origin: null,       roast: null,  rate: 4.8, img: 'img_6.png' },
+  { id: 8,  n: '陶瓷拉花杯 · 350ml',          cat: '杯具',   price: 45.0,  old: 60,   sold: 210, origin: null,       roast: null,  rate: 4.7, img: 'img_7.png', hot: true },
+  { id: 9,  n: '埃塞俄比亚耶加雪菲 G1 · 200g',cat: '咖啡豆', price: 95.0,  old: 120,  sold: 58,  origin: '埃塞俄比亚', roast: '浅焙', rate: 4.9, img: 'img_8.png' },
+  { id: 10, n: '电动磨豆机 · 便携款',         cat: '器具',   price: 129.0, old: 168,  sold: 95,  origin: null,       roast: null,  rate: 4.4, img: 'img_9.png' },
+  { id: 11, n: '哥伦比亚 Supremo 深焙 · 250g',cat: '咖啡豆', price: 62.8,  old: 80,   sold: 74,  origin: '哥伦比亚', roast: '深焙', rate: 4.5, img: 'img_10.png' },
+  { id: 12, n: '品牌帆布托特包 · 咖啡豆印花', cat: '周边',   price: 59.0,  old: 79,   sold: 150, origin: null,       roast: null,  rate: 4.6, img: 'img_11.png' },
+];
+const CATS = [['全部', '☕'], ['咖啡豆', '🫘'], ['器具', '⚙️'], ['杯具', '🍵'], ['周边', '🎁']];
+const PRICES = [50, 100, 200, 999];
+const ROASTS = ['浅焙', '中焙', '深焙'];
+const ORIGINS = ['危地马拉', '巴西', '云南', '肯尼亚', '哥斯达黎加', '埃塞俄比亚', '哥伦比亚'];
+const SORTS = ['综合', '销量', '价格从低到高', '价格从高到低', '新品'];
+
+const state = { cat: '全部', price: null, roasts: [], origins: [], sort: '综合', view: 'grid', keyword: '' };
+let cartCount = 0;
+
+/* ================= 渲染 ================= */
+function filtered() {
+  let list = GOODS.filter(g =>
+    (state.cat === '全部' || g.cat === state.cat) &&
+    (!state.price || g.price <= state.price) &&
+    (!state.roasts.length || state.roasts.includes(g.roast)) &&
+    (!state.origins.length || state.origins.includes(g.origin)) &&
+    (!state.keyword || g.n.toLowerCase().includes(state.keyword.toLowerCase()))
+  );
+  if (state.sort === '销量') list.sort((a, b) => b.sold - a.sold);
+  if (state.sort === '价格从低到高') list.sort((a, b) => a.price - b.price);
+  if (state.sort === '价格从高到低') list.sort((a, b) => b.price - a.price);
+  if (state.sort === '新品') list.sort((a, b) => b.id - a.id);
+  return list;
+}
+
+function stars(r) {
+  const full = Math.round(r);
+  return '★'.repeat(full) + '☆'.repeat(5 - full);
+}
+
+function goodsCard(g, i) {
+  return `
+  <article class="goods-card fade-up" style="animation-delay:${Math.min(i * 40, 320)}ms">
+    <div class="goods-img">
+      <img src="${IMG(g.img)}" alt="${g.n}" loading="lazy" />
+      ${g.hot ? '<span class="goods-badge">🔥 热销</span>' : ''}
+      <button class="goods-fav" title="收藏" onclick="event.stopPropagation();this.classList.toggle('on');toast(this.classList.contains('on')?'已加入收藏':'已取消收藏')">♥</button>
+    </div>
+    <div class="goods-body">
+      <h3 class="goods-title">${g.n}</h3>
+      <div class="goods-tags">
+        ${g.roast ? `<span>${g.roast}</span>` : ''}
+        ${g.origin ? `<span class="o">${g.origin}</span>` : ''}
+        <span style="background:var(--foam);color:var(--ink-muted)">${g.cat}</span>
+      </div>
+      <div class="goods-rate">
+        <span class="stars">${stars(g.rate)}</span><span>${g.rate.toFixed(1)}</span>
+        <span class="sold">已售 ${g.sold}</span>
+      </div>
+      <div class="goods-price-row">
+        <span class="now"><i>¥</i>${g.price.toFixed(2)}</span>
+        <span class="old">¥${g.old.toFixed(2)}</span>
+      </div>
+      <button class="add-cart" onclick="event.stopPropagation();addToCart('${g.n.replace(/'/g, '')}')">🛒 加入购物车</button>
+    </div>
+  </article>`;
+}
+
+function render() {
+  const list = filtered();
+  document.getElementById('catStrip').innerHTML = CATS.map(([c, em]) =>
+    `<button class="cat-chip ${state.cat === c ? 'is-active' : ''}" onclick="state.cat='${c}';render()"><span class="em">${em}</span>${c}</button>`
+  ).join('');
+  document.getElementById('priceChips').innerHTML = PRICES.map(p =>
+    `<button class="chip ${state.price === p ? 'is-active' : ''}" onclick="state.price=state.price===p?null:${p};render()">${p === 999 ? '¥999+' : '¥' + p + '内'}</button>`
+  ).join('');
+  document.getElementById('roastChecks').innerHTML = ROASTS.map(r => `
+    <label><input type="checkbox" ${state.roasts.includes(r) ? 'checked' : ''} onchange="toggleArr(state.roasts,'${r}');render()" />${r}</label>
+  `).join('');
+  document.getElementById('originChips').innerHTML = ORIGINS.map(o =>
+    `<button class="chip ${state.origins.includes(o) ? 'is-active' : ''}" onclick="toggleArr(state.origins,'${o}');render()">${o}</button>`
+  ).join('');
+  document.getElementById('sortTabs').innerHTML = SORTS.map(s =>
+    `<button class="sort-tab ${state.sort === s ? 'is-active' : ''}" onclick="state.sort='${s}';render()">${s}</button>`
+  ).join('');
+
+  const grid = document.getElementById('goodsGrid');
+  grid.className = 'goods-grid' + (state.view === 'list' ? ' list-view' : '');
+  grid.innerHTML = list.length ? list.map(goodsCard).join('')
+    : '<div class="empty-state" style="grid-column:1/-1"><div class="em"></div>没有符合条件的商品<br/>试试放宽筛选条件</div>';
+  document.getElementById('totalCount').textContent = list.length;
+  document.getElementById('hitCount').textContent = list.length;
+  document.getElementById('filterCount').textContent =
+    (state.price ? 1 : 0) + state.roasts.length + state.origins.length + (state.cat !== '全部' ? 1 : 0);
+  document.getElementById('shopEnd').style.display = list.length ? 'block' : 'none';
+}
+
+function toggleArr(arr, v) {
+  const i = arr.indexOf(v);
+  i >= 0 ? arr.splice(i, 1) : arr.push(v);
+}
+function resetFilters() {
+  Object.assign(state, { cat: '全部', price: null, roasts: [], origins: [], keyword: '' });
+  document.getElementById('searchInput').value = '';
+  render(); toast('筛选条件已重置');
+}
+function setView(v) {
+  state.view = v;
+  document.querySelectorAll('.view-btn').forEach(b => b.classList.toggle('is-active', b.dataset.view === v));
+  render();
+}
+function addToCart(name) {
+  cartCount++;
+  const badge = document.getElementById('cartBadge');
+  badge.style.display = 'flex'; badge.textContent = cartCount > 99 ? '99+' : cartCount;
+  badge.classList.remove('heart-beat'); void badge.offsetWidth; badge.classList.add('heart-beat');
+  toast(`已加入购物车：${name}`);
+}
+
+/* 秒杀倒计时 */
+let cd = 1 * 3600 + 23 * 60 + 45;
+setInterval(() => {
+  cd = cd > 0 ? cd - 1 : 24 * 3600;
+  const p = n => String(n).padStart(2, '0');
+  document.getElementById('cdH').textContent = p(Math.floor(cd / 3600));
+  document.getElementById('cdM').textContent = p(Math.floor(cd % 3600 / 60));
+  document.getElementById('cdS').textContent = p(cd % 60);
+}, 1000);
+
+/* Toast & FAB */
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+addEventListener('scroll', () => {
+  document.getElementById('fabTop').classList.toggle('show', scrollY > 420);
+}, { passive: true });
+
+render();
+</script>
+</body>
+</html>
