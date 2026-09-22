@@ -25,8 +25,11 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -128,9 +131,34 @@ public class OrderService {
      * @return 创建好的订单 VO
      */
     private OrderVO createOrderInternal(CreateOrderFrom from, Long userId) {
-        List<CartItem> cartItems = cartItemDao.selectList(
-                new LambdaQueryWrapper<CartItem>().eq(CartItem::getUserId, userId));
-        if (cartItems.isEmpty()) throw new ServiceException("购物车是空的");
+        // 下单来源三选一：
+        //   1) 直购：productId + quantity，合成虚拟购物车项，不动真实购物车（「立即购买」）
+        //   2) 选中结算：cartIds 非空，只消费勾选的购物车项
+        //   3) 整车结算：以上都未传，沿用旧行为（消费并清空整个购物车）
+        boolean direct = from.getProductId() != null;
+        List<CartItem> cartItems;
+        if (direct) {
+            int qty = from.getQuantity() == null || from.getQuantity() < 1 ? 1 : from.getQuantity();
+            CartItem item = new CartItem();
+            item.setProductId(from.getProductId());
+            item.setQuantity(qty);
+            cartItems = new ArrayList<>();
+            cartItems.add(item);
+        } else {
+            cartItems = cartItemDao.selectList(
+                    new LambdaQueryWrapper<CartItem>().eq(CartItem::getUserId, userId));
+            if (from.getCartIds() != null && !from.getCartIds().isEmpty()) {
+                Set<Long> picked = new HashSet<>(from.getCartIds());
+                cartItems = cartItems.stream()
+                        .filter(c -> picked.contains(c.getId()))
+                        .collect(Collectors.toList());
+                if (cartItems.isEmpty()) throw new ServiceException("勾选的购物车商品不存在");
+            }
+            if (cartItems.isEmpty()) throw new ServiceException("购物车是空的");
+        }
+        // 本次订单实际消费的购物车项ID（直购时为空列表，后续跳过删购物车）
+        List<Long> consumedCartIds = cartItems.stream()
+                .map(CartItem::getId).filter(Objects::nonNull).collect(Collectors.toList());
 
         // 2. 批量查商品，校验库存
         List<Long> productIds = cartItems.stream()
@@ -215,9 +243,11 @@ public class OrderService {
                 inventoryService.syncDeductToMySQL(cart.getProductId(), cart.getQuantity());
             }
 
-            // 8. 清空购物车
-            cartItemDao.delete(new LambdaQueryWrapper<CartItem>()
-                    .eq(CartItem::getUserId, userId));
+            // 8. 清理购物车：直购不动购物车；选中/整车结算只删本次消费掉的项
+            if (!direct && !consumedCartIds.isEmpty()) {
+                cartItemDao.delete(new LambdaQueryWrapper<CartItem>()
+                        .in(CartItem::getId, consumedCartIds));
+            }
 
             // 9. 组装 VO 返回
             List<OrderVO.OrderItemVO> itemVOs = orderItems.stream().map(i ->
