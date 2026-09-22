@@ -1,21 +1,21 @@
-<!--login.wxml —— 登录页-->
+<!-- login.wxml —— 登录页：微信一键登录为主 + 账号密码兜底 -->
 <view class="login-page">
-
   <view class="brand">
-    <image class="brand-icon" src="/assets/logo-mark.png" mode="aspectFit" />
+    <image class="brand-logo" src="/assets/logo-mark.png" mode="aspectFit" />
     <text class="brand-name">WorldCoffee</text>
-    <text class="brand-slogan">一杯咖啡，一个社区</text>
+    <text class="brand-slogan muted">一杯咖啡，一个社区</text>
   </view>
 
-  <view class="wc-card form">
-    <input class="wc-input" placeholder="用户名" value="{{username}}"
-           bindinput="onUsernameInput" placeholder-class="ph" />
-    <input class="wc-input" placeholder="密码" value="{{password}}" password="{{true}}"
-           bindinput="onPasswordInput" placeholder-class="ph" />
-    <button class="wc-btn" loading="{{submitting}}" bindtap="handleSubmit">登 录</button>
-    <view class="tip">
-      <text class="wc-muted">与网页端共用同一账号体系</text>
+  <view class="card form">
+    <button class="btn btn-wx wx-btn" loading="{{wxLoading}}" bindtap="handleWxLogin">微信一键登录</button>
+    <view class="row split-line">
+      <view class="divider grow"></view>
+      <text class="muted" style="font-size:11px;padding:0 10px">或使用账号密码</text>
+      <view class="divider grow"></view>
     </view>
+    <input class="input" placeholder="用户名" value="{{username}}" bindinput="onUsernameInput" placeholder-class="ph" />
+    <input class="input" placeholder="密码" value="{{password}}" password="{{true}}" bindinput="onPasswordInput" placeholder-class="ph" />
+    <button class="btn btn-brand submit-btn" loading="{{submitting}}" bindtap="handleSubmit">登 录</button>
+    <text class="muted agree">登录即代表同意《用户协议》与《隐私政策》</text>
   </view>
-
 </view>

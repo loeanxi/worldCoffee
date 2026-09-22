@@ -1,0 +1,23 @@
+/* orders.wxss —— 订单列表 */
+.chips-bar {
+  white-space: nowrap;
+  background: var(--bg);
+}
+.pad {
+  padding: 12px;
+}
+.order-card {
+  padding: 12px;
+  margin-bottom: 10px;
+}
+.order-thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  background: var(--brand-soft);
+  flex-shrink: 0;
+}
+.act-btn {
+  padding: 6px 14px;
+  font-size: 12px;
+}

@@ -1,0 +1,53 @@
+/* product.wxss —— 商品详情 */
+.head-swiper {
+  width: 100%;
+  height: 300px;
+}
+.head-img {
+  width: 100%;
+  height: 300px;
+  background: var(--brand-soft);
+}
+.body-pad {
+  padding: 14px;
+}
+.prod-title {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+  margin-top: 8px;
+  line-height: 1.5;
+}
+.spec-card {
+  margin-top: 12px;
+  padding: 12px 14px;
+}
+.detail-card {
+  margin-top: 10px;
+  padding: 12px 14px;
+}
+.detail-title {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.detail-text {
+  display: block;
+  font-size: 12px;
+  color: var(--ink2);
+  line-height: 1.8;
+}
+.sheet-thumb {
+  width: 76px;
+  height: 76px;
+  border-radius: 12px;
+  background: var(--brand-soft);
+  flex-shrink: 0;
+}
+.spec-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin: 16px 0 8px;
+}

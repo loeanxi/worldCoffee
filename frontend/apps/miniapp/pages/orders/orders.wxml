@@ -1,0 +1,54 @@
+<!-- orders.wxml —— 订单列表：状态 chips + 订单卡 + 按状态操作 -->
+<scroll-view scroll-x class="chips-bar" enhanced show-scrollbar="{{false}}">
+  <view class="row" style="gap:8px;padding:6px 12px">
+    <text
+      wx:for="{{chips}}"
+      wx:key="key"
+      class="chip {{active === item.key ? 'chip-on' : ''}}"
+      bindtap="pickStatus"
+      data-key="{{item.key}}"
+    >{{item.label}}</text>
+  </view>
+</scroll-view>
+
+<view class="pad">
+  <view wx:for="{{orders}}" wx:key="id" wx:for-index="i" class="card order-card">
+    <view class="row" style="justify-content:space-between;margin-bottom:10px">
+      <text class="muted" style="font-size:12px">{{item.orderNo}}</text>
+      <text style="font-size:12px;font-weight:600;color:{{item.statusColor}}">{{item.statusText}}</text>
+    </view>
+    <view class="row" style="gap:10px">
+      <image
+        wx:for="{{item.thumbs}}"
+        wx:for-item="t"
+        wx:key="*this"
+        src="{{t}}"
+        mode="aspectFill"
+        class="order-thumb"
+      />
+      <view class="grow"></view>
+      <view style="text-align:right">
+        <text style="font-size:13px">共 {{item.itemCount}} 件 实付 <text class="price">¥{{item.total}}</text></text>
+      </view>
+    </view>
+    <view class="row" style="gap:8px;justify-content:flex-end;margin-top:10px">
+      <block wx:if="{{item.status === 0}}">
+        <view class="btn btn-plain act-btn" bindtap="cancelOrder" data-idx="{{i}}">取消订单</view>
+        <view class="btn btn-ghost act-btn" bindtap="payOrder" data-idx="{{i}}">去支付</view>
+      </block>
+      <block wx:elif="{{item.status === 1}}">
+        <view class="btn btn-ghost act-btn" bindtap="remindShip">提醒发货</view>
+      </block>
+      <block wx:elif="{{item.status === 2}}">
+        <view class="btn btn-ghost act-btn" bindtap="confirmReceipt" data-idx="{{i}}">确认收货</view>
+      </block>
+      <block wx:elif="{{item.status === 3}}">
+        <view class="btn btn-plain act-btn" bindtap="buyAgain" data-idx="{{i}}">再次购买</view>
+      </block>
+    </view>
+  </view>
+
+  <view wx:if="{{!orders.length && !loading}}" class="empty">还没有相关订单</view>
+  <view wx:if="{{loading}}" class="empty">加载中…</view>
+  <view wx:elif="{{orders.length && !hasMore}}" class="empty" style="padding:16px 0">— 没有更多了 —</view>
+</view>

@@ -1,25 +1,40 @@
 {
   "pages": [
     "pages/index/index",
+    "pages/shop/shop",
     "pages/me/me",
+    "pages/detail/detail",
+    "pages/publish/publish",
+    "pages/notify/notify",
+    "pages/product/product",
+    "pages/cart/cart",
+    "pages/confirm/confirm",
+    "pages/address/address",
+    "pages/address-edit/address-edit",
+    "pages/orders/orders",
     "pages/login/login"
   ],
   "window": {
     "navigationBarTitleText": "WorldCoffee",
-    "navigationBarBackgroundColor": "#3E2723",
-    "navigationBarTextStyle": "white",
-    "backgroundColor": "#FFF8F1",
+    "navigationBarBackgroundColor": "#F5F3EC",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#F5F3EC",
+    "backgroundTextStyle": "light",
     "enablePullDownRefresh": false
   },
   "tabBar": {
-    "color": "#8D6E63",
-    "selectedColor": "#3E2723",
-    "backgroundColor": "#ffffff",
-    "borderStyle": "black",
+    "color": "#9A9188",
+    "selectedColor": "#5A7661",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
     "list": [
       {
         "pagePath": "pages/index/index",
-        "text": "首页"
+        "text": "发现"
+      },
+      {
+        "pagePath": "pages/shop/shop",
+        "text": "商城"
       },
       {
         "pagePath": "pages/me/me",
@@ -28,5 +43,6 @@
     ]
   },
   "style": "v2",
-  "sitemapLocation": "sitemap.json"
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
 }

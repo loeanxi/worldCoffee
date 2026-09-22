@@ -50,6 +50,41 @@ export async function login(username: string, password: string): Promise<boolean
   return false
 }
 
+/**
+ * 微信一键登录：wx.login 拿 code → POST /api/user/wx-login。
+ * 服务端 mock 模式（开发期）直接建档绑定；生产走 code2Session。
+ */
+export function wxLoginWithCode(code: string): Promise<LoginVO> {
+  return request<LoginVO>({
+    url: '/api/user/wx-login',
+    method: 'POST',
+    data: { code }
+  }).then(res => {
+    if (res.data && res.data.token) {
+      wx.setStorageSync(TOKEN_KEY, res.data.token)
+      wx.setStorageSync(USER_KEY, JSON.stringify(res.data))
+      return res.data
+    }
+    throw new Error('微信登录失败')
+  })
+}
+
+/** 封装 wx.login + 后端换 token，页面直接 await 即可 */
+export function wxLogin(): Promise<LoginVO> {
+  return new Promise((resolve, reject) => {
+    wx.login({
+      success: r => {
+        if (!r.code) {
+          reject(new Error('微信授权失败'))
+          return
+        }
+        wxLoginWithCode(r.code).then(resolve).catch(reject)
+      },
+      fail: () => reject(new Error('微信授权失败'))
+    })
+  })
+}
+
 /** 退出登录：调后端拉黑 token（失败不阻塞），并清本地登录态 */
 export async function logout(): Promise<void> {
   try {

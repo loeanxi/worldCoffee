@@ -1,0 +1,74 @@
+<!-- product.wxml —— 商品详情：头图轮播 + 价格行 + 规格 Sheet + 吸底双按钮 -->
+<swiper class="head-swiper" indicator-dots="{{images.length > 1}}" indicator-color="rgba(255,255,255,.4)" indicator-active-color="#fff">
+  <swiper-item wx:for="{{images}}" wx:key="*this">
+    <image src="{{item}}" mode="aspectFill" class="head-img" />
+  </swiper-item>
+  <swiper-item wx:if="{{!images.length}}">
+    <view class="head-img center" style="background:var(--brand-soft);font-size:44px">☕</view>
+  </swiper-item>
+</swiper>
+
+<view class="body-pad">
+  <view class="row" style="align-items:baseline;gap:8px">
+    <text class="price" style="font-size:22px;font-weight:800">¥{{price}}</text>
+    <text class="grow"></text>
+    <text class="muted" style="font-size:11px">已售 {{sales}}</text>
+  </view>
+  <text class="prod-title">{{name}}</text>
+
+  <view class="card row spec-card" bindtap="openSheet">
+    <text class="grow ink2" style="font-size:13px">已选：{{roastLevel || '标准'}} / {{weight || '标准装'}}</text>
+    <text class="muted" style="font-size:12px">规格 ›</text>
+  </view>
+
+  <view class="card detail-card">
+    <text class="detail-title">商品详情</text>
+    <text class="detail-text">{{description || '暂无详情'}}</text>
+    <view wx:if="{{origin}}" class="row" style="margin-top:8px;gap:6px">
+      <text class="chip" style="background:var(--brand-soft);color:var(--brand-deep)">产地 {{origin}}</text>
+      <text wx:if="{{stock !== null}}" class="chip" style="background:var(--accent-soft);color:var(--accent)">库存 {{stock}}</text>
+    </view>
+  </view>
+  <view style="height:70px"></view>
+</view>
+
+<view class="action-bar row" style="gap:10px">
+  <view class="center" style="font-size:12px;color:var(--ink2);padding:0 4px" bindtap="goCart">
+    <view style="font-size:18px">🛒</view>
+    购物车
+  </view>
+  <view class="btn btn-ghost grow" style="height:38px" bindtap="openSheet">加入购物车</view>
+  <view class="btn btn-accent grow" style="height:38px" bindtap="openSheetForBuy">立即购买</view>
+</view>
+
+<view wx:if="{{sheetOpen}}" class="sheet-mask" bindtap="closeSheet">
+  <view class="sheet" catchtap="noop">
+    <view class="grab"></view>
+    <view class="row" style="gap:12px">
+      <image wx:if="{{images.length}}" src="{{images[0]}}" mode="aspectFill" class="sheet-thumb" />
+      <view wx:else class="sheet-thumb center" style="background:var(--brand-soft);font-size:26px">☕</view>
+      <view>
+        <text class="price" style="font-size:18px;font-weight:800">¥{{price}}</text>
+        <text class="muted" style="display:block;font-size:11px;margin-top:4px">库存 {{stock === null ? '—' : stock}} 件</text>
+      </view>
+    </view>
+    <text class="spec-label">烘焙度</text>
+    <view class="row" style="gap:8px">
+      <text class="chip chip-on">{{roastLevel || '标准'}}</text>
+    </view>
+    <text class="spec-label">规格</text>
+    <view class="row" style="gap:8px">
+      <text class="chip chip-on">{{weight || '标准装'}}</text>
+    </view>
+    <text class="spec-label">数量</text>
+    <view class="row" style="gap:14px;font-size:16px;color:var(--ink2)">
+      <text bindtap="decQty">−</text>
+      <text style="font-size:14px;font-weight:700">{{qty}}</text>
+      <text bindtap="incQty">＋</text>
+    </view>
+    <view class="row" style="gap:10px;margin-top:18px">
+      <view class="btn btn-ghost grow" style="height:42px" bindtap="addCart">加入购物车</view>
+      <view class="btn btn-accent grow" style="height:42px" bindtap="buyNow">立即购买</view>
+    </view>
+  </view>
+</view>

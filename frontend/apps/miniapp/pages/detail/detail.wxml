@@ -1,0 +1,52 @@
+<!-- detail.wxml —— 笔记详情：头图轮播 + 作者行 + 正文 + 评论 + 吸底互动(含转发) -->
+<swiper class="head-swiper" indicator-dots="{{images.length > 1}}" indicator-color="rgba(255,255,255,.4)" indicator-active-color="#fff">
+  <swiper-item wx:for="{{images}}" wx:key="*this">
+    <image src="{{item}}" mode="aspectFill" class="head-img" />
+  </swiper-item>
+  <swiper-item wx:if="{{!images.length}}">
+    <view class="head-img center" style="background:var(--brand-soft);font-size:44px">☕</view>
+  </swiper-item>
+</swiper>
+
+<view class="pad">
+  <text class="post-title">{{title}}</text>
+
+  <view class="row author-row">
+    <image wx:if="{{authorAvatar}}" src="{{authorAvatar}}" mode="aspectFill" class="author-avatar" />
+    <view wx:else class="author-avatar center" style="background:var(--brand-soft);color:var(--brand-deep);font-weight:700">{{authorInitial}}</view>
+    <view class="grow">
+      <text class="author-name">{{authorName}}</text>
+      <text class="muted author-time">{{createTime}}</text>
+    </view>
+    <view class="btn btn-ghost follow-btn" bindtap="toggleFollow">{{followed ? '已关注' : '＋ 关注'}}</view>
+  </view>
+
+  <text class="post-content">{{content}}</text>
+
+  <view wx:if="{{topics.length}}" class="row topic-row">
+    <text wx:for="{{topics}}" wx:key="*this" class="chip topic-chip"># {{item}}</text>
+  </view>
+
+  <view class="card comment-card">
+    <text class="comment-title">💬 评论 {{comments.length}}</text>
+    <view wx:for="{{comments}}" wx:key="id" class="comment-item">
+      <text class="comment-line"><text class="comment-name">{{item.name}}：</text>{{item.content}}</text>
+    </view>
+    <view wx:if="{{!comments.length}}" class="muted" style="font-size:12px;padding:8px 0">还没有评论，抢沙发～</view>
+  </view>
+  <view style="height:66px"></view>
+</view>
+
+<view class="action-bar row" style="gap:10px">
+  <input
+    class="grow pill comment-input"
+    placeholder="说点什么…"
+    value="{{draft}}"
+    bindinput="onDraft"
+    confirm-type="send"
+    bindconfirm="sendComment"
+  />
+  <text class="act {{liked ? 'like-on' : ''}}" bindtap="toggleLike">{{liked ? '♥' : '♡'}} {{likeCount}}</text>
+  <text class="act {{favorited ? 'like-on' : ''}}" bindtap="toggleFavorite">{{favorited ? '★' : '☆'}}</text>
+  <button class="act share-btn" open-type="share">↗ 分享</button>
+</view>

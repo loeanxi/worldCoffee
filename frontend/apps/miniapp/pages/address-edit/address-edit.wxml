@@ -1,0 +1,38 @@
+<!-- address-edit.wxml —— 地址新建/编辑表单 -->
+<view class="pad">
+  <view class="card form-card">
+    <view class="row field">
+      <text class="label">收货人</text>
+      <input class="grow input" placeholder="姓名" value="{{form.receiverName}}" bindinput="onInput" data-key="receiverName" />
+    </view>
+    <view class="row field gap">
+      <text class="label">手机号</text>
+      <input class="grow input" type="number" maxlength="11" placeholder="11 位手机号" value="{{form.phone}}" bindinput="onInput" data-key="phone" />
+    </view>
+    <view class="row field gap">
+      <text class="label">省份</text>
+      <input class="grow input" placeholder="如：浙江省" value="{{form.province}}" bindinput="onInput" data-key="province" />
+    </view>
+    <view class="row field gap">
+      <text class="label">城市</text>
+      <input class="grow input" placeholder="如：杭州市" value="{{form.city}}" bindinput="onInput" data-key="city" />
+    </view>
+    <view class="row field gap">
+      <text class="label">区县</text>
+      <input class="grow input" placeholder="如：西湖区" value="{{form.district}}" bindinput="onInput" data-key="district" />
+    </view>
+    <view class="row field gap">
+      <text class="label">详细地址</text>
+      <input class="grow input" placeholder="街道、门牌号、楼层" value="{{form.detail}}" bindinput="onInput" data-key="detail" />
+    </view>
+    <view class="row field gap">
+      <text class="label">设为默认</text>
+      <switch checked="{{form.isDefault}}" color="#6D8B74" bindchange="onDefault" />
+    </view>
+  </view>
+  <view style="height:70px"></view>
+</view>
+
+<view class="action-bar">
+  <view class="btn btn-brand" style="width:100%;height:42px" bindtap="save">保存地址</view>
+</view>

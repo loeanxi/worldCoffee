@@ -1,0 +1,74 @@
+/* confirm.wxss —— 确认订单 */
+.pad {
+  padding: 12px;
+}
+.addr-card {
+  padding: 14px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+}
+.addr-line1 {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+}
+.addr-line2 {
+  display: block;
+  font-size: 12px;
+  color: var(--ink2);
+  margin-top: 3px;
+}
+.goods-card {
+  padding: 12px;
+  margin-bottom: 10px;
+}
+.goods-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.goods-row-gap {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.goods-thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  background: var(--brand-soft);
+  flex-shrink: 0;
+}
+.goods-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+.amount-card {
+  padding: 4px 14px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: var(--ink2);
+}
+.amount-row {
+  height: 40px;
+  justify-content: space-between;
+}
+.amount-row.gap {
+  border-top: 1px solid var(--line);
+}
+.remark-input {
+  flex: 1;
+  margin-left: 12px;
+  font-size: 12px;
+  text-align: right;
+}
+.pay-mark {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--wx-green);
+  color: #fff;
+  font-size: 26px;
+  margin: 22px auto;
+}

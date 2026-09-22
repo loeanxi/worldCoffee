@@ -1,0 +1,72 @@
+/* shop.wxss —— 商城 Tab */
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  background: var(--bg);
+}
+.nav-row {
+  gap: 10px;
+  padding-left: 12px;
+  height: 44px;
+}
+.search-pill {
+  height: 32px;
+  background: var(--card);
+  padding: 0 12px;
+  gap: 6px;
+  font-size: 12px;
+}
+.search-act {
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.main {
+  padding: 10px 10px 16px;
+}
+.coupon-banner {
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  background: linear-gradient(100deg, var(--brand-soft), var(--accent-soft));
+}
+.coupon-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+}
+.coupon-sub {
+  display: block;
+  font-size: 11px;
+  color: var(--ink2);
+  margin-top: 2px;
+}
+.chips-row {
+  white-space: nowrap;
+}
+.wf {
+  gap: 10px;
+  align-items: flex-start;
+}
+.wf-col {
+  gap: 10px;
+}
+.prod-card {
+  overflow: hidden;
+}
+.prod-img {
+  width: 100%;
+  display: block;
+  border-radius: 16px 16px 0 0;
+  background: var(--brand-soft);
+}
+.prod-body {
+  padding: 8px 10px 10px;
+}
+.prod-name {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}

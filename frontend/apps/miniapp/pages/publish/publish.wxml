@@ -1,0 +1,33 @@
+<!-- publish.wxml —— 发布笔记：九宫格选图 + 标题正文 + 话题 -->
+<view class="pad">
+  <view class="grid9">
+    <image wx:for="{{images}}" wx:key="*this" src="{{item}}" mode="aspectFill" class="cell" bindtap="preview" data-idx="{{index}}" />
+    <view wx:if="{{images.length < 9}}" class="cell add-cell center" bindtap="chooseImages">
+      <text style="font-size:20px;color:var(--ink3)">＋</text>
+      <text style="font-size:11px;color:var(--ink3)">添加</text>
+    </view>
+  </view>
+
+  <input class="title-input" placeholder="标题：今天喝了什么？" value="{{title}}" maxlength="40" bindinput="onTitle" />
+  <textarea class="content-input" placeholder="正文：风味、比例、故事都可以写…" value="{{content}}" maxlength="2000" bindinput="onContent" />
+
+  <view class="row topic-row">
+    <text
+      wx:for="{{topicOptions}}"
+      wx:key="*this"
+      class="chip {{topics.indexOf(item) >= 0 ? 'chip-on' : ''}}"
+      bindtap="toggleTopic"
+      data-topic="{{item}}"
+    ># {{item}}</text>
+  </view>
+
+  <view class="card tip-card">
+    <text class="muted" style="font-size:12px">发布后进入审核，审核通过才会出现在发现页</text>
+  </view>
+  <view style="height:66px"></view>
+</view>
+
+<view class="action-bar row" style="gap:10px">
+  <text class="muted" style="font-size:12px" bindtap="saveDraft">存草稿</text>
+  <view class="btn btn-brand grow" style="height:38px" bindtap="submit">发布</view>
+</view>

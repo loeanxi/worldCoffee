@@ -1,0 +1,32 @@
+<!-- address.wxml —— 地址管理：选择模式(确认订单进入) / 管理模式 -->
+<view wx:if="{{selectMode}}" class="bar muted">选择要使用的收货地址</view>
+
+<view class="pad">
+  <view wx:for="{{list}}" wx:key="id" class="card addr-card" bindtap="pick" data-idx="{{index}}">
+    <view class="row" style="gap:8px">
+      <view class="grow">
+        <view class="row" style="gap:8px">
+          <text class="addr-name">{{item.receiverName}}</text>
+          <text class="muted" style="font-size:12px">{{item.phone}}</text>
+          <text wx:if="{{item.isDefault}}" class="chip chip-on" style="font-size:10px;padding:2px 8px">默认</text>
+        </view>
+        <text class="addr-detail ink2">{{item.region}}</text>
+      </view>
+      <text wx:if="{{selectMode}}" class="muted">选择 ›</text>
+    </view>
+    <view wx:if="{{!selectMode}}" class="row act-row">
+      <text class="muted act" catchtap="setDefault" data-idx="{{index}}">{{item.isDefault ? '已是默认' : '设为默认'}}</text>
+      <text class="grow"></text>
+      <text class="ink2 act" catchtap="edit" data-idx="{{index}}">编辑</text>
+      <text class="act" style="color:var(--danger)" catchtap="remove" data-idx="{{index}}">删除</text>
+    </view>
+  </view>
+
+  <view wx:if="{{!list.length && !loading}}" class="empty">还没有收货地址，点下方新增</view>
+  <view wx:if="{{loading}}" class="empty">加载中…</view>
+  <view style="height:70px"></view>
+</view>
+
+<view class="action-bar">
+  <view class="btn btn-brand" style="width:100%;height:42px" bindtap="add">＋ 新增收货地址</view>
+</view>

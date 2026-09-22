@@ -1,0 +1,82 @@
+<!-- shop.wxml —— 商城 Tab：吸顶搜索(右侧胶囊避让) + 券包横幅 + 分类 + 双列商品 -->
+<view class="nav" style="padding-top:{{statusBarHeight}}px">
+  <view class="row nav-pad-r nav-row">
+    <view wx:if="{{!searchOpen}}" class="grow pill row search-pill" bindtap="openSearch">
+      <text class="muted">搜豆子、器具、礼盒</text>
+    </view>
+    <block wx:else>
+      <input
+        class="grow pill search-pill"
+        style="color:var(--ink)"
+        focus
+        value="{{keyword}}"
+        placeholder="搜豆子、器具、礼盒"
+        confirm-type="search"
+        bindinput="onInput"
+        bindconfirm="doSearch"
+      />
+      <text class="search-act" style="color:var(--brand-deep)" bindtap="doSearch">搜索</text>
+      <text class="search-act muted" bindtap="clearSearch">取消</text>
+    </block>
+    <view class="nav-icon-btn center" bindtap="goCart">
+      🛒
+      <text wx:if="{{cartCount > 0}}" class="badge-num">{{cartCount}}</text>
+    </view>
+  </view>
+</view>
+
+<view class="main" style="padding-top:{{navHeight}}px">
+  <view class="card row coupon-banner" bindtap="goBrowse">
+    <view class="grow">
+      <text class="coupon-title">新人券包 ¥30</text>
+      <text class="coupon-sub">满 99 减 15 · 满 199 减 30</text>
+    </view>
+    <view class="btn btn-accent" style="padding:6px 14px;font-size:12px">去选购</view>
+  </view>
+
+  <scroll-view scroll-x class="chips-row" enhanced show-scrollbar="{{false}}">
+    <view class="row" style="gap:8px;padding:0 0 10px">
+      <text class="chip {{!categoryId ? 'chip-on' : ''}}" bindtap="pickCategory" data-id="">全部</text>
+      <text
+        wx:for="{{categories}}"
+        wx:key="id"
+        class="chip {{categoryId === item.id ? 'chip-on' : ''}}"
+        bindtap="pickCategory"
+        data-id="{{item.id}}"
+      >{{item.name}}</text>
+    </view>
+  </scroll-view>
+
+  <view wx:if="{{leftCol.length || rightCol.length}}" class="row wf">
+    <view class="grow col wf-col">
+      <view wx:for="{{leftCol}}" wx:key="id" class="card prod-card" bindtap="openProduct" data-id="{{item.id}}">
+        <image wx:if="{{item.cover}}" src="{{item.cover}}" mode="widthFix" class="prod-img" />
+        <view wx:else class="prod-img center" style="height:120px;background:var(--brand-soft);font-size:30px">☕</view>
+        <view class="prod-body">
+          <text class="prod-name clamp2">{{item.name}}</text>
+          <view class="row" style="margin-top:6px;justify-content:space-between">
+            <text class="price" style="font-size:15px">¥{{item.price}}</text>
+            <text class="muted" style="font-size:11px">已售 {{item.sales}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+    <view class="grow col wf-col">
+      <view wx:for="{{rightCol}}" wx:key="id" class="card prod-card" bindtap="openProduct" data-id="{{item.id}}">
+        <image wx:if="{{item.cover}}" src="{{item.cover}}" mode="widthFix" class="prod-img" />
+        <view wx:else class="prod-img center" style="height:120px;background:var(--accent-soft);font-size:30px">☕</view>
+        <view class="prod-body">
+          <text class="prod-name clamp2">{{item.name}}</text>
+          <view class="row" style="margin-top:6px;justify-content:space-between">
+            <text class="price" style="font-size:15px">¥{{item.price}}</text>
+            <text class="muted" style="font-size:11px">已售 {{item.sales}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:elif="{{!loading}}" class="empty">暂无上架商品</view>
+  <view wx:if="{{loading}}" class="empty">加载中…</view>
+  <view wx:elif="{{leftCol.length && !hasMore}}" class="empty" style="padding:16px 0">— 没有更多了 —</view>
+</view>

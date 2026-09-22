@@ -1,0 +1,41 @@
+/* publish.wxss —— 发布笔记 */
+.pad {
+  padding: 14px;
+}
+.grid9 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.cell {
+  aspect-ratio: 1;
+  border-radius: 12px;
+  background: var(--brand-soft);
+}
+.add-cell {
+  border: 1px dashed var(--ink3);
+  background: transparent;
+  flex-direction: column;
+  gap: 4px;
+}
+.title-input {
+  margin: 14px 0 6px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.content-input {
+  width: 100%;
+  min-height: 120px;
+  font-size: 13px;
+  color: var(--ink2);
+  line-height: 1.8;
+}
+.topic-row {
+  gap: 6px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.tip-card {
+  margin-top: 14px;
+  padding: 12px 14px;
+}

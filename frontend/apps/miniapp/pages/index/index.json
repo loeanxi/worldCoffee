@@ -1,5 +1,5 @@
 {
-  "navigationBarTitleText": "WorldCoffee",
+  "navigationStyle": "custom",
   "enablePullDownRefresh": true,
-  "backgroundTextStyle": "dark"
+  "usingComponents": {}
 }

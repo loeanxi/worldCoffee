@@ -1,0 +1,21 @@
+<!-- notify.wxml —— 通知列表：赞/评论/订单三类 + 全部已读 -->
+<view class="bar row">
+  <text class="grow muted" style="font-size:12px">私聊请前往 App 继续</text>
+  <text style="font-size:12px;color:var(--brand-deep);font-weight:600" bindtap="readAll">全部已读</text>
+</view>
+
+<view class="pad">
+  <view wx:for="{{list}}" wx:key="id" class="card item {{item.isRead ? '' : 'unread'}}" bindtap="openItem" data-idx="{{index}}">
+    <view class="row" style="gap:10px">
+      <view class="ic center" style="background:{{item.bg}}">{{item.icon}}</view>
+      <view class="grow">
+        <text class="line1"><text wx:if="{{item.senderName}}" style="font-weight:700">{{item.senderName}} </text>{{item.content}}</text>
+        <text class="muted line2">{{item.time}}</text>
+      </view>
+      <view wx:if="{{!item.isRead}}" class="dot"></view>
+    </view>
+  </view>
+
+  <view wx:if="{{!list.length && !loading}}" class="empty">暂时没有新通知</view>
+  <view wx:if="{{loading}}" class="empty">加载中…</view>
+</view>

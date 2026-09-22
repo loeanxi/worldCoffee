@@ -29,7 +29,7 @@ function getToken(): string {
 
 interface RequestOptions {
   url: string
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
   data?: any
 }
 
@@ -38,7 +38,8 @@ export function request<T = any>(opts: RequestOptions): Promise<Result<T>> {
     const token = getToken()
     wx.request({
       url: BASE_URL + opts.url,
-      method: opts.method || 'GET',
+      // 后端订单流转使用 PATCH；miniprogram 类型声明未含 PATCH，故断言绕过
+      method: (opts.method || 'GET') as any,
       data: opts.data,
       header: {
         'Content-Type': 'application/json',
@@ -81,6 +82,44 @@ export function imageUrl(url?: string): string {
   if (!u) return ''
   if (/^https?:\/\//i.test(u)) return u
   return BASE_URL + (u.startsWith('/') ? u : '/' + u)
+}
+
+/** 商品 images 字段是 JSON 字符串或逗号串，统一 parse 成数组 */
+export function parseImages(raw?: string): string[] {
+  if (!raw) return []
+  const s = raw.trim()
+  if (s.startsWith('[')) {
+    try {
+      const arr = JSON.parse(s)
+      return Array.isArray(arr) ? arr.map(String) : []
+    } catch {
+      return []
+    }
+  }
+  return s.split(',').map(x => x.trim()).filter(Boolean)
+}
+
+/** 上传图片：POST /api/coffee/upload（multipart，字段名 file），返回可访问 URL */
+export function uploadImage(filePath: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const token = getToken()
+    wx.uploadFile({
+      url: BASE_URL + '/api/coffee/upload',
+      filePath,
+      name: 'file',
+      header: token ? { Authorization: `Bearer ${token}` } : {},
+      success: (res: any) => {
+        try {
+          const body = JSON.parse(res.data)
+          if (body && body.code === 200) resolve(imageUrl(body.data))
+          else reject(new Error(body?.msg || '上传失败'))
+        } catch {
+          reject(new Error('上传响应解析失败'))
+        }
+      },
+      fail: (err: any) => reject(new Error(err.errMsg || '上传失败'))
+    })
+  })
 }
 
 /** 帖子列表兼容提取：data 可能是数组或 { records | list | data } 分页形态 */

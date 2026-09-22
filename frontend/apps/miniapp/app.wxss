@@ -1,55 +1,150 @@
-/**app.wxss —— 全局样式（咖啡色调，与 web 端设计语言对齐）**/
+/* app.wxss —— 全局品牌令牌与通用组件类
+ * 色板与 App 端 mui/m-theme.css 完全一致：
+ * 品牌绿 #6D8B74 / 咖啡豆棕 #A9714B / 奶油白 #F5F3EC / 墨色 #2C2620
+ */
 page {
-  background: #FFF8F1;
-  color: #3E2723;
-  font-size: 28rpx;
-  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --brand: #6D8B74;
+  --brand-deep: #5A7661;
+  --brand-soft: rgba(109, 139, 116, 0.14);
+  --accent: #A9714B;
+  --accent-soft: rgba(169, 113, 75, 0.12);
+  --bg: #F5F3EC;
+  --card: #FFFFFF;
+  --ink: #2C2620;
+  --ink2: #6B6259;
+  --ink3: #9A9188;
+  --line: #EAE4D9;
+  --danger: #D46A3D;
+  --wx-green: #07C160;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 14px;
+  font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
 }
 
-/* 通用卡片 */
-.wc-card {
-  background: #ffffff;
-  border-radius: 24rpx;
-  margin: 20rpx 24rpx;
-  padding: 24rpx;
-  box-shadow: 0 4rpx 16rpx rgba(62, 39, 35, 0.06);
+/* ── 布局原子 ── */
+.row { display: flex; align-items: center; }
+.col { display: flex; flex-direction: column; }
+.grow { flex: 1; min-width: 0; }
+.cut { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.clamp2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.center { display: flex; align-items: center; justify-content: center; }
+
+/* ── 卡片 / 胶囊 / 按钮 ── */
+.card { background: var(--card); border-radius: 16px; }
+.pill { border-radius: 999px; }
+.chip {
+  flex-shrink: 0;
+  font-size: 12px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--ink2);
+}
+.chip-on { background: var(--brand); color: #fff; font-weight: 600; }
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+}
+.btn-brand { background: var(--brand); color: #fff; }
+.btn-accent { background: var(--accent); color: #fff; }
+.btn-ghost { background: var(--brand-soft); color: var(--brand-deep); }
+.btn-wx { background: var(--wx-green); color: #fff; }
+.btn-plain { background: var(--bg); color: var(--ink2); }
+
+/* ── 自定义导航栏（仅 navigationStyle=custom 的 Tab 页使用）
+ * 右侧 100px 为微信胶囊按钮（··· ⊙）避让区，严禁占用 */
+.nav-pad-r { padding-right: 100px; }
+.nav-title { font-size: 17px; font-weight: 700; }
+.nav-icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--card);
+  font-size: 15px;
+  position: relative;
+  flex-shrink: 0;
+}
+.badge-dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--danger);
+}
+.badge-num {
+  position: absolute;
+  top: 0;
+  right: 0;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 7px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 9px;
+  font-style: normal;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* 主按钮 */
-.wc-btn {
-  background: #3E2723;
-  color: #ffffff;
-  border-radius: 44rpx;
-  font-size: 30rpx;
-  height: 88rpx;
-  line-height: 88rpx;
+/* ── 半屏 Sheet ── */
+.sheet-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 40;
 }
-.wc-btn[disabled] {
-  background: #D7CCC8;
-  color: #ffffff;
+.sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  padding: 18px 18px calc(26px + env(safe-area-inset-bottom));
 }
-
-.wc-btn-outline {
-  background: #ffffff;
-  color: #3E2723;
-  border: 2rpx solid #3E2723;
-  border-radius: 44rpx;
-  font-size: 30rpx;
-  height: 88rpx;
-  line-height: 88rpx;
-}
-
-/* 输入框 */
-.wc-input {
-  background: #F5F0EB;
-  border-radius: 16rpx;
-  height: 88rpx;
-  padding: 0 24rpx;
-  margin-bottom: 24rpx;
-  font-size: 28rpx;
+.grab {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: #E4E0D6;
+  margin: 0 auto 14px;
 }
 
-.wc-muted {
-  color: #8D6E63;
-  font-size: 24rpx;
+/* ── 吸底操作栏 ── */
+.action-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  border-top: 1px solid var(--line);
+  padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+  z-index: 30;
 }
+
+/* ── 状态文案 ── */
+.muted { color: var(--ink3); }
+.ink2 { color: var(--ink2); }
+.price { color: var(--accent); font-weight: 700; }
+.empty {
+  text-align: center;
+  padding: 48px 0;
+  font-size: 13px;
+  color: var(--ink3);
+}
+.divider { height: 1px; background: var(--line); }

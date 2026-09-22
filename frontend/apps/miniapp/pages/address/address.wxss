@@ -1,0 +1,31 @@
+/* address.wxss —— 地址管理 */
+.bar {
+  padding: 8px 14px;
+  font-size: 12px;
+}
+.pad {
+  padding: 12px;
+}
+.addr-card {
+  padding: 14px;
+  margin-bottom: 10px;
+}
+.addr-name {
+  font-size: 14px;
+  font-weight: 700;
+}
+.addr-detail {
+  display: block;
+  font-size: 12px;
+  margin-top: 4px;
+  line-height: 1.6;
+}
+.act-row {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  gap: 16px;
+}
+.act {
+  font-size: 12px;
+}

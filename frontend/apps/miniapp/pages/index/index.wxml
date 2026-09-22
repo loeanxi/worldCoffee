@@ -1,48 +1,102 @@
-<!--index.wxml —— 首页推荐帖子流-->
-<view class="page">
+<!-- index.wxml —— 发现 Tab：商标吸顶栏(右侧为胶囊避让区) + 分类 chips + 双列瀑布流 -->
+<view class="nav" style="padding-top:{{statusBarHeight}}px">
+  <view class="row nav-pad-r nav-row">
+    <image src="/assets/logo-mark.png" mode="aspectFit" class="logo" />
+    <view wx:if="{{!searchOpen}}" class="grow pill row search-pill" bindtap="openSearch">
+      <text class="muted">搜索咖啡、地点、话题…</text>
+    </view>
+    <block wx:else>
+      <input
+        class="grow pill search-pill"
+        style="color:var(--ink)"
+        focus
+        value="{{searchQuery}}"
+        placeholder="搜索咖啡、地点、话题…"
+        confirm-type="search"
+        bindinput="onSearchInput"
+        bindconfirm="doSearch"
+      />
+      <text class="search-act" style="color:var(--brand-deep)" bindtap="doSearch">搜索</text>
+      <text class="search-act muted" bindtap="clearSearch">取消</text>
+    </block>
+    <view class="pub-btn center" bindtap="goPublish">＋</view>
+    <view class="nav-icon-btn center" bindtap="goNotify">
+      🔔
+      <view wx:if="{{unread > 0}}" class="badge-dot"></view>
+    </view>
+  </view>
 
-  <!-- 帖子列表 -->
-  <view wx:for="{{posts}}" wx:key="id" class="wc-card post" data-id="{{item.id}}">
-    <!-- 作者行 -->
-    <view class="post-author">
-      <image class="avatar" src="{{item.authorAvatar}}" mode="aspectFill" binderror="onAvatarError" />
-      <view class="author-meta">
-        <text class="author-name">{{item.authorName}}</text>
-        <text class="author-time">{{item.createTime}}</text>
+  <scroll-view scroll-x class="chips-row" enhanced show-scrollbar="{{false}}">
+    <view class="row" style="gap:8px;padding:8px 12px 2px">
+      <text
+        wx:for="{{tabs}}"
+        wx:key="key"
+        class="chip {{!activeTopic && activeTab === item.key ? 'chip-on' : ''}}"
+        bindtap="switchTab"
+        data-key="{{item.key}}"
+      >{{item.label}}</text>
+      <view style="width:1px;height:14px;background:var(--line)"></view>
+      <text
+        wx:for="{{topicTabs}}"
+        wx:key="*this"
+        class="chip {{activeTopic === item ? 'chip-on' : ''}}"
+        bindtap="searchTopic"
+        data-topic="{{item}}"
+      >{{item}}</text>
+    </view>
+  </scroll-view>
+</view>
+
+<view class="main" style="padding-top:{{navHeight}}px">
+  <view wx:if="{{leftCol.length || rightCol.length}}" class="row wf">
+    <view class="grow col wf-col">
+      <view wx:for="{{leftCol}}" wx:key="id" wx:for-index="i" class="card feed-card" bindtap="openPost" data-id="{{item.id}}">
+        <image wx:if="{{item.cover}}" src="{{item.cover}}" mode="widthFix" class="feed-img" />
+        <view class="feed-body">
+          <text class="feed-title clamp2">{{item.title}}</text>
+          <view class="row feed-meta">
+            <image wx:if="{{item.authorAvatar}}" src="{{item.authorAvatar}}" class="avatar" />
+            <view wx:else class="avatar" style="background:var(--brand-soft)"></view>
+            <text class="grow cut muted" style="font-size:11px">{{item.authorName}}</text>
+            <text
+              class="like {{item.likedByMe ? 'like-on' : ''}}"
+              catchtap="onLike"
+              data-id="{{item.id}}"
+              data-col="0"
+              data-idx="{{i}}"
+            >{{item.likedByMe ? '♥' : '♡'}} {{item.likeCount}}</text>
+          </view>
+        </view>
       </view>
     </view>
-
-    <!-- 封面图 -->
-    <image wx:if="{{item.cover}}" class="post-cover" src="{{item.cover}}" mode="aspectFill" lazy-load="{{true}}" />
-
-    <!-- 文字内容 -->
-    <view class="post-title">{{item.title}}</view>
-    <view wx:if="{{item.content}}" class="post-content">{{item.content}}</view>
-
-    <!-- 图片组（无封面时展示前 3 张） -->
-    <view wx:if="{{!item.cover && item.images.length > 0}}" class="post-images">
-      <image wx:for="{{item.images}}" wx:for-item="img" wx:key="*this" class="post-img" src="{{img}}" mode="aspectFill" lazy-load="{{true}}" />
+    <view class="grow col wf-col">
+      <view wx:for="{{rightCol}}" wx:key="id" wx:for-index="i" class="card feed-card" bindtap="openPost" data-id="{{item.id}}">
+        <image wx:if="{{item.cover}}" src="{{item.cover}}" mode="widthFix" class="feed-img" />
+        <view class="feed-body">
+          <text class="feed-title clamp2">{{item.title}}</text>
+          <view class="row feed-meta">
+            <image wx:if="{{item.authorAvatar}}" src="{{item.authorAvatar}}" class="avatar" />
+            <view wx:else class="avatar" style="background:var(--brand-soft)"></view>
+            <text class="grow cut muted" style="font-size:11px">{{item.authorName}}</text>
+            <text
+              class="like {{item.likedByMe ? 'like-on' : ''}}"
+              catchtap="onLike"
+              data-id="{{item.id}}"
+              data-col="1"
+              data-idx="{{i}}"
+            >{{item.likedByMe ? '♥' : '♡'}} {{item.likeCount}}</text>
+          </view>
+        </view>
+      </view>
     </view>
-
-    <!-- 互动栏 -->
-    <view class="post-footer">
-      <text class="like">♥ {{item.likeCount}}</text>
-      <text class="hint">进入小程序查看更多</text>
-    </view>
   </view>
 
-  <!-- 空态 -->
-  <view wx:if="{{!loading && posts.length === 0}}" class="empty">
-    <text class="empty-icon">☕</text>
-    <text class="empty-text">还没有帖子，下拉刷新试试</text>
-  </view>
+  <view wx:elif="{{!loading}}" class="empty">还没有笔记，点右上角 ＋ 发第一篇吧</view>
+  <view wx:if="{{loading}}" class="empty">加载中…</view>
+  <view wx:elif="{{leftCol.length && !hasMore}}" class="empty" style="padding:16px 0">— 没有更多了 —</view>
+</view>
 
-  <!-- 加载态 -->
-  <view wx:if="{{loading}}" class="loading">
-    <text>咖啡冲泡中…</text>
-  </view>
-  <view wx:if="{{!loading && posts.length > 0 && !hasMore}}" class="loading">
-    <text>— 到底啦 —</text>
-  </view>
-
+<view class="ai-pill row" bindtap="goAI">
+  <text>🤖</text>
+  <text style="font-size:12px;font-weight:600;color:var(--ink2)">AI 助手</text>
 </view>
